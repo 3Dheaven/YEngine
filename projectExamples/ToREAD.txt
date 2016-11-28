@@ -1,0 +1,5 @@
+- This is some examples to create a context for using opengl.
+- QT has an abstract layer for opengl.
+- GLFW is great to be focus only on the engine.
+- The wxWidget project is under construction. 
+It will be nice to use it to create our own interface for graphics api and to have a gui.
