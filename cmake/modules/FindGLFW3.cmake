@@ -17,16 +17,16 @@
 set( _glfw3_HEADER_SEARCH_DIRS
 "/usr/include"
 "/usr/local/include"
-"${CMAKE_SOURCE_DIR}/dependencies/glfw/include"
-"${CMAKE_SOURCE_DIR}/dependencies/glfw/includes"
-"${CMAKE_SOURCE_DIR}/includes"
+"${CMAKE_MODULE_PATH}/../../dependencies/glfw/include"
+"${CMAKE_MODULE_PATH}/../../dependencies/glfw/includes"
+"${CMAKE_MODULE_PATH}/../../includes"
 "C:/Program Files (x86)/glfw/include" )
 set( _glfw3_LIB_SEARCH_DIRS
 "/usr/lib"
 "/usr/local/lib"
-"${CMAKE_SOURCE_DIR}/dependencies/glfw/lib"
-"${CMAKE_SOURCE_DIR}/dependencies/glfw/libs"
-"${CMAKE_SOURCE_DIR}/lib"
+"${CMAKE_MODULE_PATH}/../../dependencies/glfw/lib"
+"${CMAKE_MODULE_PATH}/../../dependencies/glfw/libs"
+"${CMAKE_MODULE_PATH}/../../lib"
 "C:/Program Files (x86)/glfw/lib-msvc110" )
 
 # Check environment for root search directory

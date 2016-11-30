@@ -1,5 +1,5 @@
 #pragma once
-#include "C:\Users\yoan.audureau\Documents\GitHub\wxWidgets\include\wx\msw\app.h"
+#include "wx\msw\app.h"
 
 class Application :
 	public wxApp
