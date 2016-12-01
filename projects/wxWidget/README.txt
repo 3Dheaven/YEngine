@@ -1,4 +1,4 @@
-0. GET WXWIDGET (To add in dependencies/ in the future)
+GET WXWIDGET (To add in dependencies/ in the future)
 http://stackoverflow.com/questions/37995066/how-to-set-up-wxwidgets-3-1-0-with-visual-studio-2015
 
 - Grab the sources : https://github.com/wxWidgets/wxWidgets
@@ -11,6 +11,7 @@ http://stackoverflow.com/questions/37995066/how-to-set-up-wxwidgets-3-1-0-with-v
 
 -----------------------------------------------------------------------------------------------
 
+0. Add an environment variable named WXWIN (with the path of wxwidget on your computer)
 1. Make sure to have a directory named "build" next to this README file.
 2. Open Cmake 
 3. Specify the path of CMakeLists.txt in "Where is the source code"
