@@ -1,0 +1,4 @@
+- Install wxwidget by following the README file in the wxwidget folder
+- Get Vulkan SDK for windows : https://vulkan.lunarg.com/
+- Add an environment variable named VULKAN_SDK with the path of vulkan
+- Use Cmake : create build directory ...
