@@ -1,0 +1,1 @@
+- Add support of assimp and glm libraries in cmake, check for platform x64 or not

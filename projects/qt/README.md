@@ -1,4 +1,0 @@
-- CMakeLists has to be changed ...
-- The path :/Qt/Qt-5.7.0/5.7/msvc2015_64 has to be changed
-- QT-5.7 has to be downloaded
-- The path "D:\Qt\Qt-5.7.0\5.7\msvc2015_64\bin" has to be added to the environment variable PATH

@@ -1,0 +1,6 @@
+- Get Cmake > 2.8
+- In Cmake -> "Where is the source code", search for the directory's path where CMakeLists.txt is.
+- Create a directory named build and put its path in Cmake -> "Where to build the binaries"
+- Click on "Configure", choose an ide (I use Visual Studio 14 2015 Win64), "Finish"
+- Then click on generate and look in the build folder. The visual studio should have been generated.
+- Open it and choose YEngine project as the startup project
