@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.1)
 
-project(YEngine)
+project(Application)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/modules/")
 message("CMAKE_MODULE_PATH : " ${CMAKE_MODULE_PATH})
 
 # Set the name of the ouput binary
-set(EXE_NAME YEngine)
+set(EXE_NAME Application)
 
 # Add all files from a src folder
 file(
@@ -14,6 +14,8 @@ file(
 	SRC_FILES
 	src/*
 )
+
+SET(CMAKE_SUPPRESS_REGENERATION TRUE)
 
 # Find the required packages
 find_package(GLEW REQUIRED)
@@ -40,12 +42,16 @@ set(
 	"${CMAKE_CXX_FLAGS_RELEASE} -Wall"
 )
 
+add_definitions(-DUNICODE -D_UNICODE)
+
 # Set C++11
 set (CMAKE_CXX_STANDARD 11)
 
 # Setup binary output
 add_executable(${EXE_NAME} ${SRC_FILES})
 
-# Link dependencies
-target_link_libraries(${EXE_NAME} ${GLEW_LIBRARY})
-target_link_libraries(${EXE_NAME} vulkan-1)
+set(LIBS opengl32 vulkan-1) 
+target_link_libraries(${EXE_NAME} ${LIBS} ${GLEW_LIBRARY})
+set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
+set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS")
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Application)
