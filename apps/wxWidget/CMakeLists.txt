@@ -6,18 +6,38 @@ set(EXE_NAME Application)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/modules/")
 message("CMAKE_MODULE_PATH : " ${CMAKE_MODULE_PATH})
 
+message("PROJECT_SOURCE_DIR : ${PROJECT_SOURCE_DIR}" )
+
+macro(GroupYEngineSources curdir)
+
+   file(GLOB children RELATIVE 
+   ${PROJECT_SOURCE_DIR}/../../${curdir}
+   ${PROJECT_SOURCE_DIR}/../../${curdir}/*) 
+	
+   foreach(child ${children})
+
+		if(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/../../${curdir}/${child})
+			   GroupYEngineSources(${curdir}/${child})
+		else()
+			string(REPLACE "/" "\\" groupname ${curdir})
+
+			source_group(${groupname} FILES
+			${PROJECT_SOURCE_DIR}/../../${curdir}/${child})
+		endif()
+    endforeach()
+	
+endmacro()
+
 # Sources.
 file(
 	GLOB_RECURSE
 	SRC_FILES
 	src/*
-)
-
-file(
-	GLOB_RECURSE
-	SRC_FILES_ENGINE
 	../../yengine/*
 )
+message("SOURCES FILES : ${SRC_FILES}")
+
+GroupYEngineSources(yengine)
 
 # Exclude ZERO_CHECK project
 SET(CMAKE_SUPPRESS_REGENERATION TRUE)
@@ -45,7 +65,7 @@ include_directories(${wxWidgets_ROOT_DIR}/include/msvc)
 # force Unicode over Multi-byte
 add_definitions(-DUNICODE -D_UNICODE)
 
-add_executable(${EXE_NAME} ${SRC_FILES} ${SRC_FILES_ENGINE})
+add_executable(${EXE_NAME} ${SRC_FILES})
 set(LIBS opengl32 vulkan-1) 
 target_link_libraries(${EXE_NAME} ${LIBS} ${GLEW_LIBRARY})
 set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
