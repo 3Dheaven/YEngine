@@ -16,10 +16,10 @@ const std::vector<const char*> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
-#ifdef NDEBUG
-const bool enableValidationLayers = false;
-#else
+#ifdef _DEBUG
 const bool enableValidationLayers = true;
+#else
+const bool enableValidationLayers = false;
 #endif
 
 VulkanCanvas::VulkanCanvas(wxWindow *pParent,
@@ -41,7 +41,11 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
     std::vector<const char*> requiredExtensions = { "VK_KHR_surface", "VK_KHR_win32_surface" };
     InitializeVulkan(requiredExtensions);
     VkApplicationInfo appInfo = CreateApplicationInfo("YEngine");
-    std::vector<const char*> layerNames = {};
+	std::vector<const char*> layerNames;
+	if (enableValidationLayers) {
+		layerNames = validationLayers;
+		
+	}
     VkInstanceCreateInfo createInfo = CreateInstanceCreateInfo(appInfo, requiredExtensions, layerNames);
     CreateInstance(createInfo);
     CreateWindowSurface();
@@ -995,16 +999,15 @@ void VulkanCanvas::RecreateSwapchain()
     CreateCommandBuffers();
 }
 
-VkSubmitInfo VulkanCanvas::CreateSubmitInfo(uint32_t imageIndex) const noexcept
+VkSubmitInfo VulkanCanvas::CreateSubmitInfo(uint32_t imageIndex, VkPipelineStageFlags* waitStageFlags) const noexcept
 {
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    VkSemaphore waitSemaphores[] = { m_imageAvailableSemaphore };
-    VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    
     submitInfo.waitSemaphoreCount = 1;
-    submitInfo.pWaitSemaphores = waitSemaphores;
-    submitInfo.pWaitDstStageMask = waitStages;
+	submitInfo.pWaitSemaphores = &m_imageAvailableSemaphore;
+	submitInfo.pWaitDstStageMask = waitStageFlags;
 
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &m_commandBuffers[imageIndex];
@@ -1014,7 +1017,7 @@ VkSubmitInfo VulkanCanvas::CreateSubmitInfo(uint32_t imageIndex) const noexcept
     return submitInfo;
 }
 
-VkPresentInfoKHR VulkanCanvas::CreatePresentInfoKHR(uint32_t imageIndex) const noexcept
+VkPresentInfoKHR VulkanCanvas::CreatePresentInfoKHR(uint32_t& imageIndex) const noexcept
 {
     VkPresentInfoKHR presentInfo = {};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -1044,7 +1047,9 @@ void VulkanCanvas::OnPaint(wxPaintEvent& event)
             throw VulkanException(result, "Failed to acquire swap chain image");
         }
 
-        VkSubmitInfo submitInfo = CreateSubmitInfo(imageIndex);
+		VkPipelineStageFlags waitFlags[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		VkSubmitInfo submitInfo = CreateSubmitInfo(imageIndex, waitFlags);
+
         result = vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
         if (result != VK_SUCCESS) {
             throw VulkanException(result, "Failed to submit draw command buffer:");
