@@ -70,6 +70,7 @@ public:
         this->Program = glCreateProgram();
         glAttachShader(this->Program, vertex);
         glAttachShader(this->Program, fragment);
+		glBindFragDataLocation(this->Program, 0, "outColor");
         glLinkProgram(this->Program);
         // Print linking errors if any
         glGetProgramiv(this->Program, GL_LINK_STATUS, &success);

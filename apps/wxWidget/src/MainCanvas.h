@@ -1,6 +1,16 @@
 #pragma once
+#include "../../../yengine/Shader.h"
+#include "../../../yengine/Camera.h"
 #include <memory>
 #include "wx/glcanvas.h"
+#include "wx/wxprec.h"
+
+#include <GL/glew.h>
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
+#include <gtc/type_ptr.hpp>
+
+using namespace glm;
 
 class MainCanvas : public wxGLCanvas
 {
@@ -21,8 +31,17 @@ private:
 	void InitializeGLEW();
 	void SetupGraphics();
 	void OnPaint(wxPaintEvent& event);
+	void onKeyDown(wxKeyEvent& event);
+	void OnMouseEnter(wxMouseEvent& WXUNUSED(ev));
 
 	std::unique_ptr<wxGLContext> m_context;
 	GLuint m_vbo; // vertex buffer pointer
 	GLuint m_vao; // vertex array pointer
+	Shader *customShader;
+	camera *cam;
+
+
+	float m_value;
+	DECLARE_EVENT_TABLE()
+	
 };
