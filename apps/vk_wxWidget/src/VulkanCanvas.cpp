@@ -1093,9 +1093,9 @@ void VulkanCanvas::OnPaintException(const std::string& msg)
     wxTheApp->ExitMainLoop();
 }
 
-void VulkanCanvas::CreateBuffer(VkBufferUsageFlags usage,
+void VulkanCanvas::CreateBuffer(VkBufferCreateFlags flags,
                                 uint64_t size,
-                                VkBufferCreateFlags flags,
+                                VkBufferUsageFlags usage,
                                 VkSharingMode sharingMode,
                                 uint32_t queueFamilyIndexCount,
                                 const uint32_t* queueFamilyIndices)
@@ -1108,9 +1108,9 @@ void VulkanCanvas::CreateBuffer(VkBufferUsageFlags usage,
 	vkCreateBuffer(m_logicalDevice, &createInfo, VK_NULL_HANDLE, &last);
 }
 
-VkBufferCreateInfo VulkanCanvas::CreateBufferCreateInfo(VkBufferUsageFlags usage,
+VkBufferCreateInfo VulkanCanvas::CreateBufferCreateInfo(VkBufferCreateFlags flags,
                                                         uint64_t size,
-                                                        VkBufferCreateFlags flags,
+                                                        VkBufferUsageFlags usage,
                                                         VkSharingMode sharingMode,
                                                         uint32_t queueFamilyIndexCount,
                                                         const uint32_t* queueFamilyIndices)
