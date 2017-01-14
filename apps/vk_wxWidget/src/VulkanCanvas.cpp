@@ -1128,6 +1128,7 @@ VkBufferCreateInfo VulkanCanvas::CreateBufferCreateInfo(VkStructureType type,
                                                         const uint32_t* queueFamilyIndices)
 {
 	assert(size > 0);
+	assert(usage != 0);
 
 	if (sharingMode == VK_SHARING_MODE_CONCURRENT)
 	{
@@ -1143,9 +1144,19 @@ VkBufferCreateInfo VulkanCanvas::CreateBufferCreateInfo(VkStructureType type,
 		assert(flags & VK_BUFFER_CREATE_SPARSE_BINDING_BIT == false);
 	}
 
-	if (!physicalDeviceFeatures.sparseResidencyAliased)
+	if (!physicalDeviceFeatures.sparseResidencyBuffer)
 	{
 		assert(flags & VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT == false);
+	}
+
+	if (!physicalDeviceFeatures.sparseResidencyAliased)
+	{
+		assert(flags & VK_BUFFER_CREATE_SPARSE_ALIASED_BIT == false);
+	}
+
+	if (flags & VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT || flags & VK_BUFFER_CREATE_SPARSE_ALIASED_BIT)
+	{
+		assert(flags & VK_BUFFER_CREATE_SPARSE_BINDING_BIT);
 	}
 
 	VkBufferCreateInfo createInfo = {};
