@@ -1110,7 +1110,8 @@ void VulkanCanvas::CreateBuffer(VkStructureType type,
                                 uint32_t queueFamilyIndexCount,
                                 const uint32_t* queueFamilyIndices)
 {
-	auto createInfo = CreateBufferCreateInfo(type, usage, size, flags, sharingMode, queueFamilyIndexCount, queueFamilyIndices);
+	auto createInfo = CreateBufferCreateInfo(type, usage, size, flags, sharingMode, 
+        queueFamilyIndexCount, queueFamilyIndices);
 
 	m_buffers.emplace_back();
 	auto &last = m_buffers.back();
@@ -1127,6 +1128,25 @@ VkBufferCreateInfo VulkanCanvas::CreateBufferCreateInfo(VkStructureType type,
                                                         const uint32_t* queueFamilyIndices)
 {
 	assert(size > 0);
+
+	if (sharingMode == VK_SHARING_MODE_CONCURRENT)
+	{
+		assert(queueFamilyIndices != nullptr);
+		assert(queueFamilyIndexCount > 1);
+	}
+
+	VkPhysicalDeviceFeatures physicalDeviceFeatures;
+	vkGetPhysicalDeviceFeatures(m_physicalDevice, &physicalDeviceFeatures);
+
+	if (!physicalDeviceFeatures.sparseBinding)
+	{
+		assert(flags & VK_BUFFER_CREATE_SPARSE_BINDING_BIT == false);
+	}
+
+	if (!physicalDeviceFeatures.sparseResidencyAliased)
+	{
+		assert(flags & VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT == false);
+	}
 
 	VkBufferCreateInfo createInfo = {};
 
