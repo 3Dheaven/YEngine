@@ -58,6 +58,9 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
     CreateCommandPool();
     CreateCommandBuffers();
     CreateSemaphores();
+
+	CreateBuffer(VK_BUFFER_CREATE_SPARSE_BINDING_BIT, sizeof(MVP),
+		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE, 0, NULL);
 }
 
 VulkanCanvas::~VulkanCanvas() noexcept
@@ -92,10 +95,16 @@ VulkanCanvas::~VulkanCanvas() noexcept
             if (m_renderFinishedSemaphore != VK_NULL_HANDLE) {
                 vkDestroySemaphore(m_logicalDevice, m_renderFinishedSemaphore, nullptr);
             }
-            vkDestroyDevice(m_logicalDevice, nullptr);
+
+			for (auto &buffers : m_buffers)
+			{
+				vkDestroyBuffer(m_logicalDevice, buffers, nullptr);
+			}
+
+			vkDestroyDevice(m_logicalDevice, nullptr);
         }
         vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
-        vkDestroyInstance(m_instance, nullptr);
+		vkDestroyInstance(m_instance, nullptr);
     }
 }
 
