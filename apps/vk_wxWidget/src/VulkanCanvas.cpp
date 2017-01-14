@@ -59,8 +59,8 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
     CreateCommandBuffers();
     CreateSemaphores();
 
-	CreateBuffer(VK_BUFFER_CREATE_SPARSE_BINDING_BIT, sizeof(MVP),
-		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE, 0, NULL);
+	CreateBuffer(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO, VK_BUFFER_CREATE_SPARSE_BINDING_BIT, sizeof(MVP),
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE, 0, nullptr);
 }
 
 VulkanCanvas::~VulkanCanvas() noexcept
@@ -1102,14 +1102,15 @@ void VulkanCanvas::OnPaintException(const std::string& msg)
     wxTheApp->ExitMainLoop();
 }
 
-void VulkanCanvas::CreateBuffer(VkBufferCreateFlags flags,
+void VulkanCanvas::CreateBuffer(VkStructureType type,
+                                VkBufferCreateFlags flags,
                                 uint64_t size,
                                 VkBufferUsageFlags usage,
                                 VkSharingMode sharingMode,
                                 uint32_t queueFamilyIndexCount,
                                 const uint32_t* queueFamilyIndices)
 {
-	auto createInfo = CreateBufferCreateInfo(usage, size, flags, sharingMode, queueFamilyIndexCount, queueFamilyIndices);
+	auto createInfo = CreateBufferCreateInfo(type, usage, size, flags, sharingMode, queueFamilyIndexCount, queueFamilyIndices);
 
 	m_buffers.emplace_back();
 	auto &last = m_buffers.back();
@@ -1117,7 +1118,8 @@ void VulkanCanvas::CreateBuffer(VkBufferCreateFlags flags,
 	vkCreateBuffer(m_logicalDevice, &createInfo, VK_NULL_HANDLE, &last);
 }
 
-VkBufferCreateInfo VulkanCanvas::CreateBufferCreateInfo(VkBufferCreateFlags flags,
+VkBufferCreateInfo VulkanCanvas::CreateBufferCreateInfo(VkStructureType type,
+                                                        VkBufferCreateFlags flags,
                                                         uint64_t size,
                                                         VkBufferUsageFlags usage,
                                                         VkSharingMode sharingMode,
@@ -1128,7 +1130,7 @@ VkBufferCreateInfo VulkanCanvas::CreateBufferCreateInfo(VkBufferCreateFlags flag
 
 	VkBufferCreateInfo createInfo = {};
 
-	createInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	createInfo.sType = type;
 	createInfo.pNext = NULL;
 	createInfo.flags = flags;
 	createInfo.size = size;
