@@ -20,7 +20,6 @@ struct SwapChainSupportDetails {
     std::vector<VkPresentModeKHR> presentModes;
 };
 
-
 class VulkanCanvas :
     public wxWindow
 {
@@ -124,7 +123,10 @@ private:
     virtual void OnPaint(wxPaintEvent& event);
     virtual void OnResize(wxSizeEvent& event);
     void OnPaintException(const std::string& msg);
+	void VulkanCanvas::CreateBuffer(VkBufferUsageFlags, uint64_t, VkBufferCreateFlags, VkSharingMode, uint32_t, const uint32_t *);
+	VkBufferCreateInfo CreateBufferCreateInfo(VkBufferUsageFlags, uint64_t, VkBufferCreateFlags, VkSharingMode, uint32_t, const uint32_t *);
 
+	std::vector<VkBuffer> m_buffers;
     VkInstance m_instance;
     VkSurfaceKHR m_surface;
     VkPhysicalDevice m_physicalDevice;

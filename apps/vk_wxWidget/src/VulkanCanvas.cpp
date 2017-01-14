@@ -5,7 +5,6 @@
 #include <fstream>
 #include <sstream>
 
-
 #pragma comment(lib, "vulkan-1.lib")
 
 const std::vector<const char*> validationLayers = {
@@ -42,9 +41,9 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
     InitializeVulkan(requiredExtensions);
     VkApplicationInfo appInfo = CreateApplicationInfo("YEngine");
 	std::vector<const char*> layerNames;
-	if (enableValidationLayers) {
+	if (enableValidationLayers)
+	{
 		layerNames = validationLayers;
-		
 	}
     VkInstanceCreateInfo createInfo = CreateInstanceCreateInfo(appInfo, requiredExtensions, layerNames);
     CreateInstance(createInfo);
@@ -60,7 +59,6 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
     CreateCommandBuffers();
     CreateSemaphores();
 }
-
 
 VulkanCanvas::~VulkanCanvas() noexcept
 {
@@ -1093,4 +1091,42 @@ void VulkanCanvas::OnPaintException(const std::string& msg)
 {
     wxMessageBox(msg, "Vulkan Error");
     wxTheApp->ExitMainLoop();
+}
+
+void VulkanCanvas::CreateBuffer(VkBufferUsageFlags usage,
+                                uint64_t size,
+                                VkBufferCreateFlags flags,
+                                VkSharingMode sharingMode,
+                                uint32_t queueFamilyIndexCount,
+                                const uint32_t* queueFamilyIndices)
+{
+	auto createInfo = CreateBufferCreateInfo(usage, size, flags, sharingMode, queueFamilyIndexCount, queueFamilyIndices);
+
+	m_buffers.emplace_back();
+	auto &last = m_buffers.back();
+
+	vkCreateBuffer(m_logicalDevice, &createInfo, VK_NULL_HANDLE, &last);
+}
+
+VkBufferCreateInfo VulkanCanvas::CreateBufferCreateInfo(VkBufferUsageFlags usage,
+                                                        uint64_t size,
+                                                        VkBufferCreateFlags flags,
+                                                        VkSharingMode sharingMode,
+                                                        uint32_t queueFamilyIndexCount,
+                                                        const uint32_t* queueFamilyIndices)
+{
+	assert(size > 0);
+
+	VkBufferCreateInfo createInfo = {};
+
+	createInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	createInfo.pNext = NULL;
+	createInfo.flags = flags;
+	createInfo.size = size;
+	createInfo.usage = usage;
+	createInfo.sharingMode = sharingMode;
+	createInfo.queueFamilyIndexCount = queueFamilyIndexCount;
+	createInfo.pQueueFamilyIndices = queueFamilyIndices;
+
+	return createInfo;
 }
