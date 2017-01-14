@@ -58,6 +58,7 @@ private:
     void RecreateSwapchain();
 	void CreateBuffer(VkStructureType, VkBufferCreateFlags, uint64_t, VkBufferUsageFlags, VkSharingMode, 
         uint32_t, const uint32_t *);
+	void CreateUniformBuffer(uint64_t);
     VkWin32SurfaceCreateInfoKHR VulkanCanvas::CreateWin32SurfaceCreateInfo() const noexcept;
     VkDeviceQueueCreateInfo CreateDeviceQueueCreateInfo(int queueFamily) const noexcept;
     VkApplicationInfo CreateApplicationInfo(const std::string& appName,

@@ -59,8 +59,7 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
     CreateCommandBuffers();
     CreateSemaphores();
 
-	CreateBuffer(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO, VK_BUFFER_CREATE_SPARSE_BINDING_BIT, sizeof(MVP),
-        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE, 0, nullptr);
+	CreateUniformBuffer(sizeof(MVP));
 }
 
 VulkanCanvas::~VulkanCanvas() noexcept
@@ -1100,6 +1099,12 @@ void VulkanCanvas::OnPaintException(const std::string& msg)
 {
     wxMessageBox(msg, "Vulkan Error");
     wxTheApp->ExitMainLoop();
+}
+
+void VulkanCanvas::CreateUniformBuffer(uint64_t size)
+{
+	CreateBuffer(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO, VK_BUFFER_CREATE_SPARSE_BINDING_BIT, size,
+		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE, 0, nullptr);
 }
 
 void VulkanCanvas::CreateBuffer(VkStructureType type,
