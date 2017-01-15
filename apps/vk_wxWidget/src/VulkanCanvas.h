@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.h>
 #include <string>
 #include <set>
+#include "glm\glm.hpp"
 
 struct QueueFamilyIndices {
     int graphicsFamily = -1;
@@ -20,6 +21,12 @@ struct SwapChainSupportDetails {
     std::vector<VkPresentModeKHR> presentModes;
 };
 
+struct MVP
+{
+	glm::mat4 modelMatrix;
+	glm::mat4 viewMatrix;
+	glm::mat4 projectionMatrix;
+};
 
 class VulkanCanvas :
     public wxWindow
@@ -49,6 +56,9 @@ private:
     void CreateCommandBuffers();
     void CreateSemaphores();
     void RecreateSwapchain();
+	void CreateBuffer(VkBufferCreateFlags, uint64_t, VkBufferUsageFlags, VkSharingMode, 
+        uint32_t, const uint32_t *);
+	void CreateUniformBuffer(uint64_t);
     VkWin32SurfaceCreateInfoKHR VulkanCanvas::CreateWin32SurfaceCreateInfo() const noexcept;
     VkDeviceQueueCreateInfo CreateDeviceQueueCreateInfo(int queueFamily) const noexcept;
     VkApplicationInfo CreateApplicationInfo(const std::string& appName,
@@ -124,7 +134,13 @@ private:
     virtual void OnPaint(wxPaintEvent& event);
     virtual void OnResize(wxSizeEvent& event);
     void OnPaintException(const std::string& msg);
+	VkBufferCreateInfo CreateBufferCreateInfo(VkBufferCreateFlags, uint64_t, 
+        VkBufferUsageFlags, VkSharingMode, uint32_t, const uint32_t *);
+	void AllocateMemory(VkDeviceSize, uint32_t);
+	VkMemoryAllocateInfo CreateMemoryAllocateInfo(VkDeviceSize, uint32_t);
 
+	std::vector<VkDeviceMemory> m_deviceMemories;
+	std::vector<VkBuffer> m_buffers;
     VkInstance m_instance;
     VkSurfaceKHR m_surface;
     VkPhysicalDevice m_physicalDevice;

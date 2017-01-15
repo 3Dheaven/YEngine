@@ -5,7 +5,6 @@
 #include <fstream>
 #include <sstream>
 
-
 #pragma comment(lib, "vulkan-1.lib")
 
 const std::vector<const char*> validationLayers = {
@@ -42,9 +41,9 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
     InitializeVulkan(requiredExtensions);
     VkApplicationInfo appInfo = CreateApplicationInfo("YEngine");
 	std::vector<const char*> layerNames;
-	if (enableValidationLayers) {
+	if (enableValidationLayers)
+	{
 		layerNames = validationLayers;
-		
 	}
     VkInstanceCreateInfo createInfo = CreateInstanceCreateInfo(appInfo, requiredExtensions, layerNames);
     CreateInstance(createInfo);
@@ -59,8 +58,9 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
     CreateCommandPool();
     CreateCommandBuffers();
     CreateSemaphores();
-}
 
+	CreateUniformBuffer(sizeof(MVP));
+}
 
 VulkanCanvas::~VulkanCanvas() noexcept
 {
@@ -94,10 +94,16 @@ VulkanCanvas::~VulkanCanvas() noexcept
             if (m_renderFinishedSemaphore != VK_NULL_HANDLE) {
                 vkDestroySemaphore(m_logicalDevice, m_renderFinishedSemaphore, nullptr);
             }
-            vkDestroyDevice(m_logicalDevice, nullptr);
+
+			for (auto &buffers : m_buffers)
+			{
+				vkDestroyBuffer(m_logicalDevice, buffers, nullptr);
+			}
+
+			vkDestroyDevice(m_logicalDevice, nullptr);
         }
         vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
-        vkDestroyInstance(m_instance, nullptr);
+		vkDestroyInstance(m_instance, nullptr);
     }
 }
 
@@ -1093,4 +1099,129 @@ void VulkanCanvas::OnPaintException(const std::string& msg)
 {
     wxMessageBox(msg, "Vulkan Error");
     wxTheApp->ExitMainLoop();
+}
+
+void VulkanCanvas::AllocateMemory(VkDeviceSize allocationSize,
+                                  uint32_t memoryTypeIndex)
+{
+	VkPhysicalDeviceProperties physicalDeviceProperties;
+	vkGetPhysicalDeviceProperties(m_physicalDevice, &physicalDeviceProperties);
+
+	auto maxMemoryAllocationCount = physicalDeviceProperties.limits.maxMemoryAllocationCount;
+
+	assert(m_deviceMemories.size() + 1 < maxMemoryAllocationCount);
+
+	auto createInfo = CreateMemoryAllocateInfo(allocationSize, memoryTypeIndex);
+
+	m_deviceMemories.emplace_back();
+	auto &last = m_deviceMemories.back();
+
+	auto result = vkAllocateMemory(m_logicalDevice, &createInfo, nullptr, &last);
+
+	if (result != VK_SUCCESS)
+	{
+		throw VulkanException(result, "Error attempting to allocate memory:");
+	}
+}
+
+VkMemoryAllocateInfo VulkanCanvas::CreateMemoryAllocateInfo(VkDeviceSize allocationSize,
+                                                            uint32_t memoryTypeIndex)
+{
+	assert(allocationSize > 0);
+
+	VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
+	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &physicalDeviceMemoryProperties);
+
+	auto sizeMemoryHeap = physicalDeviceMemoryProperties.memoryHeaps[memoryTypeIndex].size;
+
+	assert(allocationSize <= sizeMemoryHeap);
+
+	VkMemoryAllocateInfo createInfo = {};
+
+	createInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	createInfo.pNext = nullptr;
+	createInfo.allocationSize = allocationSize;
+	createInfo.memoryTypeIndex = memoryTypeIndex;
+
+	return createInfo;
+}
+
+void VulkanCanvas::CreateUniformBuffer(uint64_t size)
+{
+	CreateBuffer(VK_BUFFER_CREATE_SPARSE_BINDING_BIT, size,
+		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE, 0, nullptr);
+}
+
+void VulkanCanvas::CreateBuffer(VkBufferCreateFlags flags,
+                                uint64_t size,
+                                VkBufferUsageFlags usage,
+                                VkSharingMode sharingMode,
+                                uint32_t queueFamilyIndexCount,
+                                const uint32_t* queueFamilyIndices)
+{
+	auto createInfo = CreateBufferCreateInfo(usage, size, flags, sharingMode, 
+        queueFamilyIndexCount, queueFamilyIndices);
+
+	m_buffers.emplace_back();
+	auto &last = m_buffers.back();
+
+	auto result = vkCreateBuffer(m_logicalDevice, &createInfo, nullptr, &last);
+
+	if (result != VK_SUCCESS)
+	{
+		throw VulkanException(result, "Error attempting to create a buffer:");
+	}
+}
+
+VkBufferCreateInfo VulkanCanvas::CreateBufferCreateInfo(VkBufferCreateFlags flags,
+                                                        uint64_t size,
+                                                        VkBufferUsageFlags usage,
+                                                        VkSharingMode sharingMode,
+                                                        uint32_t queueFamilyIndexCount,
+                                                        const uint32_t* queueFamilyIndices)
+{
+	assert(size > 0);
+	assert(usage != 0);
+
+	if (sharingMode == VK_SHARING_MODE_CONCURRENT)
+	{
+		assert(queueFamilyIndices != nullptr);
+		assert(queueFamilyIndexCount > 1);
+	}
+
+	VkPhysicalDeviceFeatures physicalDeviceFeatures;
+	vkGetPhysicalDeviceFeatures(m_physicalDevice, &physicalDeviceFeatures);
+
+	if (!physicalDeviceFeatures.sparseBinding)
+	{
+		assert((flags & VK_BUFFER_CREATE_SPARSE_BINDING_BIT) == false);
+	}
+
+	if (!physicalDeviceFeatures.sparseResidencyBuffer)
+	{
+		assert((flags & VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT) == false);
+	}
+
+	if (!physicalDeviceFeatures.sparseResidencyAliased)
+	{
+		assert((flags & VK_BUFFER_CREATE_SPARSE_ALIASED_BIT) == false);
+	}
+
+	if (flags & VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT || flags & VK_BUFFER_CREATE_SPARSE_ALIASED_BIT)
+	{
+		assert(flags & VK_BUFFER_CREATE_SPARSE_BINDING_BIT);
+	}
+
+	VkBufferCreateInfo createInfo = {};
+
+	createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	createInfo.pNext = nullptr;
+	createInfo.flags = flags;
+	createInfo.size = size;
+	createInfo.usage = usage;
+	createInfo.sharingMode = sharingMode;
+	createInfo.queueFamilyIndexCount = queueFamilyIndexCount;
+	createInfo.pQueueFamilyIndices = queueFamilyIndices;
+
+	return createInfo;
 }
