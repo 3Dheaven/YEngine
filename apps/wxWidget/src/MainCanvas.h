@@ -9,15 +9,20 @@
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
+#include <chrono>
+#include "../../../yengine/object.h"
 
 using namespace glm;
+
+static const int INTERVAL = 1000 / 60;
+static const int TIMERNUMBER = 3;
 
 class MainCanvas : public wxGLCanvas
 {
 public:
 	MainCanvas(wxWindow* parent, wxWindowID id = wxID_ANY,
 		const int* attribList = 0, const wxPoint& pos = wxDefaultPosition,
-		const wxSize& size = wxDefaultSize, long style = 0L,
+		const wxSize& size = wxSize(400,400), long style = 0L,
 		const wxString& name = L"GLCanvas",
 		const wxPalette& palette = wxNullPalette);
 
@@ -33,15 +38,23 @@ private:
 	void OnPaint(wxPaintEvent& event);
 	void onKeyDown(wxKeyEvent& event);
 	void OnMouseEnter(wxMouseEvent& WXUNUSED(ev));
+	void OnMouseWheel(wxMouseEvent& WXUNUSED(ev));
+	void OnMouseEvent(wxMouseEvent& WXUNUSED(ev));
+	void OnTimer(wxTimerEvent& event);
 
 	std::unique_ptr<wxGLContext> m_context;
-	GLuint m_vbo; // vertex buffer pointer
-	GLuint m_vao; // vertex array pointer
+	
 	Shader *customShader;
 	camera *cam;
+	std::unique_ptr<wxTimer> m_timer;
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_startTime;
+	//Model *model;
+	object *obj;
 
+	GLfloat lastX;
+	GLfloat lastY;
+	bool firstMouse;
 
-	float m_value;
 	DECLARE_EVENT_TABLE()
 	
 };

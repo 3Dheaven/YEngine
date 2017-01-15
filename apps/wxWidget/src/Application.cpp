@@ -26,11 +26,8 @@ Application::~Application()
 
 bool Application::OnInit()
 {
-	//wxFrame* mainFrame = new wxFrame(nullptr, wxID_ANY, L"YEngine");
-
-	MainWindow* mainFrame = new MainWindow(nullptr, L"YEngine!");
+	MainWindow* mainFrame = new MainWindow(nullptr, L"Machyne v1.0", wxDefaultPosition, wxSize(1000,800));
 	mainFrame->Show(true);
-
 
 	return true;
 }

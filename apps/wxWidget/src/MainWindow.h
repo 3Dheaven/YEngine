@@ -12,8 +12,7 @@ private:
 	};
 
 public:
-	MainWindow(wxWindow* parent, const std::wstring& title, const wxPoint& pos = wxDefaultPosition,
-		const wxSize& size = wxDefaultSize);
+	MainWindow(wxWindow* parent, const std::wstring& title, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize);
 	virtual ~MainWindow();
 	MainWindow(const MainWindow& tw) = delete;
 	MainWindow(MainWindow&& tw) = delete;
@@ -23,12 +22,9 @@ public:
 	void OnQuit(wxCommandEvent& event);
 	void OnSettings(wxCommandEvent& WXUNUSED(event));
 	void onClose(wxCloseEvent& evt);
-	void MainWindow::onKeyDown(wxKeyEvent& event);
 
 private:
-
-	RenderTimer* m_timer;
-
+	wxTextCtrl* m_console;
 	DECLARE_EVENT_TABLE()
 };
 

@@ -128,6 +128,8 @@ public:
 	// Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
 	void processMouseWheel(GLfloat yoffset)
 	{
+		
+
 		if (mZoom >= 1.0f && mZoom <= 45.0f)
 			mZoom -= yoffset*0.1;
 		if (mZoom <= 1.0f)

@@ -8,20 +8,26 @@ BEGIN_EVENT_TABLE(MainWindow, wxFrame)
 EVT_CLOSE(MainWindow::onClose)
 END_EVENT_TABLE()
 
-
-MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoint& pos,
-	const wxSize& size)
-	: wxFrame(parent, wxID_ANY, title, pos, size, wxMINIMIZE_BOX | wxCLOSE_BOX |
-		wxSYSTEM_MENU | wxCAPTION | wxCLIP_CHILDREN)
+MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoint& pos, const wxSize& size)
+	: wxFrame(parent, wxID_ANY, title, pos, size, wxMINIMIZE_BOX | wxCLOSE_BOX | wxSYSTEM_MENU | wxCAPTION | wxCLIP_CHILDREN)
 {
-	
-	MainCanvas* graphicsCanvas = new MainCanvas(this, mainCanvasID, nullptr, { 0, 0 },
-	{ 800, 800 });
-	Fit();
+	// Display MainWindow on screen center
 	Centre();
 
-	m_timer = new RenderTimer(graphicsCanvas);
-	m_timer->start();
+	MainCanvas* glCanvas = new MainCanvas(this, mainCanvasID, nullptr, { 0, 0 }, { 600, 600 });
+	
+	wxPanel * bottomPanel = new wxPanel(this, wxID_ANY, { 0, 600 }, { 600, 200 });
+	wxPanel * rightPanel = new wxPanel(this, wxID_ANY, { 600, 0 }, { 400, 800 });
+
+	wxButton *button = new wxButton(rightPanel, wxID_EXIT, wxT("Quit"), wxPoint(0, 600), { 400, 200 });
+		
+	wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
+	m_console = new wxTextCtrl(bottomPanel, wxID_ANY, wxEmptyString, { 0, 0 }, { 600, 140 }, wxTE_MULTILINE | wxTE_READONLY);
+
+	wxLog::SetActiveTarget(new wxLogTextCtrl(m_console));
+
+	// All output to cout goes into the text control until the exit from current scope
+	// wxStreamToTextRedirector redirect(m_console);
 
 	wxMenuBar *menubar = new wxMenuBar;
 	wxMenu *fileMenu = new wxMenu();
@@ -38,13 +44,15 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 
 	SetMenuBar(menubar);
 	SetFocus();
+
+	Connect(wxID_EXIT, wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MainWindow::OnQuit));
 	Connect(ID_Quit, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(MainWindow::OnQuit));
 	Connect(ID_Settings, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(MainWindow::OnSettings));
 }
 
 MainWindow::~MainWindow()
 {
-	delete m_timer;
+	
 }
 
 void MainWindow::OnQuit(wxCommandEvent& WXUNUSED(event))
@@ -62,6 +70,5 @@ void MainWindow::OnSettings(wxCommandEvent& WXUNUSED(event))
 
 void MainWindow::onClose(wxCloseEvent& evt)
 {
-	m_timer->Stop();
 	evt.Skip();
 }

@@ -8,7 +8,7 @@ mUp(up)
 	mYaw = -90.0f;
 	mPitch = 0.0f;
 	mMovementSpeed = 100.0f;
-	mMouseSensitivity = 0.25f;
+	mMouseSensitivity = 0.01f;
 	mZoom = 45.0f;
 	mWorldUp = mUp;
 	updateCameraVectors();
