@@ -1101,31 +1101,79 @@ void VulkanCanvas::OnPaintException(const std::string& msg)
     wxTheApp->ExitMainLoop();
 }
 
+void VulkanCanvas::AllocateMemory(VkDeviceSize allocationSize,
+                                  uint32_t memoryTypeIndex)
+{
+	VkPhysicalDeviceProperties physicalDeviceProperties;
+	vkGetPhysicalDeviceProperties(m_physicalDevice, &physicalDeviceProperties);
+
+	auto maxMemoryAllocationCount = physicalDeviceProperties.limits.maxMemoryAllocationCount;
+
+	assert(m_deviceMemories.size() + 1 < maxMemoryAllocationCount);
+
+	auto createInfo = CreateMemoryAllocateInfo(allocationSize, memoryTypeIndex);
+
+	m_deviceMemories.emplace_back();
+	auto &last = m_deviceMemories.back();
+
+	auto result = vkAllocateMemory(m_logicalDevice, &createInfo, nullptr, &last);
+
+	if (result != VK_SUCCESS)
+	{
+		throw VulkanException(result, "Error attempting to allocate memory:");
+	}
+}
+
+VkMemoryAllocateInfo VulkanCanvas::CreateMemoryAllocateInfo(VkDeviceSize allocationSize,
+                                                            uint32_t memoryTypeIndex)
+{
+	assert(allocationSize > 0);
+
+	VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
+	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &physicalDeviceMemoryProperties);
+
+	auto sizeMemoryHeap = physicalDeviceMemoryProperties.memoryHeaps[memoryTypeIndex].size;
+
+	assert(allocationSize <= sizeMemoryHeap);
+
+	VkMemoryAllocateInfo createInfo = {};
+
+	createInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	createInfo.pNext = nullptr;
+	createInfo.allocationSize = allocationSize;
+	createInfo.memoryTypeIndex = memoryTypeIndex;
+
+	return createInfo;
+}
+
 void VulkanCanvas::CreateUniformBuffer(uint64_t size)
 {
-	CreateBuffer(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO, VK_BUFFER_CREATE_SPARSE_BINDING_BIT, size,
+	CreateBuffer(VK_BUFFER_CREATE_SPARSE_BINDING_BIT, size,
 		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE, 0, nullptr);
 }
 
-void VulkanCanvas::CreateBuffer(VkStructureType type,
-                                VkBufferCreateFlags flags,
+void VulkanCanvas::CreateBuffer(VkBufferCreateFlags flags,
                                 uint64_t size,
                                 VkBufferUsageFlags usage,
                                 VkSharingMode sharingMode,
                                 uint32_t queueFamilyIndexCount,
                                 const uint32_t* queueFamilyIndices)
 {
-	auto createInfo = CreateBufferCreateInfo(type, usage, size, flags, sharingMode, 
+	auto createInfo = CreateBufferCreateInfo(usage, size, flags, sharingMode, 
         queueFamilyIndexCount, queueFamilyIndices);
 
 	m_buffers.emplace_back();
 	auto &last = m_buffers.back();
 
-	vkCreateBuffer(m_logicalDevice, &createInfo, VK_NULL_HANDLE, &last);
+	auto result = vkCreateBuffer(m_logicalDevice, &createInfo, nullptr, &last);
+
+	if (result != VK_SUCCESS)
+	{
+		throw VulkanException(result, "Error attempting to create a buffer:");
+	}
 }
 
-VkBufferCreateInfo VulkanCanvas::CreateBufferCreateInfo(VkStructureType type,
-                                                        VkBufferCreateFlags flags,
+VkBufferCreateInfo VulkanCanvas::CreateBufferCreateInfo(VkBufferCreateFlags flags,
                                                         uint64_t size,
                                                         VkBufferUsageFlags usage,
                                                         VkSharingMode sharingMode,
@@ -1146,17 +1194,17 @@ VkBufferCreateInfo VulkanCanvas::CreateBufferCreateInfo(VkStructureType type,
 
 	if (!physicalDeviceFeatures.sparseBinding)
 	{
-		assert(flags & VK_BUFFER_CREATE_SPARSE_BINDING_BIT == false);
+		assert((flags & VK_BUFFER_CREATE_SPARSE_BINDING_BIT) == false);
 	}
 
 	if (!physicalDeviceFeatures.sparseResidencyBuffer)
 	{
-		assert(flags & VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT == false);
+		assert((flags & VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT) == false);
 	}
 
 	if (!physicalDeviceFeatures.sparseResidencyAliased)
 	{
-		assert(flags & VK_BUFFER_CREATE_SPARSE_ALIASED_BIT == false);
+		assert((flags & VK_BUFFER_CREATE_SPARSE_ALIASED_BIT) == false);
 	}
 
 	if (flags & VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT || flags & VK_BUFFER_CREATE_SPARSE_ALIASED_BIT)
@@ -1166,8 +1214,8 @@ VkBufferCreateInfo VulkanCanvas::CreateBufferCreateInfo(VkStructureType type,
 
 	VkBufferCreateInfo createInfo = {};
 
-	createInfo.sType = type;
-	createInfo.pNext = NULL;
+	createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	createInfo.pNext = nullptr;
 	createInfo.flags = flags;
 	createInfo.size = size;
 	createInfo.usage = usage;

@@ -56,7 +56,7 @@ private:
     void CreateCommandBuffers();
     void CreateSemaphores();
     void RecreateSwapchain();
-	void CreateBuffer(VkStructureType, VkBufferCreateFlags, uint64_t, VkBufferUsageFlags, VkSharingMode, 
+	void CreateBuffer(VkBufferCreateFlags, uint64_t, VkBufferUsageFlags, VkSharingMode, 
         uint32_t, const uint32_t *);
 	void CreateUniformBuffer(uint64_t);
     VkWin32SurfaceCreateInfoKHR VulkanCanvas::CreateWin32SurfaceCreateInfo() const noexcept;
@@ -134,9 +134,12 @@ private:
     virtual void OnPaint(wxPaintEvent& event);
     virtual void OnResize(wxSizeEvent& event);
     void OnPaintException(const std::string& msg);
-	VkBufferCreateInfo CreateBufferCreateInfo(VkStructureType, VkBufferCreateFlags, uint64_t, 
+	VkBufferCreateInfo CreateBufferCreateInfo(VkBufferCreateFlags, uint64_t, 
         VkBufferUsageFlags, VkSharingMode, uint32_t, const uint32_t *);
+	void AllocateMemory(VkDeviceSize, uint32_t);
+	VkMemoryAllocateInfo CreateMemoryAllocateInfo(VkDeviceSize, uint32_t);
 
+	std::vector<VkDeviceMemory> m_deviceMemories;
 	std::vector<VkBuffer> m_buffers;
     VkInstance m_instance;
     VkSurfaceKHR m_surface;
