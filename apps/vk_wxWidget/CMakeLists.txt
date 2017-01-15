@@ -21,6 +21,8 @@ SET(CMAKE_SUPPRESS_REGENERATION TRUE)
 find_package(GLEW REQUIRED)
 find_package(wxWidgets REQUIRED)
 
+include_directories(${CMAKE_MODULE_PATH}/../../dependencies/glm/)
+
 # Add vulkan dependencies using environment variable from LunarG SDK Setup
 link_directories("$ENV{VULKAN_SDK}/Bin") 
 #link_directories("$ENV{VULKAN_SDK}/etc/explicit_layer.d")
