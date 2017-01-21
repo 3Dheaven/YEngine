@@ -50,16 +50,94 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
     CreateWindowSurface();
     PickPhysicalDevice();
     CreateLogicalDevice();
-    CreateSwapChain(size);
-    CreateImageViews();
-    CreateRenderPass();
-    CreateGraphicsPipeline("../shaders/vert.spv", "../shaders/frag.spv");
-    CreateFrameBuffers();
-    CreateCommandPool();
-    CreateCommandBuffers();
-    CreateSemaphores();
 
-	CreateUniformBuffer(sizeof(MVP));
+    
+
+
+	// Descriptor in the shader
+	CreateDescriptorSetLayout(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO, 1, 0,
+		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+
+	// Uniform buffer, allocation memory and binding
+	CreateUniformBuffer(sizeof(glm::vec4));
+	AllocateMemory(sizeof(glm::vec4), 0);
+	vkBindBufferMemory(m_logicalDevice, m_buffer, m_deviceMemorie, 0);
+
+	// Our example vector for the fragment shader
+	m_vectorUniformExample = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+
+	// Initialize the memory
+	void* data;
+	MapMemory(m_deviceMemorie, sizeof(glm::vec4), 0, &data);
+	memcpy(data, &m_vectorUniformExample, sizeof(glm::vec4));
+	vkUnmapMemory(m_logicalDevice, m_deviceMemorie);
+	
+
+	
+
+
+
+
+	
+	m_descriptorPoolSize.descriptorCount = 1;
+	m_descriptorPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
+	descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	descriptorPoolCreateInfo.maxSets = 1;
+	descriptorPoolCreateInfo.pNext = nullptr;
+	descriptorPoolCreateInfo.poolSizeCount = 1;
+	descriptorPoolCreateInfo.pPoolSizes = &m_descriptorPoolSize;
+	auto result = vkCreateDescriptorPool(m_logicalDevice, &descriptorPoolCreateInfo, nullptr, &m_descriptorPool);
+
+	if (result != VK_SUCCESS)
+	{
+		throw VulkanException(result, "Error attempting to create a pool descriptor:");
+	}
+
+	m_descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	m_descriptorSetAllocateInfo.pNext = nullptr;
+	m_descriptorSetAllocateInfo.descriptorPool = m_descriptorPool;
+	m_descriptorSetAllocateInfo.descriptorSetCount = 1;
+	m_descriptorSetAllocateInfo.pSetLayouts = &m_descriptorSetLayout;
+
+	result = vkAllocateDescriptorSets(m_logicalDevice, &m_descriptorSetAllocateInfo, &m_descriptorSet);
+
+	if (result != VK_SUCCESS)
+	{
+		throw VulkanException(result, "Error attempting to allocate a descriptor set:");
+	}
+
+
+
+	
+	bufferInfo.buffer = m_buffer;
+	bufferInfo.offset = 0;
+	bufferInfo.range = sizeof(glm::vec4);
+
+	
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.dstSet = m_descriptorSet;
+	descriptorWrite.dstBinding = 0;
+	descriptorWrite.dstArrayElement = 0;
+
+	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorWrite.descriptorCount = 1;
+
+	descriptorWrite.pBufferInfo = &bufferInfo;
+	descriptorWrite.pImageInfo = nullptr; // Optional
+	descriptorWrite.pTexelBufferView = nullptr; // Optional
+
+	vkUpdateDescriptorSets(m_logicalDevice, 1, &descriptorWrite, 0, nullptr);
+
+
+	CreateSwapChain(size);
+	CreateImageViews();
+	CreateRenderPass();
+	CreateGraphicsPipeline("../shaders/vert.spv", "../shaders/frag.spv");
+	CreateFrameBuffers();
+	CreateCommandPool();
+	CreateCommandBuffers();
+	CreateSemaphores();
 }
 
 VulkanCanvas::~VulkanCanvas() noexcept
@@ -95,10 +173,8 @@ VulkanCanvas::~VulkanCanvas() noexcept
                 vkDestroySemaphore(m_logicalDevice, m_renderFinishedSemaphore, nullptr);
             }
 
-			for (auto &buffers : m_buffers)
-			{
-				vkDestroyBuffer(m_logicalDevice, buffers, nullptr);
-			}
+			vkFreeMemory(m_logicalDevice, m_deviceMemorie, nullptr);
+			vkDestroyBuffer(m_logicalDevice, m_buffer, nullptr);
 
 			vkDestroyDevice(m_logicalDevice, nullptr);
         }
@@ -735,8 +811,8 @@ VkPipelineLayoutCreateInfo VulkanCanvas::CreatePipelineLayoutCreateInfo() const 
 {
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 0;
-    pipelineLayoutInfo.pushConstantRangeCount = 0;
+    pipelineLayoutInfo.setLayoutCount = 1;
+	pipelineLayoutInfo.pSetLayouts = &m_descriptorSetLayout;
     return pipelineLayoutInfo;
 }
 
@@ -804,7 +880,6 @@ void VulkanCanvas::CreateGraphicsPipeline(const std::string& vertexShaderFile, c
 
     VkGraphicsPipelineCreateInfo pipelineInfo = CreateGraphicsPipelineCreateInfo(shaderStages,
         vertexInputInfo, inputAssembly, viewportState, rasterizer, multisampling, colorBlending);
-
 
     result = vkCreateGraphicsPipelines(m_logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_graphicsPipeline);
     // vkDestroyShaderModule calls below must be placed before possible throw of exception
@@ -893,16 +968,26 @@ VkCommandPoolCreateInfo VulkanCanvas::CreateCommandPoolCreateInfo(
     QueueFamilyIndices& queueFamilyIndices) const noexcept
 {
     VkCommandPoolCreateInfo poolInfo = {};
+
     poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+	poolInfo.pNext = nullptr;
+
     poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
+
     return poolInfo;
 }
 
 void VulkanCanvas::CreateCommandPool() {
+
     QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(m_physicalDevice);
+
     VkCommandPoolCreateInfo poolInfo = CreateCommandPoolCreateInfo(queueFamilyIndices);
+
     VkResult result = vkCreateCommandPool(m_logicalDevice, &poolInfo, nullptr, &m_commandPool);
-    if (result != VK_SUCCESS) {
+
+    if (result != VK_SUCCESS)
+	{
         throw VulkanException(result, "Failed to create command pool:");
     }
 }
@@ -933,8 +1018,7 @@ VkRenderPassBeginInfo VulkanCanvas::CreateRenderPassBeginInfo(size_t swapchainBu
     renderPassInfo.framebuffer = m_swapchainFramebuffers[swapchainBufferNumber];
     renderPassInfo.renderArea.offset = { 0, 0 };
     renderPassInfo.renderArea.extent = m_swapchainExtent;
-
-    VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+    
     renderPassInfo.clearValueCount = 1;
     renderPassInfo.pClearValues = &clearColor;
     return renderPassInfo;
@@ -953,15 +1037,21 @@ void VulkanCanvas::CreateCommandBuffers()
         throw VulkanException(result, "Failed to allocate command buffers:");
     }
 
-    for (size_t i = 0; i < m_commandBuffers.size(); i++) {
-
+    for (size_t i = 0; i < m_commandBuffers.size(); i++)
+	{
         VkCommandBufferBeginInfo beginInfo = CreateCommandBufferBeginInfo();
-        vkBeginCommandBuffer(m_commandBuffers[i], &beginInfo);
+		result = vkBeginCommandBuffer(m_commandBuffers[i], &beginInfo);
+
+		if (result != VK_SUCCESS) {
+			throw VulkanException(result, "Failed to begin command buffer:");
+		}
 
         VkRenderPassBeginInfo renderPassInfo = CreateRenderPassBeginInfo(i);
+
         vkCmdBeginRenderPass(m_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-        vkCmdBindPipeline(m_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
-        vkCmdDraw(m_commandBuffers[i], 3, 1, 0, 0);
+		vkCmdBindPipeline(m_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
+		vkCmdBindDescriptorSets(m_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);
+		vkCmdDraw(m_commandBuffers[i], 3, 1, 0, 0);
         vkCmdEndRenderPass(m_commandBuffers[i]);
 
         result = vkEndCommandBuffer(m_commandBuffers[i]);
@@ -1010,7 +1100,6 @@ VkSubmitInfo VulkanCanvas::CreateSubmitInfo(uint32_t imageIndex, VkPipelineStage
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    
     submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = &m_imageAvailableSemaphore;
 	submitInfo.pWaitDstStageMask = waitStageFlags;
@@ -1035,6 +1124,7 @@ VkPresentInfoKHR VulkanCanvas::CreatePresentInfoKHR(uint32_t& imageIndex) const 
     presentInfo.pSwapchains = &m_swapchain;
 
     presentInfo.pImageIndices = &imageIndex;
+
     return presentInfo;
 }
 
@@ -1101,6 +1191,16 @@ void VulkanCanvas::OnPaintException(const std::string& msg)
     wxTheApp->ExitMainLoop();
 }
 
+void VulkanCanvas::MapMemory(VkDeviceMemory memory, uint64_t size, uint64_t offset, void **data)
+{
+	auto result = vkMapMemory(m_logicalDevice, memory, offset, size, 0, data);
+
+	if (result != VK_SUCCESS)
+	{
+		throw VulkanException(result, "Error attempting to map memory:");
+	}
+}
+
 void VulkanCanvas::AllocateMemory(VkDeviceSize allocationSize,
                                   uint32_t memoryTypeIndex)
 {
@@ -1109,19 +1209,30 @@ void VulkanCanvas::AllocateMemory(VkDeviceSize allocationSize,
 
 	auto maxMemoryAllocationCount = physicalDeviceProperties.limits.maxMemoryAllocationCount;
 
-	assert(m_deviceMemories.size() + 1 < maxMemoryAllocationCount);
+	//assert(m_deviceMemories.size() + 1 < maxMemoryAllocationCount);
 
 	auto createInfo = CreateMemoryAllocateInfo(allocationSize, memoryTypeIndex);
 
-	m_deviceMemories.emplace_back();
-	auto &last = m_deviceMemories.back();
-
-	auto result = vkAllocateMemory(m_logicalDevice, &createInfo, nullptr, &last);
+	auto result = vkAllocateMemory(m_logicalDevice, &createInfo, nullptr, &m_deviceMemorie);
 
 	if (result != VK_SUCCESS)
 	{
 		throw VulkanException(result, "Error attempting to allocate memory:");
 	}
+}
+
+uint32_t VulkanCanvas::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+{
+	VkPhysicalDeviceMemoryProperties memProperties;
+	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &memProperties);
+
+	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+		if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+			return i;
+		}
+	}
+
+	throw std::runtime_error("failed to find suitable memory type!");
 }
 
 VkMemoryAllocateInfo VulkanCanvas::CreateMemoryAllocateInfo(VkDeviceSize allocationSize,
@@ -1132,16 +1243,23 @@ VkMemoryAllocateInfo VulkanCanvas::CreateMemoryAllocateInfo(VkDeviceSize allocat
 	VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
 	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &physicalDeviceMemoryProperties);
 
-	auto sizeMemoryHeap = physicalDeviceMemoryProperties.memoryHeaps[memoryTypeIndex].size;
-
+	VkMemoryRequirements memoryRequirements;
+	vkGetBufferMemoryRequirements(m_logicalDevice, m_buffer, &memoryRequirements);
+	
+	// Not sure about that...
+	assert(memoryTypeIndex < VK_MAX_MEMORY_TYPES);
+	auto heapIndex = physicalDeviceMemoryProperties.memoryTypes[memoryTypeIndex].heapIndex;
+	auto sizeMemoryHeap = physicalDeviceMemoryProperties.memoryHeaps[heapIndex].size;
+	
 	assert(allocationSize <= sizeMemoryHeap);
 
-	VkMemoryAllocateInfo createInfo = {};
+	VkMemoryPropertyFlags flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
+	VkMemoryAllocateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	createInfo.pNext = nullptr;
 	createInfo.allocationSize = allocationSize;
-	createInfo.memoryTypeIndex = memoryTypeIndex;
+	createInfo.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, flags);
 
 	return createInfo;
 }
@@ -1149,7 +1267,7 @@ VkMemoryAllocateInfo VulkanCanvas::CreateMemoryAllocateInfo(VkDeviceSize allocat
 void VulkanCanvas::CreateUniformBuffer(uint64_t size)
 {
 	CreateBuffer(VK_BUFFER_CREATE_SPARSE_BINDING_BIT, size,
-		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_SHARING_MODE_EXCLUSIVE, 0, nullptr);
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_EXCLUSIVE, 0, nullptr);
 }
 
 void VulkanCanvas::CreateBuffer(VkBufferCreateFlags flags,
@@ -1162,10 +1280,7 @@ void VulkanCanvas::CreateBuffer(VkBufferCreateFlags flags,
 	auto createInfo = CreateBufferCreateInfo(usage, size, flags, sharingMode, 
         queueFamilyIndexCount, queueFamilyIndices);
 
-	m_buffers.emplace_back();
-	auto &last = m_buffers.back();
-
-	auto result = vkCreateBuffer(m_logicalDevice, &createInfo, nullptr, &last);
+	auto result = vkCreateBuffer(m_logicalDevice, &createInfo, nullptr, &m_buffer);
 
 	if (result != VK_SUCCESS)
 	{
@@ -1216,12 +1331,56 @@ VkBufferCreateInfo VulkanCanvas::CreateBufferCreateInfo(VkBufferCreateFlags flag
 
 	createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	createInfo.pNext = nullptr;
-	createInfo.flags = flags;
+	//createInfo.flags = flags;
 	createInfo.size = size;
-	createInfo.usage = usage;
-	createInfo.sharingMode = sharingMode;
-	createInfo.queueFamilyIndexCount = queueFamilyIndexCount;
-	createInfo.pQueueFamilyIndices = queueFamilyIndices;
+	createInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+	createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	//createInfo.queueFamilyIndexCount = queueFamilyIndexCount;
+	//createInfo.pQueueFamilyIndices = queueFamilyIndices;
 
 	return createInfo;
+}
+
+void VulkanCanvas::CreateDescriptorSetLayout(VkStructureType type, uint32_t bindingCount,
+	uint32_t binding, VkDescriptorType descriptorType, uint32_t descriptorCount, uint32_t stageFlags)
+{
+	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = CreateDescriptorSetLayoutInfo(type,
+		bindingCount, binding, descriptorType, descriptorCount, stageFlags);
+
+	auto result = vkCreateDescriptorSetLayout(m_logicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &m_descriptorSetLayout);
+
+	if (result != VK_SUCCESS)
+	{
+		throw VulkanException(result, "Failed to create descriptor set layout:");
+	}
+}
+
+VkDescriptorSetLayoutCreateInfo VulkanCanvas::CreateDescriptorSetLayoutInfo(VkStructureType type, uint32_t bindingCount,
+	uint32_t binding, VkDescriptorType descriptorType, uint32_t descriptorCount, uint32_t stageFlags)
+{	
+	m_descriptorSetLayoutBinding = CreateDescriptorSetLayoutBinding(binding, descriptorType, descriptorCount, stageFlags);
+
+	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo;
+
+	descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	descriptorSetLayoutCreateInfo.pNext = nullptr;
+	//descriptorSetLayoutCreateInfo.flags = 0;
+	descriptorSetLayoutCreateInfo.bindingCount = 1;
+	descriptorSetLayoutCreateInfo.pBindings = &m_descriptorSetLayoutBinding;
+
+	return descriptorSetLayoutCreateInfo;
+}
+
+VkDescriptorSetLayoutBinding VulkanCanvas::CreateDescriptorSetLayoutBinding(uint32_t binding, VkDescriptorType descriptorType,
+	uint32_t descriptorCount, uint32_t stageFlags)
+{
+	VkDescriptorSetLayoutBinding descriptorSetLayoutBinding;
+
+	descriptorSetLayoutBinding.binding = 0;
+	descriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorSetLayoutBinding.descriptorCount = 1;
+	descriptorSetLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	descriptorSetLayoutBinding.pImmutableSamplers = nullptr;
+
+	return descriptorSetLayoutBinding;
 }

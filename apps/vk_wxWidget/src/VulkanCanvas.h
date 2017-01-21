@@ -21,13 +21,6 @@ struct SwapChainSupportDetails {
     std::vector<VkPresentModeKHR> presentModes;
 };
 
-struct MVP
-{
-	glm::mat4 modelMatrix;
-	glm::mat4 viewMatrix;
-	glm::mat4 projectionMatrix;
-};
-
 class VulkanCanvas :
     public wxWindow
 {
@@ -56,9 +49,6 @@ private:
     void CreateCommandBuffers();
     void CreateSemaphores();
     void RecreateSwapchain();
-	void CreateBuffer(VkBufferCreateFlags, uint64_t, VkBufferUsageFlags, VkSharingMode, 
-        uint32_t, const uint32_t *);
-	void CreateUniformBuffer(uint64_t);
     VkWin32SurfaceCreateInfoKHR VulkanCanvas::CreateWin32SurfaceCreateInfo() const noexcept;
     VkDeviceQueueCreateInfo CreateDeviceQueueCreateInfo(int queueFamily) const noexcept;
     VkApplicationInfo CreateApplicationInfo(const std::string& appName,
@@ -134,13 +124,40 @@ private:
     virtual void OnPaint(wxPaintEvent& event);
     virtual void OnResize(wxSizeEvent& event);
     void OnPaintException(const std::string& msg);
+
+	void CreateBuffer(VkBufferCreateFlags, uint64_t, VkBufferUsageFlags, VkSharingMode,
+		uint32_t, const uint32_t *);
+	void CreateUniformBuffer(uint64_t);
 	VkBufferCreateInfo CreateBufferCreateInfo(VkBufferCreateFlags, uint64_t, 
         VkBufferUsageFlags, VkSharingMode, uint32_t, const uint32_t *);
 	void AllocateMemory(VkDeviceSize, uint32_t);
 	VkMemoryAllocateInfo CreateMemoryAllocateInfo(VkDeviceSize, uint32_t);
+	void MapMemory(VkDeviceMemory, uint64_t, uint64_t, void **);
+	VkDescriptorSetLayoutBinding CreateDescriptorSetLayoutBinding(uint32_t, VkDescriptorType, uint32_t, uint32_t);
+	void CreateDescriptorSetLayout(VkStructureType, uint32_t, uint32_t, VkDescriptorType, uint32_t, uint32_t);
+	VkDescriptorSetLayoutCreateInfo CreateDescriptorSetLayoutInfo(VkStructureType, uint32_t,
+		uint32_t, VkDescriptorType, uint32_t, uint32_t);
 
-	std::vector<VkDeviceMemory> m_deviceMemories;
-	std::vector<VkBuffer> m_buffers;
+	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+	VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+	glm::vec4 m_vectorUniformExample;
+	VkDeviceMemory m_deviceMemorie;
+	VkBuffer m_buffer;
+	VkDescriptorSet m_descriptorSet;
+	VkDescriptorSetLayout m_descriptorSetLayout;
+	VkDescriptorPoolSize m_descriptorPoolSize;
+
+	VkDescriptorSetLayoutBinding m_descriptorSetLayoutBinding;
+	VkDescriptorPool m_descriptorPool;
+	std::vector<VkPushConstantRange> m_ranges;
+	VkDescriptorSetAllocateInfo m_descriptorSetAllocateInfo;
+	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo;
+
+	VkDescriptorBufferInfo bufferInfo;
+	VkWriteDescriptorSet descriptorWrite;
+
     VkInstance m_instance;
     VkSurfaceKHR m_surface;
     VkPhysicalDevice m_physicalDevice;
