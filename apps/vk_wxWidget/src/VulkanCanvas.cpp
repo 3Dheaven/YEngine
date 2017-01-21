@@ -1,5 +1,6 @@
 #include "VulkanCanvas.h"
 #include "VulkanException.h"
+#include "VulkanWindow.h"
 #include "wxVulkanTutorialApp.h"
 #include <vulkan/vulkan.h>
 #include <fstream>
@@ -37,6 +38,13 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
 {
     Bind(wxEVT_PAINT, &VulkanCanvas::OnPaint, this);
     Bind(wxEVT_SIZE, &VulkanCanvas::OnResize, this);
+	Bind(wxEVT_TIMER, &VulkanCanvas::onTimer, this);
+
+	// Initialize timer
+	m_timer = std::make_unique<wxTimer>(this, 1000 / 60);
+	m_timer->Start(3);
+	m_startTime = std::chrono::high_resolution_clock::now();
+
     std::vector<const char*> requiredExtensions = { "VK_KHR_surface", "VK_KHR_win32_surface" };
     InitializeVulkan(requiredExtensions);
     VkApplicationInfo appInfo = CreateApplicationInfo("YEngine");
@@ -51,8 +59,9 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
     PickPhysicalDevice();
     CreateLogicalDevice();
 
-    
-
+	m_pParent = pParent->GetParent();
+	
+	
 
 	// Descriptor in the shader
 	CreateDescriptorSetLayout(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO, 1, 0,
@@ -64,7 +73,7 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
 	vkBindBufferMemory(m_logicalDevice, m_buffer, m_deviceMemorie, 0);
 
 	// Our example vector for the fragment shader
-	m_vectorUniformExample = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+	m_vectorUniformExample = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
 
 	// Initialize the memory
 	void* data;
@@ -142,6 +151,8 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
 
 VulkanCanvas::~VulkanCanvas() noexcept
 {
+	m_timer->Stop();
+
     if (m_instance != VK_NULL_HANDLE) {
         if (m_logicalDevice != VK_NULL_HANDLE) {
             vkDeviceWaitIdle(m_logicalDevice);
@@ -1128,9 +1139,36 @@ VkPresentInfoKHR VulkanCanvas::CreatePresentInfoKHR(uint32_t& imageIndex) const 
     return presentInfo;
 }
 
+void VulkanCanvas::onTimer(wxTimerEvent& event)
+{
+	ProcessEvent(wxPaintEvent());
+}
+
 void VulkanCanvas::OnPaint(wxPaintEvent& event)
 {
     try {
+
+		/*
+		auto t_now = std::chrono::high_resolution_clock::now();
+		auto time = std::chrono::duration_cast<std::chrono::microseconds>(t_now - m_startTime).count();
+		*/
+
+		auto parent = (VulkanWindow*)m_pParent;
+		if (parent->colorHasChanged)
+		{
+			glm::vec4 newColor;
+			newColor.x = static_cast<float>(parent->color.Red()) / 255;
+			newColor.y = static_cast<float>(parent->color.Green()) / 255;
+			newColor.z = static_cast<float>(parent->color.Blue()) / 255;
+			newColor.w = 1.0;
+
+			void* data;
+			MapMemory(m_deviceMemorie, sizeof(glm::vec4), 0, &data);
+			memcpy(data, &newColor, sizeof(glm::vec4));
+			vkUnmapMemory(m_logicalDevice, m_deviceMemorie);
+			parent->colorHasChanged = false;
+		}
+
         uint32_t imageIndex;
         VkResult result = vkAcquireNextImageKHR(m_logicalDevice, m_swapchain,
             std::numeric_limits<uint64_t>::max(), m_imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);

@@ -1,10 +1,14 @@
 #pragma once
 #include "wx/wxprec.h"
+#include <wx/timer.h>
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 #include <string>
 #include <set>
-#include "glm\glm.hpp"
+#include <memory>
+#include <chrono>
+#include "glm.hpp"
+#include <wx/clrpicker.h>
 
 struct QueueFamilyIndices {
     int graphicsFamily = -1;
@@ -33,7 +37,7 @@ public:
         const wxString& name = "VulkanCanvasName");
 
     virtual ~VulkanCanvas() noexcept;
-
+	wxWindow *m_pParent;
 private:
     void InitializeVulkan(std::vector<const char*> extensions);
     void CreateInstance(const VkInstanceCreateInfo& createInfo);
@@ -123,6 +127,7 @@ private:
     void CreateShaderModule(const std::vector<char>& code, VkShaderModule& shaderModule) const;
     virtual void OnPaint(wxPaintEvent& event);
     virtual void OnResize(wxSizeEvent& event);
+	virtual void onTimer(wxTimerEvent& event);
     void OnPaintException(const std::string& msg);
 
 	void CreateBuffer(VkBufferCreateFlags, uint64_t, VkBufferUsageFlags, VkSharingMode,
@@ -178,5 +183,9 @@ private:
     VkSemaphore m_imageAvailableSemaphore;
     VkSemaphore m_renderFinishedSemaphore;
     bool m_vulkanInitialized;
+	std::unique_ptr<wxTimer> m_timer;
+	typedef std::chrono::time_point<std::chrono::high_resolution_clock> sclock;
+	sclock m_startTime;
+	
 };
 

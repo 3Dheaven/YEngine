@@ -32,7 +32,7 @@ bool wxVulkanTutorialApp::OnInit()
 {
     VulkanWindow* mainFrame;
     try {
-        mainFrame = new VulkanWindow(nullptr, wxID_ANY, L"YEngine");
+        mainFrame = new VulkanWindow(nullptr, L"YEngine", wxDefaultPosition, wxSize(1000, 800));
     } 
     catch(VulkanException& ve) {
         std::string status = ve.GetStatus();
