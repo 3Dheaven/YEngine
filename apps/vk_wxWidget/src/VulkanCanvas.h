@@ -4,7 +4,7 @@
 #include <vulkan/vulkan.h>
 #include <string>
 #include <set>
-#include "glm.hpp"
+#include "glm\glm.hpp"
 
 struct QueueFamilyIndices {
     int graphicsFamily = -1;
