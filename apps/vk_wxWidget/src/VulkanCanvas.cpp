@@ -60,12 +60,6 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
     CreateLogicalDevice();
 
 	m_pParent = pParent->GetParent();
-	
-	
-
-	// Descriptor in the shader
-	CreateDescriptorSetLayout(VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO, 1, 0,
-		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Uniform buffer, allocation memory and binding
 	CreateUniformBuffer(sizeof(glm::vec4));
@@ -81,13 +75,13 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
 	memcpy(data, &m_vectorUniformExample, sizeof(glm::vec4));
 	vkUnmapMemory(m_logicalDevice, m_deviceMemorie);
 	
-
-	
-
-
+	// Descriptor in the shader
+	CreateDescriptorSetLayout(1, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 
 
 	
+
+	// NEED A BIT OF REFACTORING...
 	m_descriptorPoolSize.descriptorCount = 1;
 	m_descriptorPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 
@@ -116,14 +110,10 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
 		throw VulkanException(result, "Error attempting to allocate a descriptor set:");
 	}
 
-
-
-	
 	bufferInfo.buffer = m_buffer;
 	bufferInfo.offset = 0;
 	bufferInfo.range = sizeof(glm::vec4);
 
-	
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrite.dstSet = m_descriptorSet;
 	descriptorWrite.dstBinding = 0;
@@ -137,6 +127,8 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
 	descriptorWrite.pTexelBufferView = nullptr; // Optional
 
 	vkUpdateDescriptorSets(m_logicalDevice, 1, &descriptorWrite, 0, nullptr);
+
+
 
 
 	CreateSwapChain(size);
@@ -1157,10 +1149,10 @@ void VulkanCanvas::OnPaint(wxPaintEvent& event)
 		if (parent->colorHasChanged)
 		{
 			glm::vec4 newColor;
-			newColor.x = static_cast<float>(parent->color.Red()) / 255;
-			newColor.y = static_cast<float>(parent->color.Green()) / 255;
-			newColor.z = static_cast<float>(parent->color.Blue()) / 255;
-			newColor.w = 1.0;
+			newColor.x = static_cast<float>(parent->color.Red()) / 255.0f;
+			newColor.y = static_cast<float>(parent->color.Green()) / 255.0f;
+			newColor.z = static_cast<float>(parent->color.Blue()) / 255.0f;
+			newColor.w = 1.0f;
 
 			void* data;
 			MapMemory(m_deviceMemorie, sizeof(glm::vec4), 0, &data);
@@ -1304,19 +1296,13 @@ VkMemoryAllocateInfo VulkanCanvas::CreateMemoryAllocateInfo(VkDeviceSize allocat
 
 void VulkanCanvas::CreateUniformBuffer(uint64_t size)
 {
-	CreateBuffer(VK_BUFFER_CREATE_SPARSE_BINDING_BIT, size,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_SHARING_MODE_EXCLUSIVE, 0, nullptr);
+	CreateBuffer(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 }
 
-void VulkanCanvas::CreateBuffer(VkBufferCreateFlags flags,
-                                uint64_t size,
-                                VkBufferUsageFlags usage,
-                                VkSharingMode sharingMode,
-                                uint32_t queueFamilyIndexCount,
-                                const uint32_t* queueFamilyIndices)
+void VulkanCanvas::CreateBuffer(uint64_t size,
+                                VkBufferUsageFlags usage)
 {
-	auto createInfo = CreateBufferCreateInfo(usage, size, flags, sharingMode, 
-        queueFamilyIndexCount, queueFamilyIndices);
+	auto createInfo = CreateBufferCreateInfo(usage, size);
 
 	auto result = vkCreateBuffer(m_logicalDevice, &createInfo, nullptr, &m_buffer);
 
@@ -1326,63 +1312,27 @@ void VulkanCanvas::CreateBuffer(VkBufferCreateFlags flags,
 	}
 }
 
-VkBufferCreateInfo VulkanCanvas::CreateBufferCreateInfo(VkBufferCreateFlags flags,
-                                                        uint64_t size,
-                                                        VkBufferUsageFlags usage,
-                                                        VkSharingMode sharingMode,
-                                                        uint32_t queueFamilyIndexCount,
-                                                        const uint32_t* queueFamilyIndices)
+VkBufferCreateInfo VulkanCanvas::CreateBufferCreateInfo(uint64_t size,
+                                                        VkBufferUsageFlags usage)
 {
 	assert(size > 0);
 	assert(usage != 0);
-
-	if (sharingMode == VK_SHARING_MODE_CONCURRENT)
-	{
-		assert(queueFamilyIndices != nullptr);
-		assert(queueFamilyIndexCount > 1);
-	}
-
-	VkPhysicalDeviceFeatures physicalDeviceFeatures;
-	vkGetPhysicalDeviceFeatures(m_physicalDevice, &physicalDeviceFeatures);
-
-	if (!physicalDeviceFeatures.sparseBinding)
-	{
-		assert((flags & VK_BUFFER_CREATE_SPARSE_BINDING_BIT) == false);
-	}
-
-	if (!physicalDeviceFeatures.sparseResidencyBuffer)
-	{
-		assert((flags & VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT) == false);
-	}
-
-	if (!physicalDeviceFeatures.sparseResidencyAliased)
-	{
-		assert((flags & VK_BUFFER_CREATE_SPARSE_ALIASED_BIT) == false);
-	}
-
-	if (flags & VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT || flags & VK_BUFFER_CREATE_SPARSE_ALIASED_BIT)
-	{
-		assert(flags & VK_BUFFER_CREATE_SPARSE_BINDING_BIT);
-	}
 
 	VkBufferCreateInfo createInfo = {};
 
 	createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	createInfo.pNext = nullptr;
-	//createInfo.flags = flags;
 	createInfo.size = size;
-	createInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+	createInfo.usage = usage;
 	createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	//createInfo.queueFamilyIndexCount = queueFamilyIndexCount;
-	//createInfo.pQueueFamilyIndices = queueFamilyIndices;
 
 	return createInfo;
 }
 
-void VulkanCanvas::CreateDescriptorSetLayout(VkStructureType type, uint32_t bindingCount,
-	uint32_t binding, VkDescriptorType descriptorType, uint32_t descriptorCount, uint32_t stageFlags)
+void VulkanCanvas::CreateDescriptorSetLayout(uint32_t bindingCount, uint32_t binding, VkDescriptorType descriptorType, 
+	uint32_t descriptorCount, uint32_t stageFlags)
 {
-	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = CreateDescriptorSetLayoutInfo(type,
+	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = CreateDescriptorSetLayoutInfo(
 		bindingCount, binding, descriptorType, descriptorCount, stageFlags);
 
 	auto result = vkCreateDescriptorSetLayout(m_logicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &m_descriptorSetLayout);
@@ -1393,7 +1343,7 @@ void VulkanCanvas::CreateDescriptorSetLayout(VkStructureType type, uint32_t bind
 	}
 }
 
-VkDescriptorSetLayoutCreateInfo VulkanCanvas::CreateDescriptorSetLayoutInfo(VkStructureType type, uint32_t bindingCount,
+VkDescriptorSetLayoutCreateInfo VulkanCanvas::CreateDescriptorSetLayoutInfo(uint32_t bindingCount,
 	uint32_t binding, VkDescriptorType descriptorType, uint32_t descriptorCount, uint32_t stageFlags)
 {	
 	m_descriptorSetLayoutBinding = CreateDescriptorSetLayoutBinding(binding, descriptorType, descriptorCount, stageFlags);
@@ -1402,8 +1352,7 @@ VkDescriptorSetLayoutCreateInfo VulkanCanvas::CreateDescriptorSetLayoutInfo(VkSt
 
 	descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	descriptorSetLayoutCreateInfo.pNext = nullptr;
-	//descriptorSetLayoutCreateInfo.flags = 0;
-	descriptorSetLayoutCreateInfo.bindingCount = 1;
+	descriptorSetLayoutCreateInfo.bindingCount = bindingCount;
 	descriptorSetLayoutCreateInfo.pBindings = &m_descriptorSetLayoutBinding;
 
 	return descriptorSetLayoutCreateInfo;
@@ -1414,10 +1363,10 @@ VkDescriptorSetLayoutBinding VulkanCanvas::CreateDescriptorSetLayoutBinding(uint
 {
 	VkDescriptorSetLayoutBinding descriptorSetLayoutBinding;
 
-	descriptorSetLayoutBinding.binding = 0;
-	descriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorSetLayoutBinding.descriptorCount = 1;
-	descriptorSetLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	descriptorSetLayoutBinding.binding = binding;
+	descriptorSetLayoutBinding.descriptorType = descriptorType;
+	descriptorSetLayoutBinding.descriptorCount = descriptorCount;
+	descriptorSetLayoutBinding.stageFlags = stageFlags;
 	descriptorSetLayoutBinding.pImmutableSamplers = nullptr;
 
 	return descriptorSetLayoutBinding;
