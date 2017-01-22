@@ -1,6 +1,5 @@
 #pragma once
 #include <wx/timer.h>
-#include "RenderTimer.h"
 
 class MainWindow : public wxFrame
 {
@@ -22,6 +21,8 @@ public:
 	void OnQuit(wxCommandEvent& event);
 	void OnSettings(wxCommandEvent& WXUNUSED(event));
 	void onClose(wxCloseEvent& evt);
+
+	wxTextCtrl *getDebugConsole();
 
 private:
 	wxTextCtrl* m_console;

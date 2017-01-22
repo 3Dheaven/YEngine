@@ -1,5 +1,5 @@
 ﻿#include "wx/wxprec.h"
-#include "MainCanvas.h"
+#include "GLCanvas.h"
 #include "MainWindow.h"
 
 const int mainCanvasID = 2000;			// TriangleCanvas widget ID
@@ -14,7 +14,7 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 	// Display MainWindow on screen center
 	Centre();
 
-	MainCanvas* glCanvas = new MainCanvas(this, mainCanvasID, nullptr, { 0, 0 }, { 600, 600 });
+	GLCanvas* glCanvas = new GLCanvas(this, mainCanvasID, nullptr, { 0, 0 }, { 600, 600 });
 	
 	wxPanel * bottomPanel = new wxPanel(this, wxID_ANY, { 0, 600 }, { 600, 200 });
 	wxPanel * rightPanel = new wxPanel(this, wxID_ANY, { 600, 0 }, { 400, 800 });
@@ -55,12 +55,19 @@ MainWindow::~MainWindow()
 	
 }
 
-void MainWindow::OnQuit(wxCommandEvent& WXUNUSED(event))
+wxTextCtrl* MainWindow::getDebugConsole()
+{
+	return m_console;
+}
+
+void 
+MainWindow::OnQuit(wxCommandEvent& WXUNUSED(event))
 {
 	Close(true);
 }
 
-void MainWindow::OnSettings(wxCommandEvent& WXUNUSED(event))
+void 
+MainWindow::OnSettings(wxCommandEvent& WXUNUSED(event))
 {
 	wxMessageBox(	
 		wxT("A settings window will be used instead of this messagebox."), 			
@@ -68,7 +75,8 @@ void MainWindow::OnSettings(wxCommandEvent& WXUNUSED(event))
 		wxOK | wxICON_INFORMATION);
 }
 
-void MainWindow::onClose(wxCloseEvent& evt)
+void 
+MainWindow::onClose(wxCloseEvent& evt)
 {
 	evt.Skip();
 }
