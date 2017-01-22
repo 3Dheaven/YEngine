@@ -130,18 +130,15 @@ private:
 	virtual void onTimer(wxTimerEvent& event);
     void OnPaintException(const std::string& msg);
 
-	void CreateBuffer(VkBufferCreateFlags, uint64_t, VkBufferUsageFlags, VkSharingMode,
-		uint32_t, const uint32_t *);
+	void CreateBuffer(uint64_t, VkBufferUsageFlags);
 	void CreateUniformBuffer(uint64_t);
-	VkBufferCreateInfo CreateBufferCreateInfo(VkBufferCreateFlags, uint64_t, 
-        VkBufferUsageFlags, VkSharingMode, uint32_t, const uint32_t *);
+	VkBufferCreateInfo CreateBufferCreateInfo(uint64_t, VkBufferUsageFlags);
 	void AllocateMemory(VkDeviceSize, uint32_t);
 	VkMemoryAllocateInfo CreateMemoryAllocateInfo(VkDeviceSize, uint32_t);
 	void MapMemory(VkDeviceMemory, uint64_t, uint64_t, void **);
 	VkDescriptorSetLayoutBinding CreateDescriptorSetLayoutBinding(uint32_t, VkDescriptorType, uint32_t, uint32_t);
-	void CreateDescriptorSetLayout(VkStructureType, uint32_t, uint32_t, VkDescriptorType, uint32_t, uint32_t);
-	VkDescriptorSetLayoutCreateInfo CreateDescriptorSetLayoutInfo(VkStructureType, uint32_t,
-		uint32_t, VkDescriptorType, uint32_t, uint32_t);
+	void CreateDescriptorSetLayout(uint32_t, uint32_t, VkDescriptorType, uint32_t, uint32_t);
+	VkDescriptorSetLayoutCreateInfo CreateDescriptorSetLayoutInfo(uint32_t, uint32_t, VkDescriptorType, uint32_t, uint32_t);
 
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
