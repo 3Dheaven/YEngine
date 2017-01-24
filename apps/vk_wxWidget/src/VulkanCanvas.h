@@ -130,11 +130,11 @@ private:
 	virtual void onTimer(wxTimerEvent& event);
     void OnPaintException(const std::string& msg);
 
-	void CreateBuffer(uint64_t, VkBufferUsageFlags);
-	void CreateUniformBuffer(uint64_t);
+	void CreateBuffer(VkBuffer &, VkBufferUsageFlags, uint32_t size);
+	void CreateUniformBuffer(VkBuffer &, uint32_t size);
 	VkBufferCreateInfo CreateBufferCreateInfo(uint64_t, VkBufferUsageFlags);
-	void AllocateMemory(VkDeviceSize, uint32_t);
-	VkMemoryAllocateInfo CreateMemoryAllocateInfo(VkDeviceSize, uint32_t);
+	void AllocateMemory(VkBuffer &buffer);
+	VkMemoryAllocateInfo CreateMemoryAllocateInfo(VkBuffer &buffer);
 	void MapMemory(VkDeviceMemory, uint64_t, uint64_t, void **);
 	VkDescriptorSetLayoutBinding CreateDescriptorSetLayoutBinding(uint32_t, VkDescriptorType, uint32_t, uint32_t);
 	void CreateDescriptorSetLayout(uint32_t, uint32_t, VkDescriptorType, uint32_t, uint32_t);
@@ -144,7 +144,6 @@ private:
 
 	VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-	glm::vec4 m_vectorUniformExample;
 	VkDeviceMemory m_deviceMemorie;
 	VkBuffer m_buffer;
 	VkDescriptorSet m_descriptorSet;

@@ -62,22 +62,17 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
 	m_pParent = pParent->GetParent();
 
 	// Uniform buffer, allocation memory and binding
-	CreateUniformBuffer(sizeof(glm::vec4));
-	AllocateMemory(sizeof(glm::vec4), 0);
-	vkBindBufferMemory(m_logicalDevice, m_buffer, m_deviceMemorie, 0);
-
-	// Our example vector for the fragment shader
-	m_vectorUniformExample = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+	CreateUniformBuffer(m_buffer, sizeof(glm::vec4));
 
 	// Initialize the memory
 	void* data;
+	auto triangleColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
 	MapMemory(m_deviceMemorie, sizeof(glm::vec4), 0, &data);
-	memcpy(data, &m_vectorUniformExample, sizeof(glm::vec4));
+	memcpy(data, &triangleColor, sizeof(glm::vec4));
 	vkUnmapMemory(m_logicalDevice, m_deviceMemorie);
 	
 	// Descriptor in the shader
 	CreateDescriptorSetLayout(1, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-
 
 	
 
@@ -1231,17 +1226,9 @@ void VulkanCanvas::MapMemory(VkDeviceMemory memory, uint64_t size, uint64_t offs
 	}
 }
 
-void VulkanCanvas::AllocateMemory(VkDeviceSize allocationSize,
-                                  uint32_t memoryTypeIndex)
+void VulkanCanvas::AllocateMemory(VkBuffer &buffer)
 {
-	VkPhysicalDeviceProperties physicalDeviceProperties;
-	vkGetPhysicalDeviceProperties(m_physicalDevice, &physicalDeviceProperties);
-
-	auto maxMemoryAllocationCount = physicalDeviceProperties.limits.maxMemoryAllocationCount;
-
-	//assert(m_deviceMemories.size() + 1 < maxMemoryAllocationCount);
-
-	auto createInfo = CreateMemoryAllocateInfo(allocationSize, memoryTypeIndex);
+	auto createInfo = CreateMemoryAllocateInfo(buffer);
 
 	auto result = vkAllocateMemory(m_logicalDevice, &createInfo, nullptr, &m_deviceMemorie);
 
@@ -1265,50 +1252,45 @@ uint32_t VulkanCanvas::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
 	throw std::runtime_error("failed to find suitable memory type!");
 }
 
-VkMemoryAllocateInfo VulkanCanvas::CreateMemoryAllocateInfo(VkDeviceSize allocationSize,
-                                                            uint32_t memoryTypeIndex)
+VkMemoryAllocateInfo VulkanCanvas::CreateMemoryAllocateInfo(VkBuffer &buffer)
 {
-	assert(allocationSize > 0);
-
-	VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &physicalDeviceMemoryProperties);
-
 	VkMemoryRequirements memoryRequirements;
-	vkGetBufferMemoryRequirements(m_logicalDevice, m_buffer, &memoryRequirements);
+	vkGetBufferMemoryRequirements(m_logicalDevice, buffer, &memoryRequirements);
 	
-	// Not sure about that...
-	assert(memoryTypeIndex < VK_MAX_MEMORY_TYPES);
-	auto heapIndex = physicalDeviceMemoryProperties.memoryTypes[memoryTypeIndex].heapIndex;
-	auto sizeMemoryHeap = physicalDeviceMemoryProperties.memoryHeaps[heapIndex].size;
-	
-	assert(allocationSize <= sizeMemoryHeap);
-
-	VkMemoryPropertyFlags flags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
-
 	VkMemoryAllocateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	createInfo.pNext = nullptr;
-	createInfo.allocationSize = allocationSize;
-	createInfo.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, flags);
+	createInfo.allocationSize = memoryRequirements.size;
+	createInfo.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 	return createInfo;
 }
 
-void VulkanCanvas::CreateUniformBuffer(uint64_t size)
+void VulkanCanvas::CreateUniformBuffer(VkBuffer &buffer, uint32_t size)
 {
-	CreateBuffer(size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+	CreateBuffer(buffer, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, size);
 }
 
-void VulkanCanvas::CreateBuffer(uint64_t size,
-                                VkBufferUsageFlags usage)
+void VulkanCanvas::CreateBuffer(VkBuffer &buffer,
+                                VkBufferUsageFlags usage,
+	                            uint32_t size)
 {
-	auto createInfo = CreateBufferCreateInfo(usage, size);
+	auto createInfo = CreateBufferCreateInfo(size, usage);
 
-	auto result = vkCreateBuffer(m_logicalDevice, &createInfo, nullptr, &m_buffer);
+	auto result = vkCreateBuffer(m_logicalDevice, &createInfo, nullptr, &buffer);
 
 	if (result != VK_SUCCESS)
 	{
 		throw VulkanException(result, "Error attempting to create a buffer:");
+	}
+
+	AllocateMemory(buffer);
+
+	result = vkBindBufferMemory(m_logicalDevice, buffer, m_deviceMemorie, 0);
+
+	if (result != VK_SUCCESS)
+	{
+		throw VulkanException(result, "Error attempting to bind buffer and memory:");
 	}
 }
 
