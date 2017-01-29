@@ -52,25 +52,116 @@ CObjectFile::getFloat(std::string& buffer)
 }
 
 void 
-CObjectFile::getFace(std::string& buffer, unsigned int *v, unsigned int *vn, unsigned int *vt)
+CObjectFile::getFace(std::string& buffer, std::vector<unsigned int> &v, std::vector<unsigned int> &vn, std::vector<unsigned int> &vt)
 {
 	const char* ch = buffer.c_str();
 	
-	if (mModel->mCurrentMesh->mHasNormals && mModel->mCurrentMesh->mHasTexcoords)
+	std::string data = buffer;// .substr(buffer.find(" ") + 1);
+
+	size_t pos = 0;
+	std::vector<std::string> tokens;
+	while ((pos = data.find(" ")) != std::string::npos) 
 	{
-		sscanf(ch, "%i/%i/%i %i/%i/%i %i/%i/%i", &v[0], &vt[0], &vn[0], &v[1], &vt[1], &vn[1], &v[2], &vt[2], &vn[2]);
+		tokens.push_back(data.substr(0, pos));
+		data.erase(0, pos + 1);
 	}
-	else if (mModel->mCurrentMesh->mHasNormals && !mModel->mCurrentMesh->mHasTexcoords)
+
+	if (data.length())
 	{
-		sscanf(ch, "%i//%i %i//%i %i//%i", &v[0], &vn[0], &v[1], &vn[1], &v[2], &vn[2]);
+		tokens.push_back(data);
 	}
-	else if (!mModel->mCurrentMesh->mHasNormals && mModel->mCurrentMesh->mHasTexcoords)
+
+	// Check if triangles or quads
+	if (tokens.size() == 3)
 	{
-		sscanf(ch, "%i/%i %i/%i %i/%i", &v[0], &vt[0], &v[1], &vt[1], &v[2], &vt[2]);
+		unsigned int vv[3], vvn[3], vvt[3];
+
+		if (mModel->mCurrentMesh->mHasNormals && mModel->mCurrentMesh->mHasTexcoords)
+		{
+			sscanf(ch, "%i/%i/%i %i/%i/%i %i/%i/%i", &vv[0], &vvt[0], &vvn[0], &vv[1], &vvt[1], &vvn[1], &vv[2], &vvt[2], &vvn[2]);
+		}
+		else if (mModel->mCurrentMesh->mHasNormals && !mModel->mCurrentMesh->mHasTexcoords)
+		{
+			sscanf(ch, "%i//%i %i//%i %i//%i", &vv[0], &vvn[0], &vv[1], &vvn[1], &vv[2], &vvn[2]);
+		}
+		else if (!mModel->mCurrentMesh->mHasNormals && mModel->mCurrentMesh->mHasTexcoords)
+		{
+			sscanf(ch, "%i/%i %i/%i %i/%i", &vv[0], &vvt[0], &vv[1], &vvt[1], &vv[2], &vvt[2]);
+		}
+		else if (!mModel->mCurrentMesh->mHasNormals && !mModel->mCurrentMesh->mHasTexcoords)
+		{
+			sscanf(ch, "%i %i %i", &vv[0], &vv[1], &vv[2]);
+		}
+
+		v.push_back(vv[0]);
+		v.push_back(vv[1]);
+		v.push_back(vv[2]);
+
+		vn.push_back(vvn[0]);
+		vn.push_back(vvn[1]);
+		vn.push_back(vvn[2]);
+
+		vt.push_back(vvt[0]);
+		vt.push_back(vvt[1]);
+		vt.push_back(vvt[2]);
 	}
-	else if (!mModel->mCurrentMesh->mHasNormals && !mModel->mCurrentMesh->mHasTexcoords)
+	else if (tokens.size() == 4)
 	{
-		sscanf(ch, "%i %i %i", &v[0], &v[1], &v[2]);
+		/*
+		http://stackoverflow.com/questions/23723993/converting-quadriladerals-in-an-obj-file-into-triangles
+
+		3-------2
+		|      /|
+		|    /  |
+		|  /    |
+		|/      |
+		0-------1
+		*/
+
+		unsigned int vv[4], vvn[4], vvt[4];
+
+		if (mModel->mCurrentMesh->mHasNormals && mModel->mCurrentMesh->mHasTexcoords)
+		{
+			sscanf(ch, "%i/%i/%i %i/%i/%i %i/%i/%i %i/%i/%i", &vv[0], &vvt[0], &vvn[0], &vv[1], &vvt[1], &vvn[1], &vv[2], &vvt[2], &vvn[2], &vv[3], &vvt[3], &vvn[3]);
+		}
+		else if (mModel->mCurrentMesh->mHasNormals && !mModel->mCurrentMesh->mHasTexcoords)
+		{
+			sscanf(ch, "%i//%i %i//%i %i//%i %i//%i", &vv[0], &vvn[0], &vv[1], &vvn[1], &vv[2], &vvn[2], &vv[3], &vvn[3]);
+		}
+		else if (!mModel->mCurrentMesh->mHasNormals && mModel->mCurrentMesh->mHasTexcoords)
+		{
+			sscanf(ch, "%i/%i %i/%i %i/%i %i/%i", &vv[0], &vvt[0], &vv[1], &vvt[1], &vv[2], &vvt[2], &vv[3], &vvt[3]);
+		}
+		else if (!mModel->mCurrentMesh->mHasNormals && !mModel->mCurrentMesh->mHasTexcoords)
+		{
+			sscanf(ch, "%i %i %i %i", &vv[0], &vv[1], &vv[2], &vv[3]);
+		}
+
+		// (0,1,2)
+		v.push_back(vv[0]);
+		v.push_back(vv[1]);
+		v.push_back(vv[2]);
+		
+		vn.push_back(vvn[0]);
+		vn.push_back(vvn[1]);
+		vn.push_back(vvn[2]);
+		
+		vt.push_back(vvt[0]);
+		vt.push_back(vvt[1]);
+		vt.push_back(vvt[2]);
+		
+		// (0,2,3)
+		v.push_back(vv[0]);
+		v.push_back(vv[2]);
+		v.push_back(vv[3]);
+
+		vn.push_back(vvn[0]);
+		vn.push_back(vvn[2]);
+		vn.push_back(vvn[3]);
+
+		vt.push_back(vvt[0]);
+		vt.push_back(vvt[2]);
+		vt.push_back(vvt[3]);
 	}
 
 }
@@ -427,34 +518,31 @@ CObjectFile::parse()
 						}
 					}
 
-					unsigned int v[3], vn[3], vt[3];
+					std::vector<unsigned int> v, vn, vt;
 					getFace(buffer.substr(2), v, vn, vt);
 
-					mModel->mCurrentMesh->vertexIndices.push_back(v[0]);
-					mModel->mCurrentMesh->vertexIndices.push_back(v[1]);
-					mModel->mCurrentMesh->vertexIndices.push_back(v[2]);
-
-					if (mModel->mTexcoords.size())
+					for (int i = 0; i < v.size(); i++)
 					{
-						mModel->mCurrentMesh->uvIndices.push_back(vt[0]);
-						mModel->mCurrentMesh->uvIndices.push_back(vt[1]);
-						mModel->mCurrentMesh->uvIndices.push_back(vt[2]);
+						mModel->mCurrentMesh->vertexIndices.push_back(v[i]);
 
-						if (!mModel->mCurrentMesh->mHasTexcoords)
+						if (mModel->mTexcoords.size())
 						{
-							mModel->mCurrentMesh->mHasTexcoords = true;
+							mModel->mCurrentMesh->uvIndices.push_back(vt[i]);
+
+							if (!mModel->mCurrentMesh->mHasTexcoords)
+							{
+								mModel->mCurrentMesh->mHasTexcoords = true;
+							}
 						}
-					}
 
-					if (mModel->mNormals.size())
-					{
-						mModel->mCurrentMesh->normalIndices.push_back(vn[0]);
-						mModel->mCurrentMesh->normalIndices.push_back(vn[1]);
-						mModel->mCurrentMesh->normalIndices.push_back(vn[2]);
-
-						if (!mModel->mCurrentMesh->mHasNormals)
+						if (mModel->mNormals.size())
 						{
-							mModel->mCurrentMesh->mHasNormals = true;
+							mModel->mCurrentMesh->normalIndices.push_back(vn[i]);
+
+							if (!mModel->mCurrentMesh->mHasNormals)
+							{
+								mModel->mCurrentMesh->mHasNormals = true;
+							}
 						}
 					}
 				}

@@ -27,7 +27,7 @@ class CObjectFile
 		glm::vec3 getVector3(std::string& buffer);
 		glm::vec2 getVector2(std::string& buffer);
 		float getFloat(std::string& buffer);
-		void getFace(std::string& buffer, unsigned int *v, unsigned int *vn, unsigned int *vt);
+		void getFace(std::string& buffer, std::vector<unsigned int> &v, std::vector<unsigned int> &vn, std::vector<unsigned int> &vt);
 		void finalizeModel();
 		void parseMtl(std::string mtlpath);
 		void getTexture(std::string& buffer);

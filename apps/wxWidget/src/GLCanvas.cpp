@@ -69,7 +69,9 @@ GLCanvas::setupGraphics()
 
 	mScene = new CScene();
 	//mScene->add("..//..//..//media//shuttle.obj");
-	mScene->add("..//..//..//media//nanosuit//nanosuit.obj");
+	//mScene->add("..//..//..//media//nanosuit//nanosuit.obj");
+	mScene->add("..//..//..//media//axis//axisXYZ.obj");
+	mScene->add("..//..//..//media//vis.obj");
 }
 
 void 
@@ -92,7 +94,8 @@ GLCanvas::onPaint(wxPaintEvent& event)
 	SetCurrent(*m_context);
 	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	glCullFace(GL_BACK);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	auto t_now = std::chrono::high_resolution_clock::now();
 	auto time = std::chrono::duration_cast<std::chrono::microseconds>(t_now - m_startTime).count();
 
@@ -101,7 +104,8 @@ GLCanvas::onPaint(wxPaintEvent& event)
 	m_cam->projMatrix = glm::perspective(m_cam->getZoom(), (float)600 / (float)600, 0.1f, 100.0f);
 	m_customShader->shader->setUniform("projection_matrix", m_cam->projMatrix);
 	m_customShader->shader->setUniform("view_matrix", m_cam->getViewMatrix());
-	m_customShader->shader->setUniform("custom_color", glm::vec3((sin(time * 1.0f) + 1.0f) / 2.0f, (sin(time * 0.5f) + 1.0f) / 2.0f, (cos(time * 0.25f) + 1.0f) / 2.0f));
+	// glm::vec3((sin(time * 1.0f) + 1.0f) / 2.0f, (sin(time * 0.5f) + 1.0f) / 2.0f, (cos(time * 0.25f) + 1.0f) / 2.0f)
+	m_customShader->shader->setUniform("custom_color", glm::vec3(0.0,1.0,0.0));
 
 	glm::mat4 model;
 	//glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); 
