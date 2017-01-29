@@ -1,13 +1,16 @@
 #include "CObjFile.h"
 
-CObjectFile::CObjectFile(const char * path) : m_filePath(path)
+CObjectFile::CObjectFile(CModel *model)
 {
-	cptPos = 1;
-	cptNormal = 1;
-	cptUv = 1; 
-	offsetPos = 1;
-	offsetNormal = 1;
-	offsetUv = 1;
+
+	mModel = model;
+	std::size_t found = std::string(mModel->mFilePath).find_last_of("/\\");
+	dirPath = std::string(mModel->mFilePath).substr(0, found);
+}
+
+CObjectFile::CObjectFile()
+{
+
 }
 
 CObjectFile::~CObjectFile()
@@ -39,24 +42,33 @@ CObjectFile::getVector2(std::string& buffer)
 	return glm::vec2(x, y);
 }
 
+float
+CObjectFile::getFloat(std::string& buffer)
+{
+	std::istringstream data(buffer);
+	double x;
+	data >> x; 
+	return x;
+}
+
 void 
 CObjectFile::getFace(std::string& buffer, unsigned int *v, unsigned int *vn, unsigned int *vt)
 {
 	const char* ch = buffer.c_str();
 	
-	if (m_currentMesh->hasNormals && m_currentMesh->hasTexcoords)
+	if (mModel->mCurrentMesh->mHasNormals && mModel->mCurrentMesh->mHasTexcoords)
 	{
 		sscanf(ch, "%i/%i/%i %i/%i/%i %i/%i/%i", &v[0], &vt[0], &vn[0], &v[1], &vt[1], &vn[1], &v[2], &vt[2], &vn[2]);
 	}
-	else if (m_currentMesh->hasNormals && !m_currentMesh->hasTexcoords)
+	else if (mModel->mCurrentMesh->mHasNormals && !mModel->mCurrentMesh->mHasTexcoords)
 	{
 		sscanf(ch, "%i//%i %i//%i %i//%i", &v[0], &vn[0], &v[1], &vn[1], &v[2], &vn[2]);
 	}
-	else if (!m_currentMesh->hasNormals && m_currentMesh->hasTexcoords)
+	else if (!mModel->mCurrentMesh->mHasNormals && mModel->mCurrentMesh->mHasTexcoords)
 	{
 		sscanf(ch, "%i/%i %i/%i %i/%i", &v[0], &vt[0], &v[1], &vt[1], &v[2], &vt[2]);
 	}
-	else if (!m_currentMesh->hasNormals && !m_currentMesh->hasTexcoords)
+	else if (!mModel->mCurrentMesh->mHasNormals && !mModel->mCurrentMesh->mHasTexcoords)
 	{
 		sscanf(ch, "%i %i %i", &v[0], &v[1], &v[2]);
 	}
@@ -64,185 +76,509 @@ CObjectFile::getFace(std::string& buffer, unsigned int *v, unsigned int *vn, uns
 }
 
 void
-CObjectFile::finalizeObject()
+CObjectFile::finalizeModel()
 {
 	// Indexing
 
-	// For each vertex of each triangle
-	for (unsigned int i = 0; i<m_currentMesh->vertexIndices.size(); i++)
+	for (auto o : mModel->mObjects)
 	{
-		unsigned int vertexIndex = m_currentMesh->vertexIndices[i];
-		glm::vec3 vertex = m_currentMesh->temp_vertices[vertexIndex - 1];
-		m_currentMesh->vertices.push_back(vertex);
-	}
-
-	if (m_currentMesh->hasTexcoords)
-	{
-		// For each uv of each triangle
-		for (unsigned int i = 0; i < m_currentMesh->uvIndices.size(); i++)
+		for (auto m : o->mMeshes)
 		{
-			unsigned int uvIndex = m_currentMesh->uvIndices[i];
-			glm::vec2 uv = m_currentMesh->temp_uvs[uvIndex - 1];
-			m_currentMesh->uvs.push_back(uv);
+			for (unsigned int i = 0; i < mModel->mMeshes[m]->vertexIndices.size(); i++)
+			{
+				unsigned int vertexIndex = mModel->mMeshes[m]->vertexIndices[i];
+				glm::vec3 vertex = mModel->mVertices[vertexIndex - 1];
+				mModel->mMeshes[m]->vertices.push_back(vertex);
+			}
+
+			if (mModel->mMeshes[m]->mHasTexcoords)
+			{
+				// For each uv of each triangle
+				for (unsigned int i = 0; i < mModel->mMeshes[m]->uvIndices.size(); i++)
+				{
+					unsigned int uvIndex = mModel->mMeshes[m]->uvIndices[i];
+					glm::vec2 uv = mModel->mTexcoords[uvIndex - 1];
+					mModel->mMeshes[m]->uvs.push_back(uv);
+				}
+			}
+
+			if (mModel->mMeshes[m]->mHasNormals)
+			{
+				// For each normal of each triangle
+				for (unsigned int i = 0; i < mModel->mMeshes[m]->normalIndices.size(); i++)
+				{
+					unsigned int normalIndex = mModel->mMeshes[m]->normalIndices[i];
+					glm::vec3 normal = mModel->mNormals[normalIndex - 1];
+					mModel->mMeshes[m]->normals.push_back(normal);
+				}
+			}
+
 		}
 	}
-
-	if (m_currentMesh->hasNormals)
-	{
-		// For each normal of each triangle
-		for (unsigned int i = 0; i < m_currentMesh->normalIndices.size(); i++)
-		{
-			unsigned int normalIndex = m_currentMesh->normalIndices[i];
-			glm::vec3 normal = m_currentMesh->temp_normals[normalIndex - 1];
-			m_currentMesh->normals.push_back(normal);
-		}
-	}
-	m_currentMesh->isFinalized = true;
 }
 
-bool
-CObjectFile::createObject(std::string& buffer)
+void 
+CObjectFile::getTexture(std::string& buffer)
 {
-	if (m_currentMesh->hasDatas)
+	// Check if texture has any options
+	auto found = buffer.find("-");
+	if (found == std::string::npos)
 	{
-
-		finalizeObject();
-		return true;
+		if (!buffer.compare("map_Kd"))
+		{
+			// Diffuse texture
+			mModel->mCurrentMaterial->mTextureDiffuse = buffer.substr(buffer.find(" ") + 1);
+		}
+		else if (!buffer.compare("map_Ka"))
+		{
+			// Ambient texture
+			mModel->mCurrentMaterial->mTextureAmbient = buffer.substr(buffer.find(" ") + 1);
+		}
+		else if (!buffer.compare("map_Ks"))
+		{
+			// Specular texture
+			mModel->mCurrentMaterial->mTextureSpecular = buffer.substr(buffer.find(" ") + 1);
+		}
+		else if (!buffer.compare("map_d"))
+		{
+			// Opacity texture
+			mModel->mCurrentMaterial->mTextureOpacity = buffer.substr(buffer.find(" ") + 1);
+		}
+		else if (!buffer.compare("map_emissive"))
+		{
+			// Emissive texture
+			mModel->mCurrentMaterial->mTextureEmissive = buffer.substr(buffer.find(" ") + 1);
+		}
+		else if (!buffer.compare("map_Ke"))
+		{
+			// Emissive texture
+			mModel->mCurrentMaterial->mTextureEmissive = buffer.substr(buffer.find(" ") + 1);
+		}
+		else if ((!buffer.compare("map_bump")) || (!buffer.compare("map_Bump")) || (!buffer.compare("bump")))
+		{
+			// Bump texture
+			mModel->mCurrentMaterial->mTextureBump = buffer.substr(buffer.find(" ") + 1);
+		}
+		else if (!buffer.compare("map_Kn"))
+		{
+			// Normal map
+			mModel->mCurrentMaterial->mTextureNormal = buffer.substr(buffer.find(" ") + 1);
+		}
+		else if (!buffer.compare("refl"))
+		{
+			// Reflection texture(s)
+			return;
+		}
+		else if (!buffer.compare("disp"))
+		{
+			// Displacement texture
+			mModel->mCurrentMaterial->mTextureDisp = buffer.substr(buffer.find(" ") + 1);
+		}
+		else if (!buffer.compare("map_ns"))
+		{
+			// Specularity scaling (glossiness)
+			mModel->mCurrentMaterial->mTextureSpecular = buffer.substr(buffer.find(" ") + 1);
+		}
+		else
+		{
+			std::cout << "Texture type not handled" << std::endl;
+			return;
+		}
 	}
-	return false;
+	/*
+	// Textures can have options ...
+	bool clamp = false;
+	getTextureOption(clamp, clampIndex, out);
+	m_pModel->m_pCurrentMaterial->clamp[clampIndex] = clamp;
+
+	std::string texture;
+	m_DataIt = getName<DataArrayIt>(m_DataIt, m_DataItEnd, texture);
+	if (NULL != out) {
+		out->Set(texture);
+	}*/
+
+}
+
+void
+CObjectFile::parseMtl(std::string mtlpath)
+{
+	std::ifstream mtlfile(mtlpath);
+	std::string buffer;
+	
+	while (std::getline(mtlfile, buffer))
+	{
+		if (!buffer.empty())
+		{
+			std::istringstream iss(buffer);
+			auto it = buffer.begin();
+
+			switch (*it)
+			{
+				case 'N':
+				case 'n':
+				{
+					++it;
+					switch (*it)
+					{
+						case 's':   // Specular exponent
+							{
+								auto v = buffer.substr(buffer.find(" ") + 1);
+								mModel->mCurrentMaterial->mShineness = getFloat(v);
+							}
+							break;
+						case 'i':   // Index Of refraction
+							{
+								auto v = buffer.substr(buffer.find(" ") + 1);
+								mModel->mCurrentMaterial->mRefractionIndex = getFloat(v);
+							}
+							break;
+						case 'e':   // New material
+							{
+								std::string mtlname = buffer.substr(buffer.find(" ") + 1);
+								// Check if the new material exists in the model's material map
+								std::map<std::string, CMaterial*>::iterator it = mModel->mMaterialMap.find(mtlname);
+
+								if(mModel->mMaterialMap.end() == it)
+								{
+									mModel->mCurrentMaterial = new CMaterial(mtlname);
+									mModel->mMaterialMap[mtlname] = mModel->mCurrentMaterial;
+								}
+								else 
+								{
+									mModel->mCurrentMaterial = (*it).second;
+								}
+							}
+							break;
+					}
+				}
+				break;
+
+				case 'i':   // Illumination model
+				{
+					std::string v = buffer.substr(buffer.find(" ") + 1);
+					mModel->mCurrentMaterial->mIlluminationModel = std::atoi(v.c_str());
+				}
+				break;
+
+				case 'm':   // Texture
+				case 'b':   // quick'n'dirty - for 'bump' sections
+				case 'r':   // quick'n'dirty - for 'refl' sections
+				{
+					getTexture(buffer);
+				}
+				break;
+
+				case 'k':
+				case 'K':
+				{
+					++it;
+					switch (*it)
+					{
+						case 'a':   // Ambient color
+							{
+								auto v = getVector3(buffer.substr(buffer.find(" ") + 1));
+								mModel->mCurrentMaterial->mAmbientColor = v;
+							}
+							break;
+						case 'd':   // Diffuse color
+							{
+								auto v = getVector3(buffer.substr(buffer.find(" ") + 1));
+								mModel->mCurrentMaterial->mDiffuseColor = v;
+							}
+							break;
+						case 's':   // Specular color
+							{
+								auto v = getVector3(buffer.substr(buffer.find(" ") + 1));
+								mModel->mCurrentMaterial->mSpecularColor = v;
+							}
+							break;
+						case 'e':   // Emissive color
+							{
+								auto v = getVector3(buffer.substr(buffer.find(" ") + 1));
+								mModel->mCurrentMaterial->mEmissiveColor = v;
+							}
+							break;
+					}
+				}
+				break;
+
+				case 'T':
+				{
+					// Material transmission
+					auto found = buffer.find("Tf");
+					if (found != std::string::npos)
+					{
+						auto v = getVector3(buffer.substr(buffer.find(" ") + 1));
+						mModel->mCurrentMaterial->mTransparentColor = v;
+					}
+				}
+				break;
+
+				case 'd':
+				{
+					// A displacement map
+					auto found = buffer.find("disp");
+					if (found != std::string::npos)
+					{
+						getTexture(buffer);
+					}
+					else 
+					{
+						// Alpha value
+						auto v = getFloat(buffer.substr(buffer.find(" ") + 1));
+						mModel->mCurrentMaterial->mAlpha = v;
+					}
+				}
+				break;
+			}
+		}
+	}
 }
 
 bool 
-CObjectFile::parse(std::vector<std::unique_ptr<CMesh>>& meshes)
+CObjectFile::parse()
 {
-	std::unique_ptr<CMesh> mesh(new CMesh);
-	m_currentMesh = std::move(mesh);
 
-	std::ifstream objfile(m_filePath);
-
+	std::ifstream objfile(mModel->mFilePath);
 	std::string buffer;
 
 	while (std::getline(objfile, buffer))
 	{
-		std::istringstream iss(buffer);
-		auto it = buffer.begin();
-		switch (*it)
+		if (!buffer.empty())
 		{
-			// Vertex datas
-			case 'v' :
-
-				if (!m_currentMesh->hasDatas)
+			std::istringstream iss(buffer);
+			auto it = buffer.begin();
+			switch (*it)
+			{
+				// Vertex datas
+				case 'v':
 				{
-					m_currentMesh->hasDatas = true;
-				}
-
-				++it;
-				switch (*it)
-				{
+					++it;
+					switch (*it)
+					{
 					case ' ':
 					case '\t':
-						{
-							cptPos++;
-							auto v = getVector3(buffer.substr(2));
-							m_currentMesh->temp_vertices.push_back(v);
-						}
-						break;
+					{
+						auto v = getVector3(buffer.substr(2));
+						mModel->mVertices.push_back(v);
+					}
+					break;
 
-					case 'n' : 
-						{
-							cptNormal++;
-							if (!m_currentMesh->hasNormals)
-							{
-								m_currentMesh->hasNormals = true;
-							}
+					case 'n':
+					{
+						auto n = getVector3(buffer.substr(3));
+						mModel->mNormals.push_back(n);
+					}
+					break;
 
-							auto n = getVector3(buffer.substr(3));
-							m_currentMesh->temp_normals.push_back(n);
-						}
-						break;
-					
 					case 't':
-						{
-							cptUv++;
-							if (!m_currentMesh->hasTexcoords)
-							{
-								m_currentMesh->hasTexcoords = true;
-							}
-
-							auto t = getVector2(buffer.substr(3));
-							m_currentMesh->temp_uvs.push_back(t);
-						}
-						break;
+					{
+						auto t = getVector2(buffer.substr(3));
+						mModel->mTexcoords.push_back(t);
+					}
+					break;
+					}
 				}
-
 				break;
 
-			case 'm':
-				
+				// MTL file
+				case 'm':
+				{	
+					std::string mtlib = "mtllib";
+					std::size_t found = buffer.find(mtlib);
+					if (found != std::string::npos)
+					{
+						auto mtlpath = buffer.substr(found + mtlib.length() + 1);
+						parseMtl(dirPath + mtlpath);
+					}
+				}
 				break;
-			
-			// Face
-			case 'f':
+
+				// Point
+				case 'p': 
 				{
+
+				}	
+				break;
+
+				// Line
+				case 'l':
+				{
+
+				}
+				break;
+
+				// Face
+				case 'f':
+				{
+					if (!mModel->mCurrentMesh->mHasNormals)
+					{
+						if (mModel->mNormals.size()) 
+						{
+							mModel->mCurrentMesh->mHasNormals = true;
+						}
+					}
+
+					if (!mModel->mCurrentMesh->mHasTexcoords)
+					{
+						if (mModel->mTexcoords.size())
+						{
+							mModel->mCurrentMesh->mHasTexcoords = true;
+						}
+					}
+
 					unsigned int v[3], vn[3], vt[3];
 					getFace(buffer.substr(2), v, vn, vt);
 
-					m_currentMesh->vertexIndices.push_back(v[0]);
-					m_currentMesh->vertexIndices.push_back(v[1]);
-					m_currentMesh->vertexIndices.push_back(v[2]);
+					mModel->mCurrentMesh->vertexIndices.push_back(v[0]);
+					mModel->mCurrentMesh->vertexIndices.push_back(v[1]);
+					mModel->mCurrentMesh->vertexIndices.push_back(v[2]);
 
-					if (m_currentMesh->hasTexcoords)
+					if (mModel->mTexcoords.size())
 					{
-						m_currentMesh->uvIndices.push_back(vt[0]);
-						m_currentMesh->uvIndices.push_back(vt[1]);
-						m_currentMesh->uvIndices.push_back(vt[2]);
+						mModel->mCurrentMesh->uvIndices.push_back(vt[0]);
+						mModel->mCurrentMesh->uvIndices.push_back(vt[1]);
+						mModel->mCurrentMesh->uvIndices.push_back(vt[2]);
+
+						if (!mModel->mCurrentMesh->mHasTexcoords)
+						{
+							mModel->mCurrentMesh->mHasTexcoords = true;
+						}
 					}
 
-					if (m_currentMesh->hasNormals)
+					if (mModel->mNormals.size())
 					{
-						m_currentMesh->normalIndices.push_back(vn[0]);
-						m_currentMesh->normalIndices.push_back(vn[1]);
-						m_currentMesh->normalIndices.push_back(vn[2]);
+						mModel->mCurrentMesh->normalIndices.push_back(vn[0]);
+						mModel->mCurrentMesh->normalIndices.push_back(vn[1]);
+						mModel->mCurrentMesh->normalIndices.push_back(vn[2]);
+
+						if (!mModel->mCurrentMesh->mHasNormals)
+						{
+							mModel->mCurrentMesh->mHasNormals = true;
+						}
 					}
 				}
 				break;
-			
-			// Object
-			case 'o':
+
+				// Object
+				case 'o':
 				{
-					if (createObject(buffer))
+					auto objectName = buffer.substr(buffer.find(" ") + 1);
+
+					mModel->mCurrentObject = NULL;
+
+					for (std::vector<CObject*>::const_iterator it = mModel->mObjects.begin();
+						it != mModel->mObjects.end(); ++it)
 					{
-						meshes.push_back(std::move(m_currentMesh)); 
-						std::unique_ptr<CMesh> mesh(new CMesh);
-						m_currentMesh = std::move(mesh);
+						if ((*it)->mName == objectName)
+						{
+							mModel->mCurrentObject = *it;
+							break;
+						}
 					}
-					m_currentMesh->m_name = buffer.substr(2);
-					offsetPos = cptPos;
-					offsetNormal = cptNormal;
-					offsetUv = cptUv;
+
+					if (NULL == mModel->mCurrentObject) 
+					{
+						mModel->mCurrentObject = new CObject(objectName);
+						mModel->mObjects.push_back(mModel->mCurrentObject);
+						mModel->mCurrentMesh = new CMesh(objectName);
+						mModel->mMeshes.push_back(mModel->mCurrentMesh);
+						unsigned int meshId = static_cast<unsigned int>(mModel->mMeshes.size() - 1);
+						if (NULL != mModel->mCurrentObject)
+						{
+							mModel->mCurrentObject->mMeshes.push_back(meshId);
+						}
+					}
 				}
 				break;
-			
-			// Group
-			case 'g':
 
+				// Group Name
+				case 'g':
+				{
+					if (buffer.length() > 2)
+					{
+						auto name = buffer.substr(buffer.find("g") + 2);
+						mModel->mCurrentObject = NULL;
+
+						for (std::vector<CObject*>::const_iterator it = mModel->mObjects.begin();
+							it != mModel->mObjects.end(); ++it)
+						{
+							if ((*it)->mName == name)
+							{
+								mModel->mCurrentObject = *it;
+								break;
+							}
+						}
+
+						if (NULL == mModel->mCurrentObject)
+						{
+							mModel->mCurrentObject = new CObject(name);
+							mModel->mObjects.push_back(mModel->mCurrentObject);
+							mModel->mCurrentMesh = new CMesh(name);
+							mModel->mMeshes.push_back(mModel->mCurrentMesh);
+							unsigned int meshId = static_cast<unsigned int>(mModel->mMeshes.size() - 1);
+							if (NULL != mModel->mCurrentObject)
+							{
+								mModel->mCurrentObject->mMeshes.push_back(meshId);
+							}
+						}
+					}
+				}
 				break;
 
-			// Comment
-			case '#':
-				std::string c = getComment(buffer);
+				// Get material for current mesh
+				case 'u': 
+				{
+					auto matname = buffer.substr(buffer.find(" ") + 1);
+
+					// Check if the current mesh has not the same material
+					if (mModel->mCurrentMesh->mMaterial == NULL || mModel->mCurrentMesh->mMaterial->mMaterialName != matname)
+					{
+						// Search the material to use in the list of material stored on the model
+						std::map<std::string, CMaterial*>::iterator it = mModel->mMaterialMap.find(matname);
+
+						if (it == mModel->mMaterialMap.end())
+						{
+							// Not found, use default material
+							mModel->mCurrentMaterial = mModel->mDefaultMaterial;
+							matname = mModel->mDefaultMaterial->mMaterialName;
+						}
+						else 
+						{
+							// Use found material
+							mModel->mCurrentMaterial = (*it).second;
+						}
+
+						mModel->mCurrentMesh->mMaterial = mModel->mCurrentMaterial;
+					}
+				}
 				break;
+
+				// Group number
+				case 's':
+				{
+					// Not implemented
+				}
+				break;
+
+				// Comment
+				case '#':
+				{
+					std::string c = getComment(buffer);
+				}
+				break;
+
+				case '\r':
+				{
+					std::string c = getComment(buffer);
+				}
+				break;
+
+			}
 		}
 	}
 
-	if (!m_currentMesh->isFinalized)
-	{
-		/*offsetPos = cptPos;
-		offsetNormal = cptNormal;
-		offsetUv = cptUv;*/
-		finalizeObject();
-		meshes.push_back(std::move(m_currentMesh));
-	}
+	finalizeModel();
 
 	return true;
 }

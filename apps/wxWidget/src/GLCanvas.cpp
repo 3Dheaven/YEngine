@@ -36,7 +36,7 @@ GLCanvas::~GLCanvas()
 
 	delete m_cam;
 	delete m_customShader;
-	delete m_model;
+	delete mScene;
 }
 
 void 
@@ -67,7 +67,9 @@ GLCanvas::setupGraphics()
 						glm::vec3(0.0f, 0.0f, 0.0f), 
 						glm::vec3(0.0f, 1.0f, 0.0f));
 
-	m_model = new CModel("..//..//..//media//teapot.obj");
+	mScene = new CScene();
+	//mScene->add("..//..//..//media//shuttle.obj");
+	mScene->add("..//..//..//media//nanosuit//nanosuit.obj");
 }
 
 void 
@@ -108,7 +110,7 @@ GLCanvas::onPaint(wxPaintEvent& event)
 	m_customShader->shader->setUniform("model_matrix", model);
 
 	// draw the graphics
-	m_model->render(m_customShader);
+	mScene->render(m_customShader);
 
 	// and display
 	glFlush();

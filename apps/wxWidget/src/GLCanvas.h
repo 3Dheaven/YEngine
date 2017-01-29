@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../yengine/scene/CModel.h"
+#include "../../../yengine/scene/CScene.h"
 #include "../../../yengine/CShaderFactory.h"
 #include "../../../yengine/scene/CCamera.h"
 
@@ -55,7 +55,7 @@ private:
 	typedef std::chrono::time_point<std::chrono::high_resolution_clock> sclock;
 	sclock m_startTime;
 
-	CModel *m_model;
+	CScene *mScene;
 
 	GLfloat m_lastMouseX;
 	GLfloat m_lastMouseY;

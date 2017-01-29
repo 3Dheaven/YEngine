@@ -16,7 +16,7 @@ CMesh::setupMesh()
 	glVertexArrayAttribBinding(mVao, 0, 0);
 	glEnableVertexArrayAttrib(mVao, 0);
 
-	if (hasTexcoords)
+	if (mHasTexcoords)
 	{
 		// Create texture coordinates buffer
 		glCreateBuffers(1, &mUVbuf);
@@ -29,7 +29,7 @@ CMesh::setupMesh()
 		glEnableVertexArrayAttrib(mVao, 1);
 	}
 
-	if (hasNormals)
+	if (mHasNormals)
 	{
 		// Create texture coordinates buffer
 		glCreateBuffers(1, &mNbuf);
@@ -51,13 +51,12 @@ CMesh::render()
 	glBindVertexArray(0);
 }
 
-CMesh::CMesh()
+CMesh::CMesh(std::string name)
 {
-	hasDatas = false;
-	hasNormals = false;
-	hasTexcoords = false;
-	isFinalized = false;
-	m_name = "unknown";
+	mHasNormals = false;
+	mHasTexcoords = false;
+	mName = name;
+	mMaterial = NULL;
 }
 
 CMesh::~CMesh()
@@ -65,4 +64,5 @@ CMesh::~CMesh()
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
 	glDisableVertexArrayAttrib(mVao, 0);
+	delete mMaterial;
 }

@@ -1,43 +1,27 @@
 #include "CModel.h"
 
-CModel::CModel()
+CModel::CModel(std::string path)
 {
+	mCurrentMesh = NULL;
+	mCurrentMaterial = NULL;
+	mCurrentObject = NULL; 
+	mDefaultMaterial = new CMaterial("dafault-mat");
+	mFilePath = path;
 
+	auto filename = path.substr(path.find_last_of("/\\") + 1);
+	mName = filename.substr(0, filename.find("."));
 }
 
-CModel::CModel(const char* path)
+CModel::~CModel()
 {
-	m_filepath = path;
-	loadModel(path);
-}
-
-void 
-CModel::loadModel(const char* path)
-{
-	std::string ext = std::string(path).substr(std::string(path).find_last_of(".") + 1);
-
-	if (ext == "obj")
-	{
-		std::cout << "> Format .obj supported ..." << std::endl;
-		CObjectFile obj(path);
-		obj.parse(m_meshes);
-
-		for (auto &i : m_meshes)
-		{
-			i.get()->setupMesh(/*sh*/);
-		}
-	}
-	else
-	{
-		std::cout << "> Files ." << ext << " not supported ..." << std::endl;
-	}
+	delete mDefaultMaterial;
 }
 
 void 
 CModel::render(CShaderFactory *sh)
 {
-	for (auto &i : m_meshes)
+	/*for (auto &i : m_meshes)
 	{
-		i.get()->render(/*sh*/);
-	}
+		i.get()->render(/*sh*//*);
+	}*/
 }

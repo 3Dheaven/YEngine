@@ -14,25 +14,45 @@
 #include "CMesh.h"
 #include "CObjFile.h"
 #include "../CShaderFactory.h"
+#include "CMaterial.h"
+#include "CObject.h"
 
 using namespace std;
 
 class CModel
 {
-	private:
-		vector<std::unique_ptr<CMesh>> m_meshes;
-		const char* m_filepath;
+	public:
+		
+		//! Material map
+		std::map<std::string, CMaterial*> mMaterialMap;
+		//! All loaded position vertices
+		std::vector<glm::vec3> mVertices;
+		//! All loaded texture coordinates vertices
+		std::vector<glm::vec2> mTexcoords;
+		//! All loaded normals vertices
+		std::vector<glm::vec3> mNormals;
+		//! Model name
+		std::string mName;
+		//! List of objects which compose the model
+		vector<CObject*> mObjects;
+		//! List of all meshes
+		vector<CMesh*> mMeshes;
+		//! Pointer on current mesh
+		CMesh* mCurrentMesh;
+		//! Pointer on current material
+		CMaterial* mCurrentMaterial;
+		//! Pointer on current object
+		CObject* mCurrentObject;
+		//! Model path
+		std::string mFilePath;
+		//! Default material
+		CMaterial* mDefaultMaterial;
 
 	public:
-		CModel();
 
-		// Constructor, expects a filepath to a 3D model.
-		CModel(const char* path);
+		CModel(std::string path);
+		~CModel();
 
-		// Draws the model, and thus all its meshes
 		void render(CShaderFactory *sh);
-
-	private:
-		void loadModel(const char* path);
 };
 

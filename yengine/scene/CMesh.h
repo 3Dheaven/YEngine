@@ -10,6 +10,7 @@
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include "../CShaderFactory.h"
+#include "CMaterial.h"
 
 using namespace std;
 
@@ -37,13 +38,14 @@ class CMesh
 		GLuint mUVbuf;
 		GLuint mNbuf;
 
-		bool hasTexcoords;
-		bool hasNormals;
-		bool hasDatas;
-		bool isFinalized;
-		std::string m_name;
+		bool mHasTexcoords;
+		bool mHasNormals;
 
-		CMesh();
+		bool isFinalized;
+		std::string mName;
+		CMaterial *mMaterial;
+
+		CMesh(std::string name);
 		~CMesh();
 
 		void render();
