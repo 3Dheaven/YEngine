@@ -17,6 +17,7 @@ find_path(SOIL_INCLUDE_DIR SOIL.h
 	/usr/local/include
 	/opt/local/include
 	${CMAKE_SOURCE_DIR}/includes
+	${CMAKE_MODULE_PATH}/../../dependencies/soil/include
 )
 
 find_library(SOIL_LIBRARY SOIL
@@ -25,6 +26,7 @@ find_library(SOIL_LIBRARY SOIL
 	/usr/local/lib
 	/opt/local/lib
 	${CMAKE_SOURCE_DIR}/lib
+	${CMAKE_MODULE_PATH}/../../dependencies/soil/lib
 )
 
 IF(SOIL_INCLUDE_DIR AND SOIL_LIBRARY)
