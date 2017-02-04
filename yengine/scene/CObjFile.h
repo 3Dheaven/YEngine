@@ -9,6 +9,7 @@
 #include <fstream>
 #include "CMesh.h"
 #include "CModel.h"
+#include "../image/CTexture.h"
 
 class CModel;
 

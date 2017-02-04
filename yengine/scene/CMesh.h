@@ -48,6 +48,6 @@ class CMesh
 		CMesh(std::string name);
 		~CMesh();
 
-		void render();
+		void render(CShaderFactory * shader);
 		void setupMesh();
 };

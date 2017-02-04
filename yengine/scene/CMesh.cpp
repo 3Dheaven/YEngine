@@ -3,6 +3,12 @@
 void 
 CMesh::setupMesh()
 {
+	// setup material
+	if (mMaterial != NULL)
+	{
+
+	}
+
 	// Create the vertex array object
 	glCreateVertexArrays(1, &mVao);
 
@@ -44,11 +50,13 @@ CMesh::setupMesh()
 }
 
 void 
-CMesh::render()
+CMesh::render(CShaderFactory * shader)
 {
+	mMaterial->bind(shader);
 	glBindVertexArray(mVao);
 	glDrawArrays(GL_TRIANGLES, 0, 3 * vertices.size());
 	glBindVertexArray(0);
+	mMaterial->unbind();
 }
 
 CMesh::CMesh(std::string name)
@@ -62,7 +70,17 @@ CMesh::CMesh(std::string name)
 CMesh::~CMesh()
 {
 	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
+
+	if (mHasTexcoords)
+	{
+		glDisableVertexAttribArray(1);
+	}
+
+	if (mHasNormals)
+	{
+		glDisableVertexAttribArray(2);
+	}
+
 	glDisableVertexArrayAttrib(mVao, 0);
 	delete mMaterial;
 }

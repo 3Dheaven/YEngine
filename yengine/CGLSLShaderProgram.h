@@ -17,11 +17,12 @@ class CGLSLShaderProgram
 {
 	private:
 
-		GLuint mProgramID;
+		
 		std::map<std::string, GLint> mAttributes;
 		
 	public:
 			
+		GLuint mProgramID;
 		CGLSLShaderProgram();
 		CGLSLShaderProgram(std::initializer_list<CGLSLShader> shaders);
 		~CGLSLShaderProgram();

@@ -69,9 +69,9 @@ GLCanvas::setupGraphics()
 
 	mScene = new CScene();
 	//mScene->add("..//..//..//media//shuttle.obj");
-	//mScene->add("..//..//..//media//nanosuit//nanosuit.obj");
-	mScene->add("..//..//..//media//axis//axisXYZ.obj");
-	mScene->add("..//..//..//media//vis.obj");
+	mScene->add("..//..//..//media//nanosuit//nanosuit.obj");
+	//mScene->add("..//..//..//media//axis//axisXYZ.obj");
+	//mScene->add("..//..//..//media//vis.obj");
 }
 
 void 
@@ -94,8 +94,10 @@ GLCanvas::onPaint(wxPaintEvent& event)
 	SetCurrent(*m_context);
 	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glCullFace(GL_BACK);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glDisable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+	//glCullFace(GL_BACK);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	auto t_now = std::chrono::high_resolution_clock::now();
 	auto time = std::chrono::duration_cast<std::chrono::microseconds>(t_now - m_startTime).count();
 

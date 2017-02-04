@@ -215,60 +215,63 @@ CObjectFile::getTexture(std::string& buffer)
 	auto found = buffer.find("-");
 	if (found == std::string::npos)
 	{
-		if (!buffer.compare("map_Kd"))
+		found = buffer.find(" ");
+		auto key = buffer.substr(0, found);
+
+		if (!key.compare("map_Kd"))
 		{
 			// Diffuse texture
-			mModel->mCurrentMaterial->mTextureDiffuse = buffer.substr(buffer.find(" ") + 1);
+			mModel->mCurrentMaterial->mTextureDiffuse = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
 		}
-		else if (!buffer.compare("map_Ka"))
+		else if (!key.compare("map_Ka"))
 		{
 			// Ambient texture
-			mModel->mCurrentMaterial->mTextureAmbient = buffer.substr(buffer.find(" ") + 1);
+			mModel->mCurrentMaterial->mTextureAmbient = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
 		}
-		else if (!buffer.compare("map_Ks"))
+		else if (!key.compare("map_Ks"))
 		{
 			// Specular texture
-			mModel->mCurrentMaterial->mTextureSpecular = buffer.substr(buffer.find(" ") + 1);
+			mModel->mCurrentMaterial->mTextureSpecular = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
 		}
-		else if (!buffer.compare("map_d"))
+		else if (!key.compare("map_d"))
 		{
 			// Opacity texture
-			mModel->mCurrentMaterial->mTextureOpacity = buffer.substr(buffer.find(" ") + 1);
+			mModel->mCurrentMaterial->mTextureOpacity = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
 		}
-		else if (!buffer.compare("map_emissive"))
+		else if (!key.compare("map_emissive"))
 		{
 			// Emissive texture
-			mModel->mCurrentMaterial->mTextureEmissive = buffer.substr(buffer.find(" ") + 1);
+			mModel->mCurrentMaterial->mTextureEmissive = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
 		}
-		else if (!buffer.compare("map_Ke"))
+		else if (!key.compare("map_Ke"))
 		{
 			// Emissive texture
-			mModel->mCurrentMaterial->mTextureEmissive = buffer.substr(buffer.find(" ") + 1);
+			mModel->mCurrentMaterial->mTextureEmissive = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
 		}
-		else if ((!buffer.compare("map_bump")) || (!buffer.compare("map_Bump")) || (!buffer.compare("bump")))
+		else if ((!key.compare("map_bump")) || (!buffer.compare("map_Bump")) || (!buffer.compare("bump")))
 		{
 			// Bump texture
-			mModel->mCurrentMaterial->mTextureBump = buffer.substr(buffer.find(" ") + 1);
+			mModel->mCurrentMaterial->mTextureBump = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
 		}
-		else if (!buffer.compare("map_Kn"))
+		else if (!key.compare("map_Kn"))
 		{
 			// Normal map
-			mModel->mCurrentMaterial->mTextureNormal = buffer.substr(buffer.find(" ") + 1);
+			mModel->mCurrentMaterial->mTextureNormal = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
 		}
-		else if (!buffer.compare("refl"))
+		else if (!key.compare("refl"))
 		{
 			// Reflection texture(s)
 			return;
 		}
-		else if (!buffer.compare("disp"))
+		else if (!key.compare("disp"))
 		{
 			// Displacement texture
-			mModel->mCurrentMaterial->mTextureDisp = buffer.substr(buffer.find(" ") + 1);
+			mModel->mCurrentMaterial->mTextureDisp = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
 		}
-		else if (!buffer.compare("map_ns"))
+		else if (!key.compare("map_ns"))
 		{
 			// Specularity scaling (glossiness)
-			mModel->mCurrentMaterial->mTextureSpecular = buffer.substr(buffer.find(" ") + 1);
+			mModel->mCurrentMaterial->mTextureSpecular = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
 		}
 		else
 		{

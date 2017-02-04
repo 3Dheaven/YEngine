@@ -61,7 +61,7 @@ CScene::render(CShaderFactory *shader)
 		{
 			for (auto i : o->mMeshes)
 			{
-				m->mMeshes[i]->render();
+				m->mMeshes[i]->render(shader);
 			}
 		}
 	}

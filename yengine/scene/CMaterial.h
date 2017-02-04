@@ -10,6 +10,8 @@
 #include <GL/glew.h> 
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
+#include "../CShaderFactory.h"
+#include "../image/CTexture.h"
 
 using namespace std;
 
@@ -30,17 +32,20 @@ class CMaterial
 
 		int mIlluminationModel;
 
-		std::string mTextureAmbient;
-		std::string mTextureDiffuse;
-		std::string mTextureSpecular;
-		std::string mTextureEmissive;	
-		std::string mTextureOpacity;
-		std::string mTextureBump;
-		std::string mTextureNormal;
-		std::string mTextureDisp;
+		CTexture* mTextureAmbient;
+		CTexture* mTextureDiffuse;
+		CTexture* mTextureSpecular;
+		CTexture* mTextureEmissive;
+		CTexture* mTextureOpacity;
+		CTexture* mTextureBump;
+		CTexture* mTextureNormal;
+		CTexture* mTextureDisp;
 
 	public:
 		CMaterial(std::string name);
 		~CMaterial();
+
+		void bind(CShaderFactory * shader);
+		void unbind();
 };
 
