@@ -3,6 +3,7 @@
 #include "../../../yengine/scene/CScene.h"
 #include "../../../yengine/CShaderFactory.h"
 #include "../../../yengine/scene/CCamera.h"
+#include "../../../yengine/core/CGraphicDriver.h"
 
 #include <memory>
 #include "wx/glcanvas.h"
@@ -48,6 +49,7 @@ private:
 private:
 	std::unique_ptr<wxGLContext> m_context;
 	
+	CGraphicDriver *mGraphicDriver;
 	CShaderFactory *m_customShader;
 	CCamera *m_cam;
 	std::unique_ptr<wxTimer> m_timer;

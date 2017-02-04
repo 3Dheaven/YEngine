@@ -44,8 +44,5 @@ class CMaterial
 	public:
 		CMaterial(std::string name);
 		~CMaterial();
-
-		void bind(CShaderFactory * shader);
-		void unbind();
 };
 

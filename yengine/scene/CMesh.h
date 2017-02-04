@@ -47,7 +47,4 @@ class CMesh
 
 		CMesh(std::string name);
 		~CMesh();
-
-		void render(CShaderFactory * shader);
-		void setupMesh();
 };

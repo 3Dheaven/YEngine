@@ -1,14 +1,22 @@
 #include "CScene.h"
 
-CScene::CScene()
+CScene::CScene(CGraphicDriver *driver)
 {
-
+	gDriver = driver;
 }
 
 CScene::~CScene()
 {
 	for (auto i : mModels)
 	{
+		for (auto o : i->mObjects)
+		{
+			for (auto m : o->mMeshes)
+			{
+				gDriver->clean(i->mMeshes[m]);
+			}
+		}
+
 		delete i;
 	}
 }
@@ -24,24 +32,19 @@ CScene::add(std::string modelPath)
 
 		CModel* model = new CModel(modelPath);
 
-		CObjectFile* obj = new CObjectFile(model);
-		if (obj->parse())
+		CObjectFile obj = CObjectFile(model);
+		if (obj.parse())
 		{
-			mModels.push_back(model);
-
-			for (auto i : mModels)
+			for (auto o : model->mObjects)
 			{
-				for (auto o : i->mObjects)
+				for (auto m : o->mMeshes)
 				{
-					for (auto m : o->mMeshes)
-					{
-						i->mMeshes[m]->setupMesh();
-					}
+					gDriver->init(model->mMeshes[m]);
 				}
 			}
 
+			mModels.push_back(model);
 		}	
-		delete obj;
 	}
 	else
 	{
@@ -55,13 +58,13 @@ CScene::add(std::string modelPath)
 void
 CScene::render(CShaderFactory *shader)
 {
-	for (auto m : mModels)
+	for (auto i : mModels)
 	{
-		for (auto o : m->mObjects)
+		for (auto o : i->mObjects)
 		{
-			for (auto i : o->mMeshes)
+			for (auto m : o->mMeshes)
 			{
-				m->mMeshes[i]->render(shader);
+				gDriver->render(i->mMeshes[m], shader);
 			}
 		}
 	}

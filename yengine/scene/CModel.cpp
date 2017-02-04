@@ -16,12 +16,3 @@ CModel::~CModel()
 {
 	delete mDefaultMaterial;
 }
-
-void 
-CModel::render(CShaderFactory *sh)
-{
-	/*for (auto &i : m_meshes)
-	{
-		i.get()->render(/*sh*//*);
-	}*/
-}

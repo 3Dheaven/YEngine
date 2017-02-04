@@ -14,20 +14,25 @@
 #include "CModel.h"
 #include "CObjFile.h"
 #include "../CShaderFactory.h"
+#include "../core/CGraphicDriver.h"
 
 using namespace std;
 
 class CScene 
 {
-	public:
+public:
+	
+	CScene(CGraphicDriver *driver);
+	~CScene();
 
-		std::string mName;
-		std::vector<CModel*> mModels;
+	bool add(std::string modelPath);
+	void render(CShaderFactory *shader);
+	void setup();
 
-		CScene();
-		~CScene();
+private:
 
-		bool add(std::string modelPath);
-		void render(CShaderFactory *shader);
+	CGraphicDriver *gDriver;
+	std::string mName;
+	std::vector<CModel*> mModels;
 		
 };

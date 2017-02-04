@@ -37,6 +37,7 @@ GLCanvas::~GLCanvas()
 	delete m_cam;
 	delete m_customShader;
 	delete mScene;
+	delete mGraphicDriver;
 }
 
 void 
@@ -60,6 +61,8 @@ GLCanvas::onTimer(wxTimerEvent& event)
 void 
 GLCanvas::setupGraphics()
 {
+	mGraphicDriver = new CGraphicDriver();
+
 	m_customShader = new CShaderFactory("../shaders/shader.vert",
 										"../shaders/shader.frag");
 
@@ -67,7 +70,7 @@ GLCanvas::setupGraphics()
 						glm::vec3(0.0f, 0.0f, 0.0f), 
 						glm::vec3(0.0f, 1.0f, 0.0f));
 
-	mScene = new CScene();
+	mScene = new CScene(mGraphicDriver);
 	//mScene->add("..//..//..//media//shuttle.obj");
 	mScene->add("..//..//..//media//nanosuit//nanosuit.obj");
 	//mScene->add("..//..//..//media//axis//axisXYZ.obj");

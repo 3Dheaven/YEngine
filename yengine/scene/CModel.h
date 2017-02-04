@@ -52,7 +52,5 @@ class CModel
 
 		CModel(std::string path);
 		~CModel();
-
-		void render(CShaderFactory *sh);
 };
 
