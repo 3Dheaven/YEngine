@@ -1,12 +1,10 @@
-﻿#include "wx/wxprec.h"
-#include "GLCanvas.h"
-#include "CRenderer.h"
-#include "MainWindow.h"
+﻿#include "MainWindow.h"
 
 const int mainCanvasID = 2000;			// TriangleCanvas widget ID
 
 BEGIN_EVENT_TABLE(MainWindow, wxFrame)
 EVT_CLOSE(MainWindow::onClose)
+EVT_COLOURPICKER_CHANGED(ID_ColorPicker, MainWindow::OnColourChanged)
 END_EVENT_TABLE()
 
 enum E_API3D 
@@ -18,33 +16,47 @@ enum E_API3D
 MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoint& pos, const wxSize& size)
 	: wxFrame(parent, wxID_ANY, title, pos, size, wxMINIMIZE_BOX | wxCLOSE_BOX | wxSYSTEM_MENU | wxCAPTION | wxCLIP_CHILDREN)
 {
+	mGDriver = NULL;
+	mRenderer = NULL;
+
+	mMainPanel = new wxPanel(this, wxID_ANY);
+
 	// Display MainWindow on screen center
 	Centre();
 
-	E_API3D gApi = API_OPENGL;
+	E_API3D gApi = API_VULKAN;
 	switch (gApi)
 	{
 		case API_VULKAN: 
 			{
-				std::cout << "API_VULKAN\n";
+				std::cout << "API_VULKAN\n"; 
+				CVulkanCanvas* vcanvas = new CVulkanCanvas(mMainPanel, wxID_ANY, { 0, 0 }, { 600, 600 });
+				//mGDriver = new CGraphicDriver();
+				//mRenderer = new CRenderer(mGDriver);
+				//CGLCanvas->setGModule(mRenderer);
 			}
 			break;
 
 		case API_OPENGL: 
 			{
-				GLCanvas* glCanvas = new GLCanvas(this, mainCanvasID, nullptr, { 0, 0 }, { 600, 600 });
+				CGLCanvas* glcanvas = new CGLCanvas(mMainPanel, mainCanvasID, nullptr, { 0, 0 }, { 600, 600 });
 				mGDriver = new CGraphicDriver();
 				mRenderer = new CRenderer(mGDriver);
-				glCanvas->setGModule(mRenderer);
+				glcanvas->setGModule(mRenderer);
 			}
 			break;
 	}
 
-	wxPanel * bottomPanel = new wxPanel(this, wxID_ANY, { 0, 600 }, { 600, 200 });
-	wxPanel * rightPanel = new wxPanel(this, wxID_ANY, { 600, 0 }, { 400, 800 });
+	
+	wxPanel * bottomPanel = new wxPanel(mMainPanel, wxID_ANY, { 0, 600 }, { 600, 200 });
+	wxPanel * rightPanel = new wxPanel(mMainPanel, wxID_ANY, { 600, 0 }, { 400, 800 });
 
 	wxButton *button = new wxButton(rightPanel, wxID_EXIT, wxT("Quit"), wxPoint(0, 600), { 400, 200 });
 		
+	// Create a wxColourPickerCtrl control
+	colorHasChanged = false;
+	wxColourPickerCtrl* colourPickerCtrl = new wxColourPickerCtrl(rightPanel, ID_ColorPicker, wxStockGDI::COLOUR_RED, { 20, 20 });
+
 	wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
 	m_console = new wxTextCtrl(bottomPanel, wxID_ANY, wxEmptyString, { 0, 0 }, { 600, 140 }, wxTE_MULTILINE | wxTE_READONLY);
 
@@ -76,8 +88,15 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 
 MainWindow::~MainWindow()
 {
-	delete mGDriver;
-	delete mRenderer;
+	if (mGDriver != NULL)
+	{
+		delete mGDriver;
+	}
+
+	if (mRenderer != NULL)
+	{
+		delete mRenderer;
+	}
 }
 
 wxTextCtrl* MainWindow::getDebugConsole()
@@ -98,6 +117,16 @@ MainWindow::OnSettings(wxCommandEvent& WXUNUSED(event))
 		wxT("A settings window will be used instead of this messagebox."), 			
 		wxT("Test message box"),			
 		wxOK | wxICON_INFORMATION);
+}
+
+void MainWindow::OnColourChanged(wxColourPickerEvent& evt)
+{
+	// Use the wxColourPickerEvent::GetColour() function to get the selected
+	// color and set the color of the text control accordingly.
+	//m_textCtrl->SetForegroundColour(evt.GetColour());
+	//m_textCtrl->Refresh();
+	colorHasChanged = true;
+	color = evt.GetColour();
 }
 
 void 

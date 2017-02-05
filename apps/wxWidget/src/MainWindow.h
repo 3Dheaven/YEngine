@@ -1,8 +1,14 @@
 #pragma once
 #include <wx/timer.h>
 #include "../../../yengine/core/CGraphicDriver.h"
+#include <wx/clrpicker.h>
+#include "wx/wxprec.h"
+#include "CVulkanCanvas.h"
+#include "CGLCanvas.h"
+#include "CRenderer.h"
 
 class CRenderer;
+class CVulkanCanvas;
 
 class MainWindow : public wxFrame
 {
@@ -10,13 +16,21 @@ private:
 	enum 
 	{ 
 		ID_Quit = wxID_HIGHEST + 1, 
-		ID_Settings
+		ID_Settings,
+		ID_ColorPicker
 	};
 
 	CRenderer* mRenderer;
-	CGraphicDriver *mGDriver;
+	CGraphicDriver* mGDriver;
 
 public:
+	wxPanel* mMainPanel;
+	wxPanel* mBottomPanel;
+	wxPanel* mRightPanel;
+	bool colorHasChanged;
+	wxColour color;
+	wxTextCtrl* m_console;
+
 	MainWindow(wxWindow* parent, const std::wstring& title, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize);
 	virtual ~MainWindow();
 	MainWindow(const MainWindow& tw) = delete;
@@ -29,9 +43,10 @@ public:
 	void onClose(wxCloseEvent& evt);
 
 	wxTextCtrl *getDebugConsole();
-
+	void OnColourChanged(wxColourPickerEvent& evt);
+	
 private:
-	wxTextCtrl* m_console;
+	
 	DECLARE_EVENT_TABLE()
 };
 

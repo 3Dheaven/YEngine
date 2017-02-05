@@ -1,14 +1,14 @@
 #include "CRenderTimer.h"
 
-CRenderTimer::CRenderTimer(GLCanvas* glcanvas) : wxTimer()
+CRenderTimer::CRenderTimer(CGLCanvas* CGLCanvas) : wxTimer()
 {
-	CRenderTimer::m_glcanvas = glcanvas;
+	CRenderTimer::m_CGLCanvas = CGLCanvas;
 }
 
 void 
 CRenderTimer::notify()
 {
-	m_glcanvas->Refresh(false);
+	m_CGLCanvas->Refresh(false);
 }
 
 void 
