@@ -1,5 +1,6 @@
 ﻿#include "wx/wxprec.h"
 #include "GLCanvas.h"
+#include "CRenderer.h"
 #include "MainWindow.h"
 
 const int mainCanvasID = 2000;			// TriangleCanvas widget ID
@@ -8,14 +9,37 @@ BEGIN_EVENT_TABLE(MainWindow, wxFrame)
 EVT_CLOSE(MainWindow::onClose)
 END_EVENT_TABLE()
 
+enum E_API3D 
+{ 
+	API_VULKAN, 
+	API_OPENGL
+};
+
 MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoint& pos, const wxSize& size)
 	: wxFrame(parent, wxID_ANY, title, pos, size, wxMINIMIZE_BOX | wxCLOSE_BOX | wxSYSTEM_MENU | wxCAPTION | wxCLIP_CHILDREN)
 {
 	// Display MainWindow on screen center
 	Centre();
 
-	GLCanvas* glCanvas = new GLCanvas(this, mainCanvasID, nullptr, { 0, 0 }, { 600, 600 });
-	
+	E_API3D gApi = API_OPENGL;
+	switch (gApi)
+	{
+		case API_VULKAN: 
+			{
+				std::cout << "API_VULKAN\n";
+			}
+			break;
+
+		case API_OPENGL: 
+			{
+				GLCanvas* glCanvas = new GLCanvas(this, mainCanvasID, nullptr, { 0, 0 }, { 600, 600 });
+				mGDriver = new CGraphicDriver();
+				mRenderer = new CRenderer(mGDriver);
+				glCanvas->setGModule(mRenderer);
+			}
+			break;
+	}
+
 	wxPanel * bottomPanel = new wxPanel(this, wxID_ANY, { 0, 600 }, { 600, 200 });
 	wxPanel * rightPanel = new wxPanel(this, wxID_ANY, { 600, 0 }, { 400, 800 });
 
@@ -52,7 +76,8 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 
 MainWindow::~MainWindow()
 {
-	
+	delete mGDriver;
+	delete mRenderer;
 }
 
 wxTextCtrl* MainWindow::getDebugConsole()

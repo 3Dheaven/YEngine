@@ -1,5 +1,8 @@
 #pragma once
 #include <wx/timer.h>
+#include "../../../yengine/core/CGraphicDriver.h"
+
+class CRenderer;
 
 class MainWindow : public wxFrame
 {
@@ -9,6 +12,9 @@ private:
 		ID_Quit = wxID_HIGHEST + 1, 
 		ID_Settings
 	};
+
+	CRenderer* mRenderer;
+	CGraphicDriver *mGDriver;
 
 public:
 	MainWindow(wxWindow* parent, const std::wstring& title, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize);

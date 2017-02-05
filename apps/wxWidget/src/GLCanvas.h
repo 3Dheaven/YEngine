@@ -4,6 +4,7 @@
 #include "../../../yengine/CShaderFactory.h"
 #include "../../../yengine/scene/CCamera.h"
 #include "../../../yengine/core/CGraphicDriver.h"
+#include "CRenderer.h"
 
 #include <memory>
 #include "wx/glcanvas.h"
@@ -20,7 +21,7 @@ using namespace glm;
 static const int INTERVAL = 1000 / 60;
 static const int TIMERNUMBER = 3;
 
-class GLCanvas : public wxGLCanvas
+class GLCanvas : public wxGLCanvas 
 {
 public:
 	GLCanvas(wxWindow* parent, wxWindowID id = wxID_ANY,
@@ -34,6 +35,8 @@ public:
 	GLCanvas(GLCanvas&& tc) = delete;
 	GLCanvas& operator=(const GLCanvas& tc) = delete;
 	GLCanvas& operator=(GLCanvas&& tc) = delete;
+
+	void setGModule(CRenderer *renderer);
 
 private:
 	void initializeGLEW();
@@ -49,19 +52,16 @@ private:
 private:
 	std::unique_ptr<wxGLContext> m_context;
 	
-	CGraphicDriver *mGraphicDriver;
-	CShaderFactory *m_customShader;
-	CCamera *m_cam;
-	std::unique_ptr<wxTimer> m_timer;
+	std::unique_ptr<wxTimer> mTimer;
 
 	typedef std::chrono::time_point<std::chrono::high_resolution_clock> sclock;
-	sclock m_startTime;
+	sclock mStartTime;
 
-	CScene *mScene;
+	CRenderer* mGModule;
 
-	GLfloat m_lastMouseX;
-	GLfloat m_lastMouseY;
-	bool m_firstMouse;
+	GLfloat mLastMouseX;
+	GLfloat mLastMouseY;
+	bool mFirstMouse;
 
 	DECLARE_EVENT_TABLE()
 };

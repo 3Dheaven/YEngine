@@ -15,18 +15,18 @@ GLCanvas::GLCanvas(wxWindow* parent, wxWindowID id,
 
 	SetCurrent(*m_context);
 	initializeGLEW();
-	setupGraphics();
+
 	setupControls();
 
-	m_timer = std::make_unique<wxTimer>(this, TIMERNUMBER);
-	m_timer->Start(INTERVAL);
-	m_startTime = std::chrono::high_resolution_clock::now();
+	mTimer = std::make_unique<wxTimer>(this, TIMERNUMBER);
+	mTimer->Start(INTERVAL);
+	mStartTime = std::chrono::high_resolution_clock::now();
 }
 
 GLCanvas::~GLCanvas()
 {
 	SetCurrent(*m_context);
-	m_timer->Stop();
+	mTimer->Stop();
 
 	Disconnect(wxEVT_LEFT_DOWN, wxMouseEventHandler(GLCanvas::onMouseEvent), NULL, this);
 	Disconnect(wxEVT_LEFT_UP, wxMouseEventHandler(GLCanvas::onMouseEvent), NULL, this);
@@ -34,10 +34,12 @@ GLCanvas::~GLCanvas()
 	Disconnect(wxEVT_MOUSEWHEEL, wxMouseEventHandler(GLCanvas::onMouseWheel), NULL, this);
 	Disconnect(wxEVT_KEY_DOWN, wxKeyEventHandler(GLCanvas::onKeyDown), NULL, this);
 
-	delete m_cam;
-	delete m_customShader;
-	delete mScene;
-	delete mGraphicDriver;
+}
+
+void 
+GLCanvas::setGModule(CRenderer *renderer)
+{
+	mGModule = renderer;
 }
 
 void 
@@ -59,30 +61,11 @@ GLCanvas::onTimer(wxTimerEvent& event)
 }
 
 void 
-GLCanvas::setupGraphics()
-{
-	mGraphicDriver = new CGraphicDriver();
-
-	m_customShader = new CShaderFactory("../shaders/shader.vert",
-										"../shaders/shader.frag");
-
-	m_cam = new CCamera(glm::vec3(0.0f, 0.0f, 5.0f), 
-						glm::vec3(0.0f, 0.0f, 0.0f), 
-						glm::vec3(0.0f, 1.0f, 0.0f));
-
-	mScene = new CScene(mGraphicDriver);
-	//mScene->add("..//..//..//media//shuttle.obj");
-	mScene->add("..//..//..//media//nanosuit//nanosuit.obj");
-	//mScene->add("..//..//..//media//axis//axisXYZ.obj");
-	//mScene->add("..//..//..//media//vis.obj");
-}
-
-void 
 GLCanvas::setupControls()
 {
-	m_lastMouseX = 300;
-	m_lastMouseY = 300;
-	m_firstMouse = true;
+	mLastMouseX = 300;
+	mLastMouseY = 300;
+	mFirstMouse = true;
 
 	Connect(wxEVT_LEFT_DOWN, wxMouseEventHandler(GLCanvas::onMouseEvent), NULL, this);
 	Connect(wxEVT_LEFT_UP, wxMouseEventHandler(GLCanvas::onMouseEvent), NULL, this);
@@ -102,24 +85,9 @@ GLCanvas::onPaint(wxPaintEvent& event)
 	//glCullFace(GL_BACK);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	auto t_now = std::chrono::high_resolution_clock::now();
-	auto time = std::chrono::duration_cast<std::chrono::microseconds>(t_now - m_startTime).count();
+	auto time = std::chrono::duration_cast<std::chrono::microseconds>(t_now - mStartTime).count();
 
-	m_customShader->shader->use();
-
-	m_cam->projMatrix = glm::perspective(m_cam->getZoom(), (float)600 / (float)600, 0.1f, 100.0f);
-	m_customShader->shader->setUniform("projection_matrix", m_cam->projMatrix);
-	m_customShader->shader->setUniform("view_matrix", m_cam->getViewMatrix());
-	// glm::vec3((sin(time * 1.0f) + 1.0f) / 2.0f, (sin(time * 0.5f) + 1.0f) / 2.0f, (cos(time * 0.25f) + 1.0f) / 2.0f)
-	m_customShader->shader->setUniform("custom_color", glm::vec3(0.0,1.0,0.0));
-
-	glm::mat4 model;
-	//glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); 
-	model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f)); 
-	//model = glm::rotate(model, (float)time * 45.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-	m_customShader->shader->setUniform("model_matrix", model);
-
-	// draw the graphics
-	mScene->render(m_customShader);
+	mGModule->render();
 
 	// and display
 	glFlush();
@@ -136,25 +104,29 @@ void
 GLCanvas::onKeyDown(wxKeyEvent& event)
 {
 	int code = event.GetKeyCode();
-	
-	if (code == 'z' || code == 'Z')
-	{
-		m_cam->processKeyboard(FORWARD, 0.001);
-	}
+	auto cam = mGModule->getCam();
 
-	if (code == 's' || code == 'S')
+	if (cam != NULL)
 	{
-		m_cam->processKeyboard(BACKWARD, 0.001);
-	}
+		if (code == 'z' || code == 'Z')
+		{
+			cam->processKeyboard(FORWARD, 0.001);
+		}
 
-	if (code == 'd' || code == 'D')
-	{
-		m_cam->processKeyboard(RIGHT, 0.001);
-	}
+		if (code == 's' || code == 'S')
+		{
+			cam->processKeyboard(BACKWARD, 0.001);
+		}
 
-	if (code == 'q' || code == 'Q')
-	{
-		m_cam->processKeyboard(LEFT, 0.001);
+		if (code == 'd' || code == 'D')
+		{
+			cam->processKeyboard(RIGHT, 0.001);
+		}
+
+		if (code == 'q' || code == 'Q')
+		{
+			cam->processKeyboard(LEFT, 0.001);
+		}
 	}
 }
 
@@ -171,7 +143,11 @@ GLCanvas::onMouseWheel(wxMouseEvent& event)
 		value -= (event.GetWheelDelta() / 240.0);
 	}
 
-	m_cam->processMouseWheel(value);
+	auto cam = mGModule->getCam();
+	if (cam != NULL)
+	{
+		cam->processMouseWheel(value);
+	}
 }
 
 void 
@@ -179,23 +155,28 @@ GLCanvas::onMouseEvent(wxMouseEvent& event)
 {
 	if (event.Dragging() && event.ButtonIsDown(wxMOUSE_BTN_LEFT)) 
 	{
-		if (m_firstMouse)
+		if (mFirstMouse)
 		{
-			m_lastMouseX = event.GetX();
-			m_lastMouseY = event.GetY();
-			m_firstMouse = false;
+			mLastMouseX = event.GetX();
+			mLastMouseY = event.GetY();
+			mFirstMouse = false;
 		}
 
-		GLfloat xoffset = (float)(event.GetX() - m_lastMouseX) ;
-		GLfloat	yoffset = (float)(m_lastMouseY - event.GetY());
+		GLfloat xoffset = (float)(event.GetX() - mLastMouseX) ;
+		GLfloat	yoffset = (float)(mLastMouseY - event.GetY());
 
-		m_lastMouseX = event.GetX();
-		m_lastMouseY = event.GetY();
+		mLastMouseX = event.GetX();
+		mLastMouseY = event.GetY();
 
-		m_cam->processMouseMovement(xoffset, yoffset);
+		auto cam = mGModule->getCam();
+
+		if (cam != NULL)
+		{
+			cam->processMouseMovement(xoffset, yoffset);
+		}
 	}
 	else
 	{
-		m_firstMouse = true;
+		mFirstMouse = true;
 	}
 }
