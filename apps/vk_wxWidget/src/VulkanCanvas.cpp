@@ -62,14 +62,14 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
 	m_pParent = pParent->GetParent();
 
 	// Uniform buffer, allocation memory and binding
-	CreateUniformBuffer(m_buffer, sizeof(glm::vec4));
+	CreateUniformBuffer(m_uniformBuffer, sizeof(glm::vec4), m_uniformMemorie);
 
 	// Initialize the memory
 	void* data;
 	auto triangleColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	MapMemory(m_deviceMemorie, sizeof(glm::vec4), 0, &data);
+	MapMemory(m_uniformMemorie, sizeof(glm::vec4), 0, &data);
 	memcpy(data, &triangleColor, sizeof(glm::vec4));
-	vkUnmapMemory(m_logicalDevice, m_deviceMemorie);
+	vkUnmapMemory(m_logicalDevice, m_uniformMemorie);
 	
 	// Descriptor in the shader
 	CreateDescriptorSetLayout(1, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -105,7 +105,7 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
 		throw VulkanException(result, "Error attempting to allocate a descriptor set:");
 	}
 
-	bufferInfo.buffer = m_buffer;
+	bufferInfo.buffer = m_uniformBuffer;
 	bufferInfo.offset = 0;
 	bufferInfo.range = sizeof(glm::vec4);
 
@@ -122,6 +122,29 @@ VulkanCanvas::VulkanCanvas(wxWindow *pParent,
 	descriptorWrite.pTexelBufferView = nullptr; // Optional
 
 	vkUpdateDescriptorSets(m_logicalDevice, 1, &descriptorWrite, 0, nullptr);
+
+
+
+
+	// Triangle vertices
+	m_vertices.push_back(glm::vec2(0.0, -0.5));
+	m_vertices.push_back(glm::vec2(0.5, 0.5));
+	m_vertices.push_back(glm::vec2(-0.5, 0.5));
+
+	// Create buffer, memory, bind buffer/memory and map memory
+	CreateVertexBuffer(m_vertexBuffer, m_vertexMemory);
+
+	m_bindingDescription.binding = 0;
+	m_bindingDescription.stride = sizeof(glm::vec2);
+	m_bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+	m_attributeDescriptions.emplace_back();
+	auto &attributeDescription = m_attributeDescriptions.back();
+	attributeDescription.binding = 0;
+	attributeDescription.location = 0;
+	attributeDescription.format = VK_FORMAT_R32G32_SFLOAT;
+	attributeDescription.offset = 0;
+
 
 
 
@@ -171,8 +194,8 @@ VulkanCanvas::~VulkanCanvas() noexcept
                 vkDestroySemaphore(m_logicalDevice, m_renderFinishedSemaphore, nullptr);
             }
 
-			vkFreeMemory(m_logicalDevice, m_deviceMemorie, nullptr);
-			vkDestroyBuffer(m_logicalDevice, m_buffer, nullptr);
+			vkFreeMemory(m_logicalDevice, m_uniformMemorie, nullptr);
+			vkDestroyBuffer(m_logicalDevice, m_uniformBuffer, nullptr);
 
 			vkDestroyDevice(m_logicalDevice, nullptr);
         }
@@ -711,8 +734,15 @@ VkPipelineVertexInputStateCreateInfo VulkanCanvas::CreatePipelineVertexInputStat
 {
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 0;
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
+   
+	/*vertexInputInfo.vertexBindingDescriptionCount = 0;
+    vertexInputInfo.vertexAttributeDescriptionCount = 0;*/
+
+	vertexInputInfo.vertexBindingDescriptionCount = 1;
+	vertexInputInfo.vertexAttributeDescriptionCount = m_attributeDescriptions.size();
+	vertexInputInfo.pVertexBindingDescriptions = &m_bindingDescription;
+	vertexInputInfo.pVertexAttributeDescriptions = m_attributeDescriptions.data();
+
     return vertexInputInfo;
 }
 
@@ -1040,7 +1070,8 @@ void VulkanCanvas::CreateCommandBuffers()
         VkCommandBufferBeginInfo beginInfo = CreateCommandBufferBeginInfo();
 		result = vkBeginCommandBuffer(m_commandBuffers[i], &beginInfo);
 
-		if (result != VK_SUCCESS) {
+		if (result != VK_SUCCESS)
+		{
 			throw VulkanException(result, "Failed to begin command buffer:");
 		}
 
@@ -1048,12 +1079,18 @@ void VulkanCanvas::CreateCommandBuffers()
 
         vkCmdBeginRenderPass(m_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(m_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
+
+		VkBuffer vertexBuffers[] = { m_vertexBuffer };
+		VkDeviceSize offsets[] = { 0 };
+		vkCmdBindVertexBuffers(m_commandBuffers[i], 0, 1, vertexBuffers, offsets);
+
 		vkCmdBindDescriptorSets(m_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);
-		vkCmdDraw(m_commandBuffers[i], 3, 1, 0, 0);
+		vkCmdDraw(m_commandBuffers[i], m_vertices.size(), 1, 0, 0);
         vkCmdEndRenderPass(m_commandBuffers[i]);
 
         result = vkEndCommandBuffer(m_commandBuffers[i]);
-        if (result != VK_SUCCESS) {
+        if (result != VK_SUCCESS)
+		{
             throw VulkanException(result, "Failed to record command buffer:");
         }
     }
@@ -1150,9 +1187,9 @@ void VulkanCanvas::OnPaint(wxPaintEvent& event)
 			newColor.w = 1.0f;
 
 			void* data;
-			MapMemory(m_deviceMemorie, sizeof(glm::vec4), 0, &data);
+			MapMemory(m_uniformMemorie, sizeof(glm::vec4), 0, &data);
 			memcpy(data, &newColor, sizeof(glm::vec4));
-			vkUnmapMemory(m_logicalDevice, m_deviceMemorie);
+			vkUnmapMemory(m_logicalDevice, m_uniformMemorie);
 			parent->colorHasChanged = false;
 		}
 
@@ -1226,11 +1263,11 @@ void VulkanCanvas::MapMemory(VkDeviceMemory memory, uint64_t size, uint64_t offs
 	}
 }
 
-void VulkanCanvas::AllocateMemory(VkBuffer &buffer)
+void VulkanCanvas::AllocateMemory(VkDeviceMemory &deviceMemorie, VkBuffer &buffer, VkMemoryPropertyFlags properties)
 {
-	auto createInfo = CreateMemoryAllocateInfo(buffer);
+	auto createInfo = CreateMemoryAllocateInfo(buffer, properties);
 
-	auto result = vkAllocateMemory(m_logicalDevice, &createInfo, nullptr, &m_deviceMemorie);
+	auto result = vkAllocateMemory(m_logicalDevice, &createInfo, nullptr, &deviceMemorie);
 
 	if (result != VK_SUCCESS)
 	{
@@ -1238,13 +1275,15 @@ void VulkanCanvas::AllocateMemory(VkBuffer &buffer)
 	}
 }
 
-uint32_t VulkanCanvas::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+uint32_t VulkanCanvas::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
 {
 	VkPhysicalDeviceMemoryProperties memProperties;
 	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &memProperties);
 
-	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-		if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+	for (uint32_t i = 0; i < memProperties.memoryTypeCount; ++i)
+	{
+		if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+		{
 			return i;
 		}
 	}
@@ -1252,7 +1291,7 @@ uint32_t VulkanCanvas::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
 	throw std::runtime_error("failed to find suitable memory type!");
 }
 
-VkMemoryAllocateInfo VulkanCanvas::CreateMemoryAllocateInfo(VkBuffer &buffer)
+VkMemoryAllocateInfo VulkanCanvas::CreateMemoryAllocateInfo(VkBuffer &buffer, VkMemoryPropertyFlags properties)
 {
 	VkMemoryRequirements memoryRequirements;
 	vkGetBufferMemoryRequirements(m_logicalDevice, buffer, &memoryRequirements);
@@ -1261,19 +1300,33 @@ VkMemoryAllocateInfo VulkanCanvas::CreateMemoryAllocateInfo(VkBuffer &buffer)
 	createInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	createInfo.pNext = nullptr;
 	createInfo.allocationSize = memoryRequirements.size;
-	createInfo.memoryTypeIndex = findMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+	createInfo.memoryTypeIndex = FindMemoryType(memoryRequirements.memoryTypeBits, properties);
 
 	return createInfo;
 }
 
-void VulkanCanvas::CreateUniformBuffer(VkBuffer &buffer, uint32_t size)
+void VulkanCanvas::CreateUniformBuffer(VkBuffer &buffer, uint32_t size, VkDeviceMemory &deviceMemorie)
 {
-	CreateBuffer(buffer, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, size);
+	CreateBuffer(buffer, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, size, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, deviceMemorie);
+}
+
+void VulkanCanvas::CreateVertexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceMemorie)
+{
+	VkDeviceSize bufferSize = sizeof(glm::vec2) * m_vertices.size();
+	CreateBuffer(buffer, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, bufferSize,
+	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, deviceMemorie);
+
+	void* data;
+	MapMemory(deviceMemorie, bufferSize, 0, &data);
+	memcpy(data, m_vertices.data(), (size_t)bufferSize);
+	vkUnmapMemory(m_logicalDevice, deviceMemorie);
 }
 
 void VulkanCanvas::CreateBuffer(VkBuffer &buffer,
                                 VkBufferUsageFlags usage,
-	                            uint32_t size)
+	                            uint32_t size,
+                                VkMemoryPropertyFlags properties,
+                                VkDeviceMemory &deviceMemorie)
 {
 	auto createInfo = CreateBufferCreateInfo(size, usage);
 
@@ -1284,9 +1337,9 @@ void VulkanCanvas::CreateBuffer(VkBuffer &buffer,
 		throw VulkanException(result, "Error attempting to create a buffer:");
 	}
 
-	AllocateMemory(buffer);
+	AllocateMemory(deviceMemorie, buffer, properties);
 
-	result = vkBindBufferMemory(m_logicalDevice, buffer, m_deviceMemorie, 0);
+	result = vkBindBufferMemory(m_logicalDevice, buffer, deviceMemorie, 0);
 
 	if (result != VK_SUCCESS)
 	{

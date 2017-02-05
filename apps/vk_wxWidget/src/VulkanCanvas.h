@@ -130,25 +130,31 @@ private:
 	virtual void onTimer(wxTimerEvent& event);
     void OnPaintException(const std::string& msg);
 
-	void CreateBuffer(VkBuffer &, VkBufferUsageFlags, uint32_t size);
-	void CreateUniformBuffer(VkBuffer &, uint32_t size);
+	void VulkanCanvas::CreateVertexBuffer(VkBuffer &, VkDeviceMemory &);
+
+	void CreateBuffer(VkBuffer &, VkBufferUsageFlags, uint32_t size, VkMemoryPropertyFlags properties, VkDeviceMemory &deviceMemorie);
+	void CreateUniformBuffer(VkBuffer &, uint32_t size, VkDeviceMemory &deviceMemorie);
 	VkBufferCreateInfo CreateBufferCreateInfo(uint64_t, VkBufferUsageFlags);
-	void AllocateMemory(VkBuffer &buffer);
-	VkMemoryAllocateInfo CreateMemoryAllocateInfo(VkBuffer &buffer);
+	void AllocateMemory(VkDeviceMemory &deviceMemorie, VkBuffer &buffer, VkMemoryPropertyFlags properties);
+	VkMemoryAllocateInfo CreateMemoryAllocateInfo(VkBuffer &buffer, VkMemoryPropertyFlags properties);
 	void MapMemory(VkDeviceMemory, uint64_t, uint64_t, void **);
 	VkDescriptorSetLayoutBinding CreateDescriptorSetLayoutBinding(uint32_t, VkDescriptorType, uint32_t, uint32_t);
 	void CreateDescriptorSetLayout(uint32_t, uint32_t, VkDescriptorType, uint32_t, uint32_t);
 	VkDescriptorSetLayoutCreateInfo CreateDescriptorSetLayoutInfo(uint32_t, uint32_t, VkDescriptorType, uint32_t, uint32_t);
 
-	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 	VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-	VkDeviceMemory m_deviceMemorie;
-	VkBuffer m_buffer;
+	VkDeviceMemory m_uniformMemorie, m_vertexMemory;
+	std::vector<glm::vec2> m_vertices;
+	VkBuffer m_uniformBuffer, m_vertexBuffer;
 	VkDescriptorSet m_descriptorSet;
 	VkDescriptorSetLayout m_descriptorSetLayout;
 	VkDescriptorPoolSize m_descriptorPoolSize;
+
+	VkVertexInputBindingDescription m_bindingDescription;
+	std::vector<VkVertexInputAttributeDescription> m_attributeDescriptions;
 
 	VkDescriptorSetLayoutBinding m_descriptorSetLayoutBinding;
 	VkDescriptorPool m_descriptorPool;
