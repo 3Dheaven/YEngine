@@ -2,7 +2,6 @@
 
 CObjectFile::CObjectFile(CModel *model)
 {
-
 	mModel = model;
 	std::size_t found = std::string(mModel->mFilePath).find_last_of("/\\");
 	dirPath = std::string(mModel->mFilePath).substr(0, found);
@@ -56,7 +55,7 @@ CObjectFile::getFace(std::string& buffer, std::vector<unsigned int> &v, std::vec
 {
 	const char* ch = buffer.c_str();
 	
-	std::string data = buffer;// .substr(buffer.find(" ") + 1);
+	std::string data = buffer;
 
 	size_t pos = 0;
 	std::vector<std::string> tokens;
@@ -279,17 +278,8 @@ CObjectFile::getTexture(std::string& buffer)
 			return;
 		}
 	}
-	/*
+	
 	// Textures can have options ...
-	bool clamp = false;
-	getTextureOption(clamp, clampIndex, out);
-	m_pModel->m_pCurrentMaterial->clamp[clampIndex] = clamp;
-
-	std::string texture;
-	m_DataIt = getName<DataArrayIt>(m_DataIt, m_DataItEnd, texture);
-	if (NULL != out) {
-		out->Set(texture);
-	}*/
 
 }
 
@@ -355,8 +345,8 @@ CObjectFile::parseMtl(std::string mtlpath)
 				break;
 
 				case 'm':   // Texture
-				case 'b':   // quick'n'dirty - for 'bump' sections
-				case 'r':   // quick'n'dirty - for 'refl' sections
+				case 'b':   
+				case 'r':   
 				{
 					getTexture(buffer);
 				}

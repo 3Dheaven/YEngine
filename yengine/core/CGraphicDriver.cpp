@@ -62,7 +62,6 @@ CGraphicDriver::bindMaterial(CMesh *mesh, CShaderFactory * shader)
 	{
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, mesh->mMaterial->mTextureDiffuse->mID);
-		//glUniform1i(glGetUniformLocation(shader->shader->mProgramID, "texture_diffuse"), 0);
 		shader->shader->setUniform("texture_diffuse", 0);
 	}
 
@@ -70,20 +69,19 @@ CGraphicDriver::bindMaterial(CMesh *mesh, CShaderFactory * shader)
 	{
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, mesh->mMaterial->mTextureNormal->mID);
-		glUniform1i(glGetUniformLocation(shader->shader->mProgramID, "texture_normal"), 1);
+		shader->shader->setUniform("texture_normal", 1);
 	}
 
 	if (mesh->mMaterial->mTextureSpecular != NULL)
 	{
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, mesh->mMaterial->mTextureSpecular->mID);
-		glUniform1i(glGetUniformLocation(shader->shader->mProgramID, "texture_specular"), 2);
+		shader->shader->setUniform("texture_specular", 2);
 	}
-	//m_customShader->shader->setUniform("projection_matrix", m_cam->projMatrix);
-	//glUniform3i(glGetUniformLocation(shader->shader->mProgramID, "texDNS"), mTextureDiffuse->mID, mTextureNormal->mID, mTextureSpecular->mID);
-	glUniform3f(glGetUniformLocation(shader->shader->mProgramID, "ambient"), mesh->mMaterial->mAmbientColor.r, mesh->mMaterial->mAmbientColor.g, mesh->mMaterial->mAmbientColor.b);
-	glUniform3f(glGetUniformLocation(shader->shader->mProgramID, "diffuse"), mesh->mMaterial->mDiffuseColor.r, mesh->mMaterial->mDiffuseColor.g, mesh->mMaterial->mDiffuseColor.b);
-	glUniform3f(glGetUniformLocation(shader->shader->mProgramID, "specular"), mesh->mMaterial->mSpecularColor.r, mesh->mMaterial->mSpecularColor.g, mesh->mMaterial->mSpecularColor.b);
+
+	shader->shader->setUniform("ambient", mesh->mMaterial->mAmbientColor);
+	shader->shader->setUniform("diffuse", mesh->mMaterial->mDiffuseColor);
+	shader->shader->setUniform("specular", mesh->mMaterial->mSpecularColor);
 }
 
 void
