@@ -24,7 +24,7 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 	// Display MainWindow on screen center
 	Centre();
 
-	E_API3D gApi = API_VULKAN;
+	E_API3D gApi = API_OPENGL;
 	switch (gApi)
 	{
 		case API_VULKAN: 

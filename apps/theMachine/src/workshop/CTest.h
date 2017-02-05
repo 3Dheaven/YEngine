@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../scene/CScene.h"
-#include "../CShaderFactory.h"
-#include "../scene/CCamera.h"
-#include "../core/CGraphicDriver.h"
+#include "../../../../yengine/scene/CScene.h"
+#include "../../../../yengine/CShaderFactory.h"
+#include "../../../../yengine/scene/CCamera.h"
+#include "../../../../yengine/core/CGraphicDriver.h"
 
 #include <memory>
 #include "wx/glcanvas.h"
