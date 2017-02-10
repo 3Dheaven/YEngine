@@ -24,12 +24,12 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 	// Display MainWindow on screen center
 	Centre();
 
-	E_API3D gApi = API_OPENGL;
+	E_API3D gApi = API_VULKAN;
 	switch (gApi)
 	{
 		case API_VULKAN: 
 			{
-				std::cout << "API_VULKAN\n"; 
+				std::cout << "API_VULKAN\n";
 				CVulkanCanvas* vcanvas = new CVulkanCanvas(mMainPanel, wxID_ANY, { 0, 0 }, { 600, 600 });
 				//mGDriver = new CGraphicDriver();
 				//mRenderer = new CRenderer(mGDriver);
