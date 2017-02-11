@@ -33,7 +33,7 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 				CVulkanCanvas* vcanvas = new CVulkanCanvas(mMainPanel, wxID_ANY, { 0, 0 }, { 600, 600 });
 				//mGDriver = new CGraphicDriver();
 				//mRenderer = new CRenderer(mGDriver);
-				//CGLCanvas->setGModule(mRenderer);
+				//CVKCanvas->setGModule(mRenderer);
 			}
 			break;
 

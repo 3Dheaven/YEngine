@@ -124,6 +124,7 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 
 
 
+	CreateCommandPool();
 
 	// Triangle vertices
 	m_vertices.push_back(glm::vec2(0.0, -0.5));
@@ -146,14 +147,12 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 
 
 
-
-
 	CreateSwapChain(size);
 	CreateImageViews();
 	CreateRenderPass();
 	CreateGraphicsPipeline("../shaders/vk/vert.spv", "../shaders/vk/frag.spv");
 	CreateFrameBuffers();
-	CreateCommandPool();
+	
 	CreateCommandBuffers();
 	CreateSemaphores();
 }
@@ -1312,13 +1311,84 @@ void CVulkanCanvas::CreateUniformBuffer(VkBuffer &buffer, uint32_t size, VkDevic
 void CVulkanCanvas::CreateVertexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceMemorie)
 {
 	VkDeviceSize bufferSize = sizeof(glm::vec2) * m_vertices.size();
-	CreateBuffer(buffer, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, bufferSize,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, deviceMemorie);
+
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+
+	CreateBuffer(stagingBuffer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, bufferSize,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBufferMemory);
 
 	void* data;
-	MapMemory(deviceMemorie, bufferSize, 0, &data);
+	MapMemory(stagingBufferMemory, bufferSize, 0, &data);
 	memcpy(data, m_vertices.data(), (size_t)bufferSize);
-	vkUnmapMemory(m_logicalDevice, deviceMemorie);
+	vkUnmapMemory(m_logicalDevice, stagingBufferMemory);
+
+	CreateBuffer(buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, bufferSize,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, deviceMemorie);
+
+	CopyBuffer(stagingBuffer, buffer, bufferSize);
+}
+
+void CVulkanCanvas::CopyBuffer(const VkBuffer &srcBuffer, VkBuffer &dstBuffer, VkDeviceSize size)
+{
+	VkCommandBufferAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = m_commandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	auto result = vkAllocateCommandBuffers(m_logicalDevice, &allocInfo, &commandBuffer);
+
+	if (result != VK_SUCCESS)
+	{
+		throw CVulkanException(result, "Error attempting to allocate command buffers:");
+	}
+
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	result = vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	if (result != VK_SUCCESS)
+	{
+		throw CVulkanException(result, "Error attempting to begin command buffer:");
+	}
+
+	VkBufferCopy copyRegion = {};
+	copyRegion.srcOffset = 0; // Optional
+	copyRegion.dstOffset = 0; // Optional
+	copyRegion.size = size;
+	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+	result = vkEndCommandBuffer(commandBuffer);
+
+	if (result != VK_SUCCESS)
+	{
+		throw CVulkanException(result, "Error attempting to end command buffer:");
+	}
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	result = vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+
+	if (result != VK_SUCCESS)
+	{
+		throw CVulkanException(result, "Error attempting to submit queue:");
+	}
+
+	result = vkQueueWaitIdle(m_graphicsQueue);
+
+	if (result != VK_SUCCESS)
+	{
+		throw CVulkanException(result, "Error attempting to wait queue:");
+	}
+
+	vkFreeCommandBuffers(m_logicalDevice, m_commandPool, 1, &commandBuffer);
 }
 
 void CVulkanCanvas::CreateBuffer(VkBuffer &buffer,

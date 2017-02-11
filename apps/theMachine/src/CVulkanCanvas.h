@@ -137,6 +137,7 @@ private:
 	void OnPaintException(const std::string& msg);
 
 	void CreateVertexBuffer(VkBuffer &, VkDeviceMemory &);
+	void CopyBuffer(const VkBuffer &, VkBuffer &, VkDeviceSize);
 
 	void CreateBuffer(VkBuffer &, VkBufferUsageFlags, uint32_t size, VkMemoryPropertyFlags properties, VkDeviceMemory &deviceMemorie);
 	void CreateUniformBuffer(VkBuffer &, uint32_t size, VkDeviceMemory &deviceMemorie);
