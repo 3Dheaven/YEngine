@@ -1,10 +1,10 @@
 ﻿#include "CRenderer.h"
 
-CRenderer::CRenderer(CGraphicDriver *gdriver, E_MODULES_EXAMPLES renderingWorshopChoice)
+CRenderer::CRenderer(CGraphicDriver *gdriver, E_MODULES_EXAMPLES renderingWorshopChoice, wxPanel *panel)
 {
 	mRenderingWorkshopChoice = renderingWorshopChoice;
 	mGDriver = gdriver;
-
+	mRightPanel = panel;
 	loadModule();
 	setupGraphics();
 }
@@ -52,7 +52,7 @@ void CRenderer::loadModule()
 	{
 		case OBJ_LOADER:
 		{
-			mActiveModule = new ObjLoading(mGDriver);
+			mActiveModule = new ObjLoading(mGDriver, mRightPanel);
 		}
 		break;
 

@@ -1,7 +1,7 @@
 #version 330 core
 out vec4 outColor;
 
-uniform vec3 custom_color;
+uniform vec4 custom_color;
 uniform vec3 ambient;
 uniform vec3 diffuse;
 uniform vec3 specular;

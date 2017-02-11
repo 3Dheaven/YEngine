@@ -20,6 +20,8 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 	mRenderer = NULL;
 
 	mMainPanel = new wxPanel(this, wxID_ANY);
+	wxPanel * bottomPanel = new wxPanel(mMainPanel, wxID_ANY, { 0, 600 }, { 600, 200 });
+	wxPanel * rightPanel = new wxPanel(mMainPanel, wxID_ANY, { 600, 0 }, { 400, 800 });
 
 	// Display MainWindow on screen center
 	Centre();
@@ -42,15 +44,14 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 			{
 				CGLCanvas* glcanvas = new CGLCanvas(mMainPanel, mainCanvasID, nullptr, { 0, 0 }, { 600, 600 });
 				mGDriver = dynamic_cast<CGraphicDriver *>(new CGLDriver());
-				mRenderer = new CRenderer(mGDriver, ex);
+				mRenderer = new CRenderer(mGDriver, ex, rightPanel);
 				glcanvas->setGModule(mRenderer);
 			}
 			break;
 	}
 
 	
-	wxPanel * bottomPanel = new wxPanel(mMainPanel, wxID_ANY, { 0, 600 }, { 600, 200 });
-	wxPanel * rightPanel = new wxPanel(mMainPanel, wxID_ANY, { 600, 0 }, { 400, 800 });
+	
 
 	wxButton *button = new wxButton(rightPanel, wxID_EXIT, wxT("Quit"), wxPoint(0, 600), { 400, 200 });
 		

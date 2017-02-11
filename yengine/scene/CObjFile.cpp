@@ -573,6 +573,7 @@ CObjectFile::parse()
 						mModel->mCurrentObject = new CObject(objectName);
 						mModel->mObjects.push_back(mModel->mCurrentObject);
 						mModel->mCurrentMesh = new CMesh(objectName);
+						mModel->mCurrentMesh->mHasMaterial = true;
 						mModel->mMeshes.push_back(mModel->mCurrentMesh);
 						unsigned int meshId = static_cast<unsigned int>(mModel->mMeshes.size() - 1);
 						if (NULL != mModel->mCurrentObject)
@@ -606,6 +607,7 @@ CObjectFile::parse()
 							mModel->mCurrentObject = new CObject(name);
 							mModel->mObjects.push_back(mModel->mCurrentObject);
 							mModel->mCurrentMesh = new CMesh(name);
+							mModel->mCurrentMesh->mHasMaterial = true;
 							mModel->mMeshes.push_back(mModel->mCurrentMesh);
 							unsigned int meshId = static_cast<unsigned int>(mModel->mMeshes.size() - 1);
 							if (NULL != mModel->mCurrentObject)

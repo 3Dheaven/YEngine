@@ -1,12 +1,11 @@
 ﻿#include "ObjLoadingTest.h"
-#include "../../../../yengine/helpers/StringsHelper.h"
-#include "../../../../yengine/system/FileSystem.h"
 
-ObjLoading::ObjLoading(CGraphicDriver *gdriver)
+ObjLoading::ObjLoading(CGraphicDriver *gdriver, wxPanel* panel)
 {
 	mCam = NULL;
 	mGDriver = gdriver;
-
+	mRightPanel = panel;
+	loadGUI();
 }
 
 ObjLoading::~ObjLoading()
@@ -14,6 +13,7 @@ ObjLoading::~ObjLoading()
 	delete mCam;
 	delete mCustomShader;
 	delete mScene;
+	cleanGUI();
 }
 
 CCamera* 
@@ -51,10 +51,10 @@ ObjLoading::setupGraphics()
 
 	mScene = new CScene(mGDriver);
 	mScene->add(projectPath + "//media//nanosuit//nanosuit.obj");
-	//mScene->add(projectPath + "//media//sphere.obj");
-	//mScene->add(projectPath + "//media//shuttle.obj");
-	//mScene->add(projectPath + "//media//axis//axisXYZ.obj");
-	//mScene->add(projectPath + "//media//vis.obj");
+
+	mUniformColor = glm::vec4(1.0, 0.0, 0.0, 0.0);
+	mCustomShader->shader->setUniform("custom_color", mUniformColor);
+	mUniformColorHasChanged = false;
 }
 
 void 
@@ -66,7 +66,11 @@ ObjLoading::render()
 	mCustomShader->shader->setUniform("projection_matrix", mCam->projMatrix);
 	mCustomShader->shader->setUniform("view_matrix", mCam->getViewMatrix());
 	// glm::vec3((sin(time * 1.0f) + 1.0f) / 2.0f, (sin(time * 0.5f) + 1.0f) / 2.0f, (cos(time * 0.25f) + 1.0f) / 2.0f)
-	mCustomShader->shader->setUniform("custom_color", glm::vec3(0.0,1.0,0.0));
+	if (mUniformColorHasChanged)
+	{
+		mCustomShader->shader->setUniform("custom_color", mUniformColor);
+		mUniformColorHasChanged = false;
+	}
 
 	glm::mat4 model;
 	//glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); 
@@ -74,6 +78,34 @@ ObjLoading::render()
 	//model = glm::rotate(model, (float)time * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
 	mCustomShader->shader->setUniform("model_matrix", model);
 
-	// draw the graphics
 	mScene->render(mCustomShader);
+}
+
+void 
+ObjLoading::loadGUI()
+{
+	if (mRightPanel != NULL)
+	{
+		wxColourPickerCtrl* colourPickerCtrl = new wxColourPickerCtrl(mRightPanel, wxID_ANY, wxStockGDI::COLOUR_RED, { 40, 40 });
+		colourPickerCtrl->Bind(wxEVT_COLOURPICKER_CHANGED, &ObjLoading::OnColourChanged, this);		
+	}
+}
+
+void 
+ObjLoading::cleanGUI()
+{
+	if (mRightPanel != NULL)
+	{
+		delete mRightPanel;
+	}
+}
+
+void ObjLoading::OnColourChanged(wxColourPickerEvent& evt)
+{
+	mUniformColorHasChanged = true;
+	auto newColor = evt.GetColour();
+	mUniformColor.x = static_cast<float>(newColor.Red()) / 255.0f;
+	mUniformColor.y = static_cast<float>(newColor.Green()) / 255.0f;
+	mUniformColor.z = static_cast<float>(newColor.Blue()) / 255.0f;
+	mUniformColor.w = 1.0f;
 }

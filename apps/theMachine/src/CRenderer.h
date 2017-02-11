@@ -24,7 +24,7 @@ using namespace glm;
 class CRenderer
 {
 public:
-	CRenderer(CGraphicDriver *gdriver, E_MODULES_EXAMPLES renderingWorshopChoice);
+	CRenderer(CGraphicDriver *gdriver, E_MODULES_EXAMPLES renderingWorshopChoice, wxPanel *wxPanel = NULL);
 	~CRenderer();
 
 	void setupGraphics();
@@ -34,6 +34,7 @@ public:
 
 private:
 
+	wxPanel* mRightPanel;
 	CGraphicDriver* mGDriver;
 	E_MODULES_EXAMPLES mRenderingWorkshopChoice;
 	CModuleBase* mActiveModule;
