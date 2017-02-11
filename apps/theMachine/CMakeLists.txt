@@ -8,21 +8,20 @@ message("CMAKE_MODULE_PATH : " ${CMAKE_MODULE_PATH})
 
 message("PROJECT_SOURCE_DIR : ${PROJECT_SOURCE_DIR}" )
 
-macro(GroupYEngineSources curdir)
+macro(GroupSources curdir relativePath)
 
    file(GLOB children RELATIVE 
-   ${PROJECT_SOURCE_DIR}/../../${curdir}
-   ${PROJECT_SOURCE_DIR}/../../${curdir}/*) 
-	
+   ${PROJECT_SOURCE_DIR}/${relativePath}/${curdir}
+   ${PROJECT_SOURCE_DIR}/${relativePath}${curdir}/*) 
+   
    foreach(child ${children})
 
-		if(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/../../${curdir}/${child})
-			   GroupYEngineSources(${curdir}/${child})
+		if(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/${relativePath}/${curdir}/${child})
+			   GroupSources(${curdir}/${child} ${relativePath})
 		else()
 			string(REPLACE "/" "\\" groupname ${curdir})
-
 			source_group(${groupname} FILES
-			${PROJECT_SOURCE_DIR}/../../${curdir}/${child})
+			${PROJECT_SOURCE_DIR}/${relativePath}/${curdir}/${child})
 		endif()
     endforeach()
 	
@@ -35,9 +34,9 @@ file(
 	src/*
 	../../yengine/*
 )
-message("SOURCES FILES : ${SRC_FILES}")
 
-GroupYEngineSources(yengine)
+GroupSources(src "//")
+GroupSources(yengine "/../../")
 
 # Exclude ZERO_CHECK project
 SET(CMAKE_SUPPRESS_REGENERATION TRUE)
