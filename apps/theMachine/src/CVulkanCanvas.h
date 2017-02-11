@@ -138,6 +138,7 @@ private:
 
 	void CreateVertexBuffer(VkBuffer &, VkDeviceMemory &);
 	void CopyBuffer(const VkBuffer &, VkBuffer &, VkDeviceSize);
+	void CreateIndexBuffer(VkBuffer &, VkDeviceMemory &);
 
 	void CreateBuffer(VkBuffer &, VkBufferUsageFlags, uint32_t size, VkMemoryPropertyFlags properties, VkDeviceMemory &deviceMemorie);
 	void CreateUniformBuffer(VkBuffer &, uint32_t size, VkDeviceMemory &deviceMemorie);
@@ -153,10 +154,10 @@ private:
 
 	VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-	VkDeviceMemory m_uniformMemorie, m_vertexMemory;
+	VkDeviceMemory m_uniformMemorie, m_vertexMemory, m_indexMemory;
 	std::vector<glm::vec2> m_vertices;
 	std::vector<uint16_t> m_indices;
-	VkBuffer m_uniformBuffer, m_vertexBuffer;
+	VkBuffer m_uniformBuffer, m_vertexBuffer, m_indexBuffer;
 	VkDescriptorSet m_descriptorSet;
 	VkDescriptorSetLayout m_descriptorSetLayout;
 	VkDescriptorPoolSize m_descriptorPoolSize;

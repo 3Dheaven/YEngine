@@ -129,13 +129,16 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	// Triangle vertices
 	m_vertices.push_back(glm::vec2(-0.5f, -0.5f));
 	m_vertices.push_back(glm::vec2(0.5f, -0.5f));
-	m_vertices.push_back(glm::vec2(-0.5f, 0.5f));
 	m_vertices.push_back(glm::vec2(0.5f, 0.5f));
 	m_vertices.push_back(glm::vec2(-0.5f, 0.5f));
-	m_vertices.push_back(glm::vec2(0.5f, -0.5f));
 	
-	// Create buffer, memory, bind buffer/memory and map memory
+	// Create vertex buffer, memory, bind buffer/memory and map memory
 	CreateVertexBuffer(m_vertexBuffer, m_vertexMemory);
+
+	// Create index buffer, memory, bind buffer/memory and map memory
+	std::vector<uint16_t> indexArray = { 0, 1, 2, 2, 3, 0 };
+	m_indices.insert(m_indices.begin(), indexArray.begin(), indexArray.end());
+	CreateIndexBuffer(m_indexBuffer, m_indexMemory);
 
 	m_bindingDescription.binding = 0;
 	m_bindingDescription.stride = sizeof(glm::vec2);
@@ -148,8 +151,6 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	attributeDescription.format = VK_FORMAT_R32G32_SFLOAT;
 	attributeDescription.offset = 0;
 
-
-	
 
 
 
@@ -1087,9 +1088,11 @@ void CVulkanCanvas::CreateCommandBuffers()
 		VkBuffer vertexBuffers[] = { m_vertexBuffer };
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(m_commandBuffers[i], 0, 1, vertexBuffers, offsets);
+		vkCmdBindIndexBuffer(m_commandBuffers[i], m_indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
 		vkCmdBindDescriptorSets(m_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);
-		vkCmdDraw(m_commandBuffers[i], m_vertices.size(), 1, 0, 0);
+		//vkCmdDraw(m_commandBuffers[i], m_vertices.size(), 1, 0, 0);
+		vkCmdDrawIndexed(m_commandBuffers[i], m_indices.size(), 1, 0, 0, 0);
 		vkCmdEndRenderPass(m_commandBuffers[i]);
 
 		result = vkEndCommandBuffer(m_commandBuffers[i]);
@@ -1330,6 +1333,27 @@ void CVulkanCanvas::CreateVertexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceM
 	vkUnmapMemory(m_logicalDevice, stagingBufferMemory);
 
 	CreateBuffer(buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, bufferSize,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, deviceMemorie);
+
+	CopyBuffer(stagingBuffer, buffer, bufferSize);
+}
+
+void CVulkanCanvas::CreateIndexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceMemorie)
+{
+	VkDeviceSize bufferSize = sizeof(uint16_t) * m_indices.size();
+
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+
+	CreateBuffer(stagingBuffer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, bufferSize,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBufferMemory);
+
+	void* data;
+	MapMemory(stagingBufferMemory, bufferSize, 0, &data);
+	memcpy(data, m_indices.data(), (size_t)bufferSize);
+	vkUnmapMemory(m_logicalDevice, stagingBufferMemory);
+
+	CreateBuffer(buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, bufferSize,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, deviceMemorie);
 
 	CopyBuffer(stagingBuffer, buffer, bufferSize);
