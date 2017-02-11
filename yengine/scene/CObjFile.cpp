@@ -495,6 +495,16 @@ CObjectFile::parse()
 				// Face
 				case 'f':
 				{
+					if (NULL == mModel->mCurrentObject)
+					{
+						mModel->mCurrentObject = new CObject("default-object");
+						mModel->mObjects.push_back(mModel->mCurrentObject);
+						mModel->mCurrentMesh = new CMesh("default-mesh");
+						mModel->mMeshes.push_back(mModel->mCurrentMesh);
+						unsigned int meshId = static_cast<unsigned int>(mModel->mMeshes.size() - 1);
+						mModel->mCurrentObject->mMeshes.push_back(meshId);
+					}
+
 					if (!mModel->mCurrentMesh->mHasNormals)
 					{
 						if (mModel->mNormals.size()) 
@@ -608,6 +618,7 @@ CObjectFile::parse()
 				break;
 
 				// Get material for current mesh
+				// "usemtl" keyword
 				case 'u': 
 				{
 					auto matname = buffer.substr(buffer.find(" ") + 1);

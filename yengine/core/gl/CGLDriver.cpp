@@ -54,56 +54,62 @@ CGLDriver::init(CMesh *mesh) const
 void
 CGLDriver::bindMaterial(CMesh *mesh, CShaderFactory * shader) const
 {
-	glEnable(GL_TEXTURE_2D);
-
-	if (mesh->mMaterial->mTextureDiffuse != NULL)
+	if (mesh->mHasMaterial)
 	{
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, mesh->mMaterial->mTextureDiffuse->mID);
-		shader->shader->setUniform("texture_diffuse", 0);
-	}
+		glEnable(GL_TEXTURE_2D);
 
-	if (mesh->mMaterial->mTextureNormal != NULL)
-	{
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, mesh->mMaterial->mTextureNormal->mID);
-		shader->shader->setUniform("texture_normal", 1);
-	}
+		if (mesh->mMaterial->mTextureDiffuse != NULL)
+		{
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, mesh->mMaterial->mTextureDiffuse->mID);
+			shader->shader->setUniform("texture_diffuse", 0);
+		}
 
-	if (mesh->mMaterial->mTextureSpecular != NULL)
-	{
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, mesh->mMaterial->mTextureSpecular->mID);
-		shader->shader->setUniform("texture_specular", 2);
-	}
+		if (mesh->mMaterial->mTextureNormal != NULL)
+		{
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, mesh->mMaterial->mTextureNormal->mID);
+			shader->shader->setUniform("texture_normal", 1);
+		}
 
-	shader->shader->setUniform("ambient", mesh->mMaterial->mAmbientColor);
-	shader->shader->setUniform("diffuse", mesh->mMaterial->mDiffuseColor);
-	shader->shader->setUniform("specular", mesh->mMaterial->mSpecularColor);
+		if (mesh->mMaterial->mTextureSpecular != NULL)
+		{
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, mesh->mMaterial->mTextureSpecular->mID);
+			shader->shader->setUniform("texture_specular", 2);
+		}
+
+		shader->shader->setUniform("ambient", mesh->mMaterial->mAmbientColor);
+		shader->shader->setUniform("diffuse", mesh->mMaterial->mDiffuseColor);
+		shader->shader->setUniform("specular", mesh->mMaterial->mSpecularColor);
+	}
 }
 
 void
 CGLDriver::unbindMaterial(CMesh *mesh) const
 {
-	if (mesh->mMaterial->mTextureDiffuse != NULL)
+	if (mesh->mHasMaterial)
 	{
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
+		if (mesh->mMaterial->mTextureDiffuse != NULL)
+		{
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
 
-	if (mesh->mMaterial->mTextureNormal != NULL)
-	{
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
+		if (mesh->mMaterial->mTextureNormal != NULL)
+		{
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
 
-	if (mesh->mMaterial->mTextureSpecular != NULL)
-	{
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
+		if (mesh->mMaterial->mTextureSpecular != NULL)
+		{
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
 
-	glDisable(GL_TEXTURE_2D);
+		glDisable(GL_TEXTURE_2D);
+	}
 }
 
 void

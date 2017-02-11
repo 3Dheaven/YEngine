@@ -40,6 +40,7 @@ class CMesh
 
 		bool mHasTexcoords;
 		bool mHasNormals;
+		bool mHasMaterial;
 
 		bool isFinalized;
 		std::string mName;

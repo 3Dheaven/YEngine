@@ -5,7 +5,7 @@
 #include "../../../yengine/scene/CCamera.h"
 #include "../../../yengine/core/CGraphicDriver.h"
 #include "CRenderer.h"
-
+#include "./workshop/TerrainCDLOD.h"
 #include <memory>
 #include "wx/glcanvas.h"
 #include "wx/wxprec.h"
@@ -36,7 +36,7 @@ public:
 	CGLCanvas& operator=(const CGLCanvas& tc) = delete;
 	CGLCanvas& operator=(CGLCanvas&& tc) = delete;
 
-	void setGModule(CRenderer *renderer);
+	void setGModule(CRenderer/*TerrainCDLOD*/ *renderer);
 
 private:
 	void initializeGLEW();
@@ -58,6 +58,7 @@ private:
 	sclock mStartTime;
 
 	CRenderer* mGModule;
+	//TerrainCDLOD* mGModule;
 
 	GLfloat mLastMouseX;
 	GLfloat mLastMouseY;

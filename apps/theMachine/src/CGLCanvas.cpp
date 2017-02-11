@@ -38,7 +38,7 @@ CGLCanvas::~CGLCanvas()
 }
 
 void 
-CGLCanvas::setGModule(CRenderer *renderer)
+CGLCanvas::setGModule(CRenderer/* TerrainCDLOD*/ *renderer)
 {
 	mGModule = renderer;
 }
@@ -81,10 +81,10 @@ CGLCanvas::onPaint(wxPaintEvent& event)
 	SetCurrent(*m_context);
 	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glDisable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
+	//glDisable(GL_BLEND);
+	//glEnable(GL_DEPTH_TEST);
 	//glCullFace(GL_BACK);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	auto t_now = std::chrono::high_resolution_clock::now();
 	auto time = std::chrono::duration_cast<std::chrono::microseconds>(t_now - mStartTime).count();
 
