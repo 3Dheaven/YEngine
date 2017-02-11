@@ -5,7 +5,7 @@
 #include "../../../yengine/scene/CCamera.h"
 #include "../../../yengine/core/CGraphicDriver.h"
 #include "CRenderer.h"
-#include "./workshop/TerrainCDLOD.h"
+//#include "./workshop/TerrainCDLOD.h"
 #include <memory>
 #include "wx/glcanvas.h"
 #include "wx/wxprec.h"

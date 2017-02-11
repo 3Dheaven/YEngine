@@ -25,6 +25,7 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 	Centre();
 
 	E_API3D gApi = API_OPENGL;
+	E_MODULES_EXAMPLES ex = OBJ_LOADER;
 	switch (gApi)
 	{
 		case API_VULKAN: 
@@ -41,7 +42,7 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 			{
 				CGLCanvas* glcanvas = new CGLCanvas(mMainPanel, mainCanvasID, nullptr, { 0, 0 }, { 600, 600 });
 				mGDriver = dynamic_cast<CGraphicDriver *>(new CGLDriver());
-				mRenderer = new CRenderer(mGDriver);
+				mRenderer = new CRenderer(mGDriver, ex);
 				glcanvas->setGModule(mRenderer);
 			}
 			break;
