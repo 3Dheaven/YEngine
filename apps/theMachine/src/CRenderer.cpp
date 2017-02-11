@@ -1,10 +1,11 @@
 ﻿#include "CRenderer.h"
 
-CRenderer::CRenderer(CGraphicDriver *gdriver)
+CRenderer::CRenderer(CGraphicDriver *gdriver, E_MODULES_EXAMPLES renderingWorshopChoice)
 {
 	mCam = NULL;
 	mGDriver = gdriver;
 	setupGraphics();
+	mRenderingWorshopChoice = renderingWorshopChoice;
 }
 
 CRenderer::~CRenderer()
@@ -32,6 +33,7 @@ CRenderer::setupGraphics()
 
 	mScene = new CScene(mGDriver);
 	mScene->add("..//..//..//media//nanosuit//nanosuit.obj");
+	//mScene->add("..//..//..//media//sphere.obj");
 	//mScene->add("..//..//..//media//shuttle.obj");
 	//mScene->add("..//..//..//media//axis//axisXYZ.obj");
 	//mScene->add("..//..//..//media//vis.obj");

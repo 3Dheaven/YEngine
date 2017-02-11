@@ -7,6 +7,7 @@
 #include "CVulkanCanvas.h"
 #include "CGLCanvas.h"
 #include "CRenderer.h"
+#include "ERenderingWorkshop.h"
 
 class CRenderer;
 class CVulkanCanvas;

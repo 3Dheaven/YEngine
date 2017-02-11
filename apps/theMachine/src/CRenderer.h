@@ -9,6 +9,8 @@
 #include "wx/glcanvas.h"
 #include "wx/wxprec.h"
 
+#include "ERenderingWorkshop.h"
+
 #include <GL/glew.h>
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
@@ -20,7 +22,7 @@ using namespace glm;
 class CRenderer
 {
 public:
-	CRenderer(CGraphicDriver *gdriver);
+	CRenderer(CGraphicDriver *gdriver, E_MODULES_EXAMPLES renderingWorshopChoice);
 	~CRenderer();
 
 	void setupGraphics();
@@ -31,7 +33,7 @@ public:
 private:
 
 	CShaderFactory *mCustomShader;
-	
+	E_MODULES_EXAMPLES mRenderingWorshopChoice;
 	CScene *mScene;
 	CGraphicDriver *mGDriver;
 };
