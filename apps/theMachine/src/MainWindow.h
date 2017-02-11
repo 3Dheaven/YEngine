@@ -1,6 +1,7 @@
 #pragma once
 #include <wx/timer.h>
-#include "../../../yengine/core/CGraphicDriver.h"
+#include "../../../yengine/core/gl/CGLdriver.h"
+#include "../../../yengine/core/vk/CVKdriver.h"
 #include <wx/clrpicker.h>
 #include "wx/wxprec.h"
 #include "CVulkanCanvas.h"

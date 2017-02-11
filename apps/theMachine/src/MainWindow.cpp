@@ -24,23 +24,23 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 	// Display MainWindow on screen center
 	Centre();
 
-	E_API3D gApi = API_VULKAN;
+	E_API3D gApi = API_OPENGL;
 	switch (gApi)
 	{
 		case API_VULKAN: 
 			{
 				std::cout << "API_VULKAN\n";
 				CVulkanCanvas* vcanvas = new CVulkanCanvas(mMainPanel, wxID_ANY, { 0, 0 }, { 600, 600 });
-				//mGDriver = new CGraphicDriver();
-				//mRenderer = new CRenderer(mGDriver);
-				//CVKCanvas->setGModule(mRenderer);
+				/*mGDriver = dynamic_cast<CGraphicDriver *>(new CVKDriver());
+				mRenderer = new CRenderer(mGDriver);
+				glcanvas->setGModule(mRenderer);*/
 			}
 			break;
 
 		case API_OPENGL: 
 			{
 				CGLCanvas* glcanvas = new CGLCanvas(mMainPanel, mainCanvasID, nullptr, { 0, 0 }, { 600, 600 });
-				mGDriver = new CGraphicDriver();
+				mGDriver = dynamic_cast<CGraphicDriver *>(new CGLDriver());
 				mRenderer = new CRenderer(mGDriver);
 				glcanvas->setGModule(mRenderer);
 			}
@@ -88,14 +88,14 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 
 MainWindow::~MainWindow()
 {
-	if (mGDriver != NULL)
-	{
-		delete mGDriver;
-	}
-
 	if (mRenderer != NULL)
 	{
 		delete mRenderer;
+	}
+
+	if (mGDriver != NULL)
+	{
+		delete mGDriver;
 	}
 }
 

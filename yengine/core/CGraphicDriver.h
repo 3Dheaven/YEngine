@@ -23,9 +23,9 @@ public:
 	CGraphicDriver();
 	~CGraphicDriver();
 
-	void init(CMesh *mesh);
-	void bindMaterial(CMesh *mesh, CShaderFactory * shader);
-	void unbindMaterial(CMesh *mesh);
-	void render(CMesh *mesh, CShaderFactory * shader);
-	void clean(CMesh *mesh);
+	virtual void init(CMesh *mesh) const = 0;
+	virtual void bindMaterial(CMesh *mesh, CShaderFactory * shader) const = 0;
+	virtual void unbindMaterial(CMesh *mesh) const = 0;
+	virtual void render(CMesh *mesh, CShaderFactory * shader) const = 0;
+	virtual void clean(CMesh *mesh) const = 0;
 };

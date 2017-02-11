@@ -126,18 +126,20 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 
 	CreateCommandPool();
 
-	// Triangle vertices
+	// Rectangle vertices
 	m_vertices.push_back(glm::vec2(-0.5f, -0.5f));
 	m_vertices.push_back(glm::vec2(0.5f, -0.5f));
 	m_vertices.push_back(glm::vec2(0.5f, 0.5f));
 	m_vertices.push_back(glm::vec2(-0.5f, 0.5f));
+
+	// Rectangle indices
+	std::vector<uint16_t> indexRectangle = { 0, 1, 2, 2, 3, 0 };
 	
 	// Create vertex buffer, memory, bind buffer/memory and map memory
 	CreateVertexBuffer(m_vertexBuffer, m_vertexMemory);
 
 	// Create index buffer, memory, bind buffer/memory and map memory
-	std::vector<uint16_t> indexArray = { 0, 1, 2, 2, 3, 0 };
-	m_indices.insert(m_indices.begin(), indexArray.begin(), indexArray.end());
+	m_indices.insert(m_indices.begin(), indexRectangle.begin(), indexRectangle.end());
 	CreateIndexBuffer(m_indexBuffer, m_indexMemory);
 
 	m_bindingDescription.binding = 0;

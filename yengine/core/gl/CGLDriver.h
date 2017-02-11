@@ -9,14 +9,21 @@
 #include <GL/glew.h> 
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
+#include "../CGraphicDriver.h"
+#include "../../scene/CMesh.h"
 
 using namespace std;
 
-class CGLDriver
+class CGLDriver : public CGraphicDriver
 {
-	public:
+public:
 
-		CGLDriver();
-		~CGLDriver();
+	CGLDriver();
+	~CGLDriver();
 
+	void init(CMesh *mesh) const override;
+	void bindMaterial(CMesh *mesh, CShaderFactory * shader) const override;
+	void unbindMaterial(CMesh *mesh) const override;
+	void render(CMesh *mesh, CShaderFactory * shader) const override;
+	void clean(CMesh *mesh) const override;
 };
