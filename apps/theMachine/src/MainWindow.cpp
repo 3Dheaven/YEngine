@@ -91,11 +91,13 @@ MainWindow::~MainWindow()
 	if (mRenderer != NULL)
 	{
 		delete mRenderer;
+		mRenderer = nullptr;
 	}
 
 	if (mGDriver != NULL)
 	{
 		delete mGDriver;
+		mGDriver = nullptr;
 	}
 }
 

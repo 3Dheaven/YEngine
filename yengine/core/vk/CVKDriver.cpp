@@ -27,7 +27,3 @@ void CVKDriver::render(CMesh * mesh, CShaderFactory * shader) const
 void CVKDriver::clean(CMesh * mesh) const
 {
 }
-
-void CVKDriver::test() const
-{
-}
