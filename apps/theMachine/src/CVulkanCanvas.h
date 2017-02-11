@@ -155,6 +155,7 @@ private:
 
 	VkDeviceMemory m_uniformMemorie, m_vertexMemory;
 	std::vector<glm::vec2> m_vertices;
+	std::vector<uint16_t> m_indices;
 	VkBuffer m_uniformBuffer, m_vertexBuffer;
 	VkDescriptorSet m_descriptorSet;
 	VkDescriptorSetLayout m_descriptorSetLayout;

@@ -127,10 +127,13 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	CreateCommandPool();
 
 	// Triangle vertices
-	m_vertices.push_back(glm::vec2(0.0, -0.5));
-	m_vertices.push_back(glm::vec2(0.5, 0.5));
-	m_vertices.push_back(glm::vec2(-0.5, 0.5));
-
+	m_vertices.push_back(glm::vec2(-0.5f, -0.5f));
+	m_vertices.push_back(glm::vec2(0.5f, -0.5f));
+	m_vertices.push_back(glm::vec2(-0.5f, 0.5f));
+	m_vertices.push_back(glm::vec2(0.5f, 0.5f));
+	m_vertices.push_back(glm::vec2(-0.5f, 0.5f));
+	m_vertices.push_back(glm::vec2(0.5f, -0.5f));
+	
 	// Create buffer, memory, bind buffer/memory and map memory
 	CreateVertexBuffer(m_vertexBuffer, m_vertexMemory);
 
@@ -144,6 +147,9 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	attributeDescription.location = 0;
 	attributeDescription.format = VK_FORMAT_R32G32_SFLOAT;
 	attributeDescription.offset = 0;
+
+
+	
 
 
 
