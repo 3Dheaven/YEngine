@@ -4,6 +4,8 @@
 #include "../../../yengine/CShaderFactory.h"
 #include "../../../yengine/scene/CCamera.h"
 #include "../../../yengine/core/CGraphicDriver.h"
+#include "../workshop/CModuleBase.h"
+#include "../workshop/obj_loading/ObjLoadingTest.h"
 
 #include <memory>
 #include "wx/glcanvas.h"
@@ -28,12 +30,12 @@ public:
 	void setupGraphics();
 	void render();
 	CCamera* getCam();
-	CCamera *mCam;
+	void loadModule();
 
 private:
 
-	CShaderFactory *mCustomShader;
-	E_MODULES_EXAMPLES mRenderingWorshopChoice;
-	CScene *mScene;
-	CGraphicDriver *mGDriver;
+	CGraphicDriver* mGDriver;
+	E_MODULES_EXAMPLES mRenderingWorkshopChoice;
+	CModuleBase* mActiveModule;
+
 };

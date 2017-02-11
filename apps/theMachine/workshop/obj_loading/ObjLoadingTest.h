@@ -1,9 +1,10 @@
 #pragma once
 
-#include "../../../../yengine/scene/CScene.h"
-#include "../../../../yengine/CShaderFactory.h"
-#include "../../../../yengine/scene/CCamera.h"
-#include "../../../../yengine/core/CGraphicDriver.h"
+#include "../../../yengine/scene/CScene.h"
+#include "../../../yengine/CShaderFactory.h"
+#include "../../../yengine/scene/CCamera.h"
+#include "../../../yengine/core/CGraphicDriver.h"
+#include "../CModuleBase.h"
 
 #include <memory>
 #include "wx/glcanvas.h"
@@ -17,18 +18,19 @@
 
 using namespace glm;
 
-class CTest
+class ObjLoading : public CModuleBase
 {
 public:
-	CTest(CGraphicDriver *gdriver);
-	~CTest();
+	ObjLoading(CGraphicDriver *gdriver);
+	~ObjLoading();
 
 	void setupGraphics();
 	void render();
 	CCamera* getCam();
-
+	
 private:
 	CCamera *mCam;
+	CShaderFactory *mCustomShader;
 	CScene *mScene;
 	CGraphicDriver *mGDriver;
 };

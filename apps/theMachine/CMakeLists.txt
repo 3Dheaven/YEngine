@@ -32,11 +32,13 @@ file(
 	GLOB_RECURSE
 	SRC_FILES
 	src/*
+	workshop/*
 	../../yengine/*
 )
 
 GroupSources(src "//")
 GroupSources(yengine "/../../")
+GroupSources(workshop "//")
 
 # Exclude ZERO_CHECK project
 SET(CMAKE_SUPPRESS_REGENERATION TRUE)
