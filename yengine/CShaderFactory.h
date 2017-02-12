@@ -1,5 +1,5 @@
-#ifndef CGLSLSHADERFACTORY_H
-#define CGLSLSHADERFACTORY_H
+#ifndef CSHADERFACTORY_H
+#define CSHADERFACTORY_H
 
 #include <string>
 #include <fstream>
@@ -8,25 +8,31 @@
 
 #include <GL/glew.h>
 
-#include "CGLSLShaderProgram.h"
-#include "CGLSLShader.h"
+#include "CShaderProgram.h"
 
 class CShaderFactory
 {
 	public:
-		CGLSLShaderProgram *shader;
-
-		CShaderFactory(const GLchar* vertexPath, const GLchar* fragmentPath)
+		CShaderFactory()
 		{
-			CGLSLShader vertTerrain(vertexPath, GL_VERTEX_SHADER, "VERTEX");
-			CGLSLShader fragTerrain(fragmentPath, GL_FRAGMENT_SHADER, "FRAGMENT");
-			shader = new CGLSLShaderProgram({ vertTerrain, fragTerrain });
 		}
 
 		~CShaderFactory()
 		{
-			delete shader;
+			if (mShader != nullptr)
+			{
+				delete mShader;
+				mShader = nullptr;
+			}
 		}
+
+		CShaderProgram *getProgram() const
+		{
+			return mShader;
+		}
+
+	protected:
+		CShaderProgram *mShader;
 };
 
 #endif

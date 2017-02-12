@@ -43,7 +43,7 @@ ObjLoading::setupGraphics()
 	std::string vsPath = projectPath + "//apps//theMachine//workshop//obj_loading//shader.vert";
 	std::string fsPath = projectPath + "//apps//theMachine//workshop//obj_loading//shader.frag";
 
-	mCustomShader = new CShaderFactory(vsPath.c_str(), fsPath.c_str());
+	mGDriver->createShader(vsPath, fsPath);
 
 	mCam = new CCamera(glm::vec3(0.0f, 0.0f, 5.0f), 
 						glm::vec3(0.0f, 0.0f, 0.0f), 
@@ -53,22 +53,24 @@ ObjLoading::setupGraphics()
 	mScene->add(projectPath + "//media//nanosuit//nanosuit.obj");
 
 	mUniformColor = glm::vec4(1.0, 0.0, 0.0, 0.0);
-	mCustomShader->shader->setUniform("custom_color", mUniformColor);
+	mGDriver->getShader()->getProgram()->setUniform("custom_color", mUniformColor);
 	mUniformColorHasChanged = false;
 }
 
 void 
 ObjLoading::render()
 {
-	mCustomShader->shader->use();
+	auto shaderProgram = mGDriver->getShader()->getProgram();
+		
+	shaderProgram->use();
 
 	mCam->projMatrix = glm::perspective(mCam->getZoom(), (float)600 / (float)600, 0.1f, 100.0f);
-	mCustomShader->shader->setUniform("projection_matrix", mCam->projMatrix);
-	mCustomShader->shader->setUniform("view_matrix", mCam->getViewMatrix());
+	shaderProgram->setUniform("projection_matrix", mCam->projMatrix);
+	shaderProgram->setUniform("view_matrix", mCam->getViewMatrix());
 	// glm::vec3((sin(time * 1.0f) + 1.0f) / 2.0f, (sin(time * 0.5f) + 1.0f) / 2.0f, (cos(time * 0.25f) + 1.0f) / 2.0f)
 	if (mUniformColorHasChanged)
 	{
-		mCustomShader->shader->setUniform("custom_color", mUniformColor);
+		shaderProgram->setUniform("custom_color", mUniformColor);
 		mUniformColorHasChanged = false;
 	}
 
@@ -76,7 +78,7 @@ ObjLoading::render()
 	//glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); 
 	model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f)); 
 	//model = glm::rotate(model, (float)time * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
-	mCustomShader->shader->setUniform("model_matrix", model);
+	shaderProgram->setUniform("model_matrix", model);
 
 	mScene->render(mCustomShader);
 }

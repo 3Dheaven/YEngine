@@ -1,4 +1,5 @@
 #include "CGLDriver.h"
+#include "../../CGLShaderFactory.h"
 
 CGLDriver::CGLDriver() : CGraphicDriver()
 {
@@ -6,6 +7,15 @@ CGLDriver::CGLDriver() : CGraphicDriver()
 
 CGLDriver::~CGLDriver()
 {
+}
+
+void CGLDriver::createShader(const string &vertexShader, const string &pixelShader)
+{
+	if (mCustomShader == nullptr)
+	{
+		mCustomShader = dynamic_cast<CShaderFactory *>(new CGLShaderFactory(vertexShader, pixelShader));
+		assert(mCustomShader != nullptr);
+	}
 }
 
 template<typename T>

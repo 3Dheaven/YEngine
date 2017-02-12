@@ -26,4 +26,5 @@ public:
 	void unbindMaterial(CMesh *mesh) const override;
 	void render(CMesh *mesh, CShaderFactory * shader) const override;
 	void clean(CMesh *mesh) const override;
+	void createShader(const string &vertexShader, const string &pixelShader) override;
 };

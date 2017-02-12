@@ -12,10 +12,9 @@
 #include <initializer_list>
 #include <vector>
 
-#include "CShaderProgram.h"
-#include "CGLSLShader.h"
+#include "CShader.h"
 
-class CGLSLShaderProgram : public CShaderProgram
+class CShaderProgram 
 {
 	private:
 		std::map<std::string, GLint> mAttributes;
@@ -23,9 +22,9 @@ class CGLSLShaderProgram : public CShaderProgram
 	public:
 			
 		GLuint mProgramID;
-		CGLSLShaderProgram();
-		CGLSLShaderProgram(std::initializer_list<CGLSLShader> shaders);
-		~CGLSLShaderProgram();
+		CShaderProgram();
+		CShaderProgram(std::initializer_list<CShader> shaders);
+		~CShaderProgram();
 
 		void use() const;
 		void unuse() const;
