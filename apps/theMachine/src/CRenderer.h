@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../../../yengine/scene/CScene.h"
-#include "../../../yengine/CShaderFactory.h"
 #include "../../../yengine/scene/CCamera.h"
 #include "../../../yengine/core/CGraphicDriver.h"
 #include "../workshop/CModuleBase.h"

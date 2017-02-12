@@ -13,7 +13,6 @@
 
 #include "CMesh.h"
 #include "CObjFile.h"
-#include "../CShaderFactory.h"
 #include "CMaterial.h"
 #include "CObject.h"
 

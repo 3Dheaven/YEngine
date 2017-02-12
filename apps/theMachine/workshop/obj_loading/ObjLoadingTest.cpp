@@ -11,7 +11,6 @@ ObjLoading::ObjLoading(CGraphicDriver *gdriver, wxPanel* panel)
 ObjLoading::~ObjLoading()
 {
 	delete mCam;
-	delete mCustomShader;
 	delete mScene;
 	cleanGUI();
 }
@@ -53,24 +52,22 @@ ObjLoading::setupGraphics()
 	mScene->add(projectPath + "//media//nanosuit//nanosuit.obj");
 
 	mUniformColor = glm::vec4(1.0, 0.0, 0.0, 0.0);
-	mGDriver->getShader()->getProgram()->setUniform("custom_color", mUniformColor);
+	mGDriver->getShader()->setUniform("custom_color", mUniformColor);
 	mUniformColorHasChanged = false;
 }
 
 void 
 ObjLoading::render()
 {
-	auto shaderProgram = mGDriver->getShader()->getProgram();
-		
-	shaderProgram->use();
+	mGDriver->getShader()->use();
 
 	mCam->projMatrix = glm::perspective(mCam->getZoom(), (float)600 / (float)600, 0.1f, 100.0f);
-	shaderProgram->setUniform("projection_matrix", mCam->projMatrix);
-	shaderProgram->setUniform("view_matrix", mCam->getViewMatrix());
+	mGDriver->getShader()->setUniform("projection_matrix", mCam->projMatrix);
+	mGDriver->getShader()->setUniform("view_matrix", mCam->getViewMatrix());
 	// glm::vec3((sin(time * 1.0f) + 1.0f) / 2.0f, (sin(time * 0.5f) + 1.0f) / 2.0f, (cos(time * 0.25f) + 1.0f) / 2.0f)
 	if (mUniformColorHasChanged)
 	{
-		shaderProgram->setUniform("custom_color", mUniformColor);
+		mGDriver->getShader()->setUniform("custom_color", mUniformColor);
 		mUniformColorHasChanged = false;
 	}
 
@@ -78,9 +75,9 @@ ObjLoading::render()
 	//glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); 
 	model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f)); 
 	//model = glm::rotate(model, (float)time * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
-	shaderProgram->setUniform("model_matrix", model);
+	mGDriver->getShader()->setUniform("model_matrix", model);
 
-	mScene->render(mCustomShader);
+	mScene->render(mGDriver->getShader());
 }
 
 void 

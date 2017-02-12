@@ -5,12 +5,6 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
-
-#include <GL/glew.h> 
-#include <glm.hpp>
-#include <gtc/matrix_transform.hpp>
-#include "../CShaderFactory.h"
-#include "CMaterial.h"
 #include "CMesh.h"
 
 using namespace std;

@@ -9,11 +9,10 @@
 #include <GL/glew.h> 
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
-#include "../CShaderFactory.h"
+#include "../core/CShader.h"
 #include "CMaterial.h"
 #include "CModel.h"
 #include "CObjFile.h"
-#include "../CShaderFactory.h"
 #include "../core/CGraphicDriver.h"
 
 using namespace std;
@@ -26,7 +25,7 @@ public:
 	~CScene();
 
 	bool add(std::string modelPath);
-	void render(CShaderFactory *shader);
+	void render(CShader *shader);
 	void setup();
 
 private:

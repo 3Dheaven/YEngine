@@ -8,19 +8,19 @@ CVKDriver::~CVKDriver()
 {
 }
 
-void CVKDriver::init(CMesh * mesh) const
+void CVKDriver::init(CMesh *mesh) const
 {
 }
 
-void CVKDriver::bindMaterial(CMesh * mesh, CShaderFactory * shader) const
+void CVKDriver::bindMaterial(CMesh *mesh, CShader *shader) const
 {
 }
 
-void CVKDriver::unbindMaterial(CMesh * mesh) const
+void CVKDriver::unbindMaterial(CMesh *mesh) const
 {
 }
 
-void CVKDriver::render(CMesh * mesh, CShaderFactory * shader) const
+void CVKDriver::render(CMesh *mesh, CShader *shader) const
 {
 }
 

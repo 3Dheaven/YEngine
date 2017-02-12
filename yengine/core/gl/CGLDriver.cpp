@@ -1,5 +1,5 @@
 #include "CGLDriver.h"
-#include "../../CGLShaderFactory.h"
+#include "CGLShaderFactory.h"
 
 CGLDriver::CGLDriver() : CGraphicDriver()
 {
@@ -13,9 +13,15 @@ void CGLDriver::createShader(const string &vertexShader, const string &pixelShad
 {
 	if (mCustomShader == nullptr)
 	{
-		mCustomShader = dynamic_cast<CShaderFactory *>(new CGLShaderFactory(vertexShader, pixelShader));
+		mCustomShader = dynamic_cast<CGLShaderFactory*>(new CGLShaderFactory(vertexShader, pixelShader));
 		assert(mCustomShader != nullptr);
 	}
+}
+
+CShader* 
+CGLDriver::getShader() const
+{
+	return dynamic_cast<CGLShaderFactory*>(mCustomShader);
 }
 
 template<typename T>
@@ -62,7 +68,7 @@ CGLDriver::init(CMesh *mesh) const
 }
 
 void
-CGLDriver::bindMaterial(CMesh *mesh, CShaderFactory * shader) const
+CGLDriver::bindMaterial(CMesh *mesh, CShader* shader) const
 {
 	if (mesh->mHasMaterial)
 	{
@@ -72,26 +78,26 @@ CGLDriver::bindMaterial(CMesh *mesh, CShaderFactory * shader) const
 		{
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, mesh->mMaterial->mTextureDiffuse->mID);
-			shader->shader->setUniform("texture_diffuse", 0);
+			shader->setUniform("texture_diffuse", 0);
 		}
 
 		if (mesh->mMaterial->mTextureNormal != NULL)
 		{
 			glActiveTexture(GL_TEXTURE1);
 			glBindTexture(GL_TEXTURE_2D, mesh->mMaterial->mTextureNormal->mID);
-			shader->shader->setUniform("texture_normal", 1);
+			shader->setUniform("texture_normal", 1);
 		}
 
 		if (mesh->mMaterial->mTextureSpecular != NULL)
 		{
 			glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, mesh->mMaterial->mTextureSpecular->mID);
-			shader->shader->setUniform("texture_specular", 2);
+			shader->setUniform("texture_specular", 2);
 		}
 
-		shader->shader->setUniform("ambient", mesh->mMaterial->mAmbientColor);
-		shader->shader->setUniform("diffuse", mesh->mMaterial->mDiffuseColor);
-		shader->shader->setUniform("specular", mesh->mMaterial->mSpecularColor);
+		shader->setUniform("ambient", mesh->mMaterial->mAmbientColor);
+		shader->setUniform("diffuse", mesh->mMaterial->mDiffuseColor);
+		shader->setUniform("specular", mesh->mMaterial->mSpecularColor);
 	}
 }
 
@@ -123,7 +129,7 @@ CGLDriver::unbindMaterial(CMesh *mesh) const
 }
 
 void
-CGLDriver::render(CMesh *mesh, CShaderFactory * shader) const
+CGLDriver::render(CMesh *mesh, CShader* shader) const
 {
 	bindMaterial(mesh, shader);
 	glBindVertexArray(mesh->mVao);

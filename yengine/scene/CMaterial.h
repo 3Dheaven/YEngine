@@ -10,7 +10,6 @@
 #include <GL/glew.h> 
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
-#include "../CShaderFactory.h"
 #include "../image/CTexture.h"
 
 using namespace std;

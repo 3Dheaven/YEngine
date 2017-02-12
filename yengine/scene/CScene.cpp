@@ -56,7 +56,7 @@ CScene::add(std::string modelPath)
 }
 
 void
-CScene::render(CShaderFactory *shader)
+CScene::render(CShader* shader)
 {
 	for (auto i : mModels)
 	{

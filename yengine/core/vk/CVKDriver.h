@@ -22,8 +22,8 @@ class CVKDriver : CGraphicDriver
 		~CVKDriver();
 
 		void init(CMesh *mesh) const override;
-		void bindMaterial(CMesh *mesh, CShaderFactory * shader) const override;
+		void bindMaterial(CMesh *mesh, CShader* shader) const override;
 		void unbindMaterial(CMesh *mesh) const override;
-		void render(CMesh *mesh, CShaderFactory * shader) const override;
+		void render(CMesh *mesh, CShader* shader) const override;
 		void clean(CMesh *mesh) const override;
 };

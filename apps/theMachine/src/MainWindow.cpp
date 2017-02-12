@@ -43,7 +43,7 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 		case API_OPENGL: 
 			{
 				CGLCanvas* glcanvas = new CGLCanvas(mMainPanel, mainCanvasID, nullptr, { 0, 0 }, { 600, 600 });
-				mGDriver = dynamic_cast<CGraphicDriver *>(new CGLDriver());
+				mGDriver = new CGLDriver();
 				mRenderer = new CRenderer(mGDriver, ex, rightPanel);
 				glcanvas->setGModule(mRenderer);
 			}
