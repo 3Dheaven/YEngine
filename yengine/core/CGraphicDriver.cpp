@@ -1,8 +1,7 @@
 #include "CGraphicDriver.h"
 
-CGraphicDriver::CGraphicDriver() : mCustomShader(nullptr)
+CGraphicDriver::CGraphicDriver() : mCustomShader(nullptr), vbIdCounter(0)
 {
-	vbIdCounter = 0;
 }
 
 CGraphicDriver::~CGraphicDriver()

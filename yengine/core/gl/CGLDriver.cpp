@@ -18,12 +18,6 @@ void CGLDriver::createShader(const string &vertexShader, const string &pixelShad
 	}
 }
 
-CShader* 
-CGLDriver::getShader() const
-{
-	return mCustomShader;
-}
-
 template<typename T>
 void createVertexBuffer(GLuint &vbId, GLuint vaoId, int vbIndex, unsigned int size, T &data)
 {

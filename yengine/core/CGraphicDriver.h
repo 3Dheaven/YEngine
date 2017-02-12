@@ -24,7 +24,7 @@ public:
 	CGraphicDriver();
 	~CGraphicDriver();
 
-	virtual CShader *getShader() const;
+	virtual CShader *getShader() const final;
 	virtual void init(CMesh* mesh) const = 0;
 	virtual void bindMaterial(CMesh* mesh, CShader* shader) const = 0;
 	virtual void unbindMaterial(CMesh* mesh) const = 0;

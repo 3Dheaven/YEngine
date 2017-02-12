@@ -27,5 +27,4 @@ public:
 	void render(CMesh *mesh, CShader *shader) const override;
 	void clean(CMesh *mesh) const override;
 	void createShader(const string &vertexShader, const string &pixelShader) override;
-	CShader* getShader() const;
 };
