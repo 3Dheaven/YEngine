@@ -13,7 +13,7 @@ void CGLDriver::createShader(const string &vertexShader, const string &pixelShad
 {
 	if (mCustomShader == nullptr)
 	{
-		mCustomShader = dynamic_cast<CGLShaderFactory*>(new CGLShaderFactory(vertexShader, pixelShader));
+		mCustomShader = dynamic_cast<CShader *>(new CGLShaderFactory(vertexShader, pixelShader));
 		assert(mCustomShader != nullptr);
 	}
 }
@@ -21,7 +21,7 @@ void CGLDriver::createShader(const string &vertexShader, const string &pixelShad
 CShader* 
 CGLDriver::getShader() const
 {
-	return dynamic_cast<CGLShaderFactory*>(mCustomShader);
+	return mCustomShader;
 }
 
 template<typename T>
