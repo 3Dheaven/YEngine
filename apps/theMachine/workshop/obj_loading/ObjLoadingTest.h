@@ -18,6 +18,7 @@
 #include <chrono>
 #include <wx/combobox.h>
 #include <wx/clrpicker.h>
+#include <wx/sizer.h>
 
 using namespace glm;
 
@@ -53,5 +54,4 @@ private:
 	wxPanel* mRightPanel;
 	bool mColorHasChanged;
 	wxColour mColor;
-	void OnColourChanged(wxColourPickerEvent& evt); 
 };

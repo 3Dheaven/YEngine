@@ -13,5 +13,5 @@ in vec2 TexCoords;
 void main()
 {
 	vec3 diff = texture2D(texture_diffuse, TexCoords).xyz;
-	outColor = vec4(diff, 1.0);
+	outColor = vec4(diff, 1.0) * custom_color;
 }

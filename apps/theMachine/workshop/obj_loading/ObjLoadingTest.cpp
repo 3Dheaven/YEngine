@@ -51,9 +51,9 @@ ObjLoading::setupGraphics()
 	mScene = new CScene(mGDriver);
 	mScene->add(projectPath + "//media//nanosuit//nanosuit.obj");
 
-	mUniformColor = glm::vec4(1.0, 0.0, 0.0, 0.0);
+	mUniformColor = glm::vec4(1.0, 1.0, 1.0, 1.0);
 	mGDriver->getShader()->setUniform("custom_color", mUniformColor);
-	mUniformColorHasChanged = false;
+	mUniformColorHasChanged = true;
 }
 
 void 
@@ -83,10 +83,35 @@ ObjLoading::render()
 void 
 ObjLoading::loadGUI()
 {
+	// http://zetcode.com/gui/wxwidgets/layoutmanagement/
+
 	if (mRightPanel != NULL)
 	{
-		wxColourPickerCtrl* colourPickerCtrl = new wxColourPickerCtrl(mRightPanel, wxID_ANY, wxStockGDI::COLOUR_RED, { 40, 40 });
-		colourPickerCtrl->Bind(wxEVT_COLOURPICKER_CHANGED, &ObjLoading::OnColourChanged, this);		
+		mRightPanel->SetBackgroundColour(wxT("#ededed"));
+
+		wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
+
+		wxBoxSizer *hbox1 = new wxBoxSizer(wxHORIZONTAL);
+		wxStaticText *st1 = new wxStaticText(mRightPanel, wxID_ANY, wxT("Color uniform : "));
+		hbox1->Add(st1, 0, wxRIGHT, 10);
+		wxColourPickerCtrl* colourPickerCtrl = new wxColourPickerCtrl(mRightPanel, wxID_ANY, wxStockGDI::COLOUR_RED);
+		colourPickerCtrl->Bind(	wxEVT_COLOURPICKER_CHANGED, 
+								[&](wxColourPickerEvent& evt) 
+								{
+									mUniformColorHasChanged = true;
+									auto newColor = evt.GetColour();
+									mUniformColor.x = static_cast<float>(newColor.Red()) / 255.0f;
+									mUniformColor.y = static_cast<float>(newColor.Green()) / 255.0f;
+									mUniformColor.z = static_cast<float>(newColor.Blue()) / 255.0f;
+									mUniformColor.w = 1.0f;
+								});
+		hbox1->Add(colourPickerCtrl, 2);
+		vbox->Add(hbox1, 0, wxLEFT | wxRIGHT | wxTOP, 10);
+
+		vbox->Add(-1, 25); // bottom space
+
+		mRightPanel->SetSizer(vbox);
+		mRightPanel->Layout();
 	}
 }
 
@@ -95,16 +120,6 @@ ObjLoading::cleanGUI()
 {
 	if (mRightPanel != NULL)
 	{
-		delete mRightPanel;
+		mRightPanel->DestroyChildren();
 	}
-}
-
-void ObjLoading::OnColourChanged(wxColourPickerEvent& evt)
-{
-	mUniformColorHasChanged = true;
-	auto newColor = evt.GetColour();
-	mUniformColor.x = static_cast<float>(newColor.Red()) / 255.0f;
-	mUniformColor.y = static_cast<float>(newColor.Green()) / 255.0f;
-	mUniformColor.z = static_cast<float>(newColor.Blue()) / 255.0f;
-	mUniformColor.w = 1.0f;
 }

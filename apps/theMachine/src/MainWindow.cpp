@@ -58,7 +58,7 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 	// Create a wxColourPickerCtrl control
 	colorHasChanged = false;
 	wxColourPickerCtrl* colourPickerCtrl = new wxColourPickerCtrl(rightPanel, ID_ColorPicker, wxStockGDI::COLOUR_RED, { 20, 20 });
-
+	colourPickerCtrl->Hide();
 	wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
 	m_console = new wxTextCtrl(bottomPanel, wxID_ANY, wxEmptyString, { 0, 0 }, { 600, 140 }, wxTE_MULTILINE | wxTE_READONLY);
 
