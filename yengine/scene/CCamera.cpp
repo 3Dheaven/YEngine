@@ -38,6 +38,18 @@ CCamera::~CCamera()
 	
 }
 
+void 
+CCamera::update()
+{
+	updateCameraVectors();
+}
+
+void
+CCamera::setYaw(float y)
+{
+	mYaw = y;
+}
+
 bool 
 CCamera::AABBInsideFrustum(glm::vec3 max_v, glm::vec3 min_v)
 {

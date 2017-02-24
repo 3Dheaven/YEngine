@@ -5,6 +5,7 @@
 #include "../../../yengine/core/CGraphicDriver.h"
 #include "../workshop/CModuleBase.h"
 #include "../workshop/obj_loading/ObjLoadingTest.h"
+#include "../workshop/cdlod_terrain/TerrainCDLOD.h"
 
 #include <memory>
 #include "wx/glcanvas.h"

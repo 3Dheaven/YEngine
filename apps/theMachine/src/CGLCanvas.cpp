@@ -84,7 +84,7 @@ CGLCanvas::onPaint(wxPaintEvent& event)
 	//glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 	glCullFace(GL_BACK);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	auto t_now = std::chrono::high_resolution_clock::now();
 	auto time = std::chrono::duration_cast<std::chrono::microseconds>(t_now - mStartTime).count();
 
@@ -111,22 +111,22 @@ CGLCanvas::onKeyDown(wxKeyEvent& event)
 	{
 		if (code == 'z' || code == 'Z')
 		{
-			cam->processKeyboard(FORWARD, 0.001);
+			cam->processKeyboard(FORWARD, 0.005);
 		}
 
 		if (code == 's' || code == 'S')
 		{
-			cam->processKeyboard(BACKWARD, 0.001);
+			cam->processKeyboard(BACKWARD, 0.005);
 		}
 
 		if (code == 'd' || code == 'D')
 		{
-			cam->processKeyboard(RIGHT, 0.001);
+			cam->processKeyboard(RIGHT, 0.005);
 		}
 
 		if (code == 'q' || code == 'Q')
 		{
-			cam->processKeyboard(LEFT, 0.001);
+			cam->processKeyboard(LEFT, 0.005);
 		}
 	}
 }

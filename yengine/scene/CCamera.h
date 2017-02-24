@@ -36,16 +36,16 @@ class CCamera
 		glm::vec3 mFront;
 		glm::vec3 mUp;
 		glm::vec3 mRight;
-		glm::vec3 mWorldUp;
-
-		// Eular Angles
-		GLfloat mYaw;
-		GLfloat mPitch;
+		glm::vec3 mWorldUp;	
 
 		// Camera options
 		GLfloat mMovementSpeed;
 		GLfloat mMouseSensitivity;
 		GLfloat mZoom;
+		
+		// Eular Angles
+		GLfloat mYaw;
+		GLfloat mPitch;
 
 		glm::mat3 modelMatrix;
 
@@ -69,6 +69,10 @@ class CCamera
 		CCamera(glm::vec3 position, glm::vec3 direction, glm::vec3 up);
 		~CCamera();
 
+		void update();
+
+		void setYaw(float y);
+
 		GLfloat getZoom() const;
 
 		glm::mat4 getViewMatrix();
@@ -77,7 +81,6 @@ class CCamera
 
 		void processMouseMovement(GLfloat xoffset, GLfloat yoffset);
 
-		// Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
 		void processMouseWheel(GLfloat yoffset);
 	
 		bool AABBInsidePlane(Plane plane, glm::vec3 max_v, glm::vec3 min_v);

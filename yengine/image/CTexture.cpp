@@ -23,7 +23,7 @@ mFilePath(filepath)
 
 	SOIL_free_image_data(image);
 
-	glBindTexture(GL_TEXTURE_2D, 0);
+	//glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 CTexture::~CTexture()

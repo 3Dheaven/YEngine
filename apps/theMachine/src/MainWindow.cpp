@@ -27,7 +27,7 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 	Centre();
 
 	E_API3D gApi = API_OPENGL;
-	E_MODULES_EXAMPLES ex = OBJ_LOADER;
+	E_MODULES_EXAMPLES ex = TERRAIN;//OBJ_LOADER;
 	switch (gApi)
 	{
 		case API_VULKAN: 
