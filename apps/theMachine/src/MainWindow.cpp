@@ -53,7 +53,7 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 
 		case API_OPENGL: 
 			{
-				glcanvas = new CGLCanvas(mMainPanel, mainCanvasID, nullptr, { 0, 0 }, GetSize());
+				glcanvas = new CGLCanvas(mMainPanel, mainCanvasID, nullptr, { 0, 0 }, GetSize(), wxFULL_REPAINT_ON_RESIZE);
 				mGDriver = new CGLDriver();
 				mRenderer = new CRenderer(mGDriver, ex, settingsMainPanel);
 				glcanvas->setGModule(mRenderer);
@@ -93,9 +93,9 @@ MainWindow::OnResize(wxSizeEvent& event)
 {
 	if (gApi == API_OPENGL && glcanvas != NULL)
 	{
+		mMainPanel->SetSize(GetSize());
 		glcanvas->SetSize(GetSize());
-		glcanvas->Refresh(false);
-	
+		glcanvas->resize();
 	}
 }
 

@@ -13,6 +13,7 @@ CGLCanvas::CGLCanvas(wxWindow* parent, wxWindowID id,
 	Bind(wxEVT_TIMER, &CGLCanvas::onTimer, this);
 
 	m_context = std::make_unique<wxGLContext>(this);
+	//m_context.Set
 	SetCurrent(*m_context);
 	initializeGLEW();
 
@@ -38,9 +39,16 @@ CGLCanvas::~CGLCanvas()
 }
 
 void 
-CGLCanvas::setGModule(CRenderer/* TerrainCDLOD*/ *renderer)
+CGLCanvas::setGModule(CRenderer *renderer)
 {
 	mGModule = renderer;
+}
+
+void 
+CGLCanvas::resize()
+{
+	glViewport(0, 0, GetSize().GetWidth(), GetSize().GetHeight());
+	Refresh();
 }
 
 void 
