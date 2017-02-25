@@ -61,7 +61,7 @@ ObjLoading::render()
 {
 	mGDriver->getShader()->use();
 
-	mCam->projMatrix = glm::perspective(mCam->getZoom(), (float)600 / (float)600, 0.1f, 100.0f);
+	mCam->projMatrix = glm::perspective(mCam->getZoom(), 1.0f, 0.1f, 100.0f);
 	mGDriver->getShader()->setUniform("projection_matrix", mCam->projMatrix);
 	mGDriver->getShader()->setUniform("view_matrix", mCam->getViewMatrix());
 	// glm::vec3((sin(time * 1.0f) + 1.0f) / 2.0f, (sin(time * 0.5f) + 1.0f) / 2.0f, (cos(time * 0.25f) + 1.0f) / 2.0f)

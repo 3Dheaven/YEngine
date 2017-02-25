@@ -17,18 +17,28 @@ class MainWindow : public wxFrame
 private:
 	enum 
 	{ 
-		ID_Quit = wxID_HIGHEST + 1, 
-		ID_Settings,
-		ID_ColorPicker
+		ID_QUIT = wxID_HIGHEST + 1,
+		ID_DISPLAY_SETTINGS,
+		ID_ColorPicker,
+		ID_DISPLAY_CONSOLE
+	};
+
+	enum E_API3D
+	{
+		API_VULKAN,
+		API_OPENGL
 	};
 
 	CRenderer* mRenderer;
 	CGraphicDriver* mGDriver;
+	CVulkanCanvas* vcanvas;
+	CGLCanvas* glcanvas;
+	E_API3D gApi;
+	wxPanel *mMainPanel;
+	bool mInitDone;
 
 public:
-	wxPanel* mMainPanel;
-	wxPanel* mBottomPanel;
-	wxPanel* mRightPanel;
+
 	bool colorHasChanged;
 	wxColour color;
 	wxTextCtrl* m_console;
@@ -40,14 +50,27 @@ public:
 	MainWindow& operator=(const MainWindow& tw) = delete;
 	MainWindow& operator=(MainWindow&&) = delete;
 
-	void OnQuit(wxCommandEvent& event);
-	void OnSettings(wxCommandEvent& WXUNUSED(event));
-	void onClose(wxCloseEvent& evt);
+	
 
 	wxTextCtrl *getDebugConsole();
 	void OnColourChanged(wxColourPickerEvent& evt);
 	
 private:
+
+	wxFrame *mConsoleWindow;
+	wxFrame *mSettingsWindow;
+
+	wxMenuBar *menubar;
+	wxMenu *fileMenu;
+	wxMenu *viewMenu;
+	wxMenuItem* viewItems;
+
+	void createMenuBar();
+	void OnDisplayConsoleCheckbox(wxCommandEvent& event);
+	void OnDisplaySettingsCheckbox(wxCommandEvent& event);
+	void OnQuit(wxCommandEvent& event);
+	void onClose(wxCloseEvent& evt);
+	void OnResize(wxSizeEvent& event);
 	
 	DECLARE_EVENT_TABLE()
 };

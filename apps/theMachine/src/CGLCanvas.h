@@ -50,14 +50,12 @@ private:
 
 private:
 	std::unique_ptr<wxGLContext> m_context;
-	
 	std::unique_ptr<wxTimer> mTimer;
 
 	typedef std::chrono::time_point<std::chrono::high_resolution_clock> sclock;
 	sclock mStartTime;
 
 	CRenderer* mGModule;
-	//TerrainCDLOD* mGModule;
 
 	GLfloat mLastMouseX;
 	GLfloat mLastMouseY;

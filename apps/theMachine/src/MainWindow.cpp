@@ -7,33 +7,44 @@ EVT_CLOSE(MainWindow::onClose)
 EVT_COLOURPICKER_CHANGED(ID_ColorPicker, MainWindow::OnColourChanged)
 END_EVENT_TABLE()
 
-enum E_API3D 
-{ 
-	API_VULKAN, 
-	API_OPENGL
-};
 
 MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoint& pos, const wxSize& size)
-	: wxFrame(parent, wxID_ANY, title, pos, size, wxMINIMIZE_BOX | wxCLOSE_BOX | wxSYSTEM_MENU | wxCAPTION | wxCLIP_CHILDREN)
+	: wxFrame(parent, wxID_ANY, title, pos, size, wxMINIMIZE_BOX | wxCLOSE_BOX | wxSYSTEM_MENU | wxCAPTION | wxCLIP_CHILDREN | wxRESIZE_BORDER)
 {
-	mGDriver = NULL;
-	mRenderer = NULL;
-
+	
 	mMainPanel = new wxPanel(this, wxID_ANY);
-	wxPanel * bottomPanel = new wxPanel(mMainPanel, wxID_ANY, { 0, 600 }, { 600, 200 });
-	wxPanel * rightPanel = new wxPanel(mMainPanel, wxID_ANY, { 600, 0 }, { 400, 800 });
-
+	
 	// Display MainWindow on screen center
 	Centre();
 
-	E_API3D gApi = API_OPENGL;
+	// Create console window
+	mConsoleWindow = new wxFrame(this, wxID_ANY, "Console", { GetPosition().x - 600, GetPosition().y }, { 600, 300 }, wxMINIMIZE_BOX |  wxCAPTION | wxCLIP_CHILDREN);
+	wxPanel *consoleMainPanel = new wxPanel(mConsoleWindow, wxID_ANY, { 0,0 }, { 600, 300 });
+	consoleMainPanel->SetBackgroundColour(wxT("#000000"));
+	mConsoleWindow->Show(true);
+
+	// Create custom settings window
+	mSettingsWindow = new wxFrame(this, wxID_ANY, "Settings", { GetPosition().x + size.x,  GetPosition().y }, { 300, 800 }, wxMINIMIZE_BOX | wxCAPTION | wxCLIP_CHILDREN);
+	wxPanel *settingsMainPanel = new wxPanel(mSettingsWindow, wxID_ANY, { 0,0 }, { 300, 800 });
+	settingsMainPanel->SetBackgroundColour(wxT("#ededed"));
+	//m_console = new wxTextCtrl(consoleMainPanel, wxID_ANY, wxEmptyString, { 0, 0 }, { 600, 300 }, wxTE_MULTILINE | wxTE_READONLY);
+	//wxLog::SetActiveTarget(new wxLogTextCtrl(m_console));
+	// All output to cout goes into the text control until the exit from current scope
+	// wxStreamToTextRedirector redirect(m_console);
+	mSettingsWindow->Show(true);
+
+	createMenuBar();
+
+	mGDriver = NULL;
+	mRenderer = NULL;
+
+	gApi = API_OPENGL;
 	E_MODULES_EXAMPLES ex = TERRAIN;//OBJ_LOADER;
 	switch (gApi)
 	{
 		case API_VULKAN: 
 			{
-				std::cout << "API_VULKAN\n";
-				CVulkanCanvas* vcanvas = new CVulkanCanvas(mMainPanel, wxID_ANY, { 0, 0 }, { 600, 600 });
+				vcanvas = new CVulkanCanvas(mMainPanel, wxID_ANY, { 0, 0 }, GetSize());
 				/*mGDriver = dynamic_cast<CGraphicDriver *>(new CVKDriver());
 				mRenderer = new CRenderer(mGDriver);
 				glcanvas->setGModule(mRenderer);*/
@@ -42,50 +53,24 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 
 		case API_OPENGL: 
 			{
-				CGLCanvas* glcanvas = new CGLCanvas(mMainPanel, mainCanvasID, nullptr, { 0, 0 }, { 600, 600 });
+				glcanvas = new CGLCanvas(mMainPanel, mainCanvasID, nullptr, { 0, 0 }, GetSize());
 				mGDriver = new CGLDriver();
-				mRenderer = new CRenderer(mGDriver, ex, rightPanel);
+				mRenderer = new CRenderer(mGDriver, ex, settingsMainPanel);
 				glcanvas->setGModule(mRenderer);
 			}
 			break;
 	}
 
-	
-	
 
-	wxButton *button = new wxButton(rightPanel, wxID_EXIT, wxT("Quit"), wxPoint(0, 600), { 400, 200 });
-		
+
+	
 	// Create a wxColourPickerCtrl control
 	colorHasChanged = false;
-	wxColourPickerCtrl* colourPickerCtrl = new wxColourPickerCtrl(rightPanel, ID_ColorPicker, wxStockGDI::COLOUR_RED, { 20, 20 });
+	wxColourPickerCtrl* colourPickerCtrl = new wxColourPickerCtrl(settingsMainPanel, ID_ColorPicker, wxStockGDI::COLOUR_RED, { 20, 20 });
 	colourPickerCtrl->Hide();
 	wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
-	m_console = new wxTextCtrl(bottomPanel, wxID_ANY, wxEmptyString, { 0, 0 }, { 600, 140 }, wxTE_MULTILINE | wxTE_READONLY);
-
-	wxLog::SetActiveTarget(new wxLogTextCtrl(m_console));
-
-	// All output to cout goes into the text control until the exit from current scope
-	// wxStreamToTextRedirector redirect(m_console);
-
-	wxMenuBar *menubar = new wxMenuBar;
-	wxMenu *fileMenu = new wxMenu();
-	fileMenu->Append(ID_Quit, wxT("&Quit"));
-	menubar->Append(fileMenu, wxT("&File"));
-	wxMenu *settingsMenu = new wxMenu();
-	settingsMenu->Append(ID_Settings, wxT("&Rendering options"));
-	menubar->Append(settingsMenu, wxT("&Settings"));
-
-	wxCheckBox *useOpenglCheckbox = new wxCheckBox();
-	wxCheckBox *useVulkanCheckbox = new wxCheckBox();
-	settingsMenu->AppendCheckItem(useOpenglCheckbox->GetId(), "Use OpenGL");
-	settingsMenu->AppendCheckItem(useVulkanCheckbox->GetId(), "Use Vulkan");
-
-	SetMenuBar(menubar);
-	SetFocus();
-
-	Connect(wxID_EXIT, wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MainWindow::OnQuit));
-	Connect(ID_Quit, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(MainWindow::OnQuit));
-	Connect(ID_Settings, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(MainWindow::OnSettings));
+	
+	Bind(wxEVT_SIZE, &MainWindow::OnResize, this);
 }
 
 MainWindow::~MainWindow()
@@ -103,6 +88,17 @@ MainWindow::~MainWindow()
 	}
 }
 
+void 
+MainWindow::OnResize(wxSizeEvent& event)
+{
+	if (gApi == API_OPENGL && glcanvas != NULL)
+	{
+		glcanvas->SetSize(GetSize());
+		glcanvas->Refresh(false);
+	
+	}
+}
+
 wxTextCtrl* MainWindow::getDebugConsole()
 {
 	return m_console;
@@ -114,13 +110,34 @@ MainWindow::OnQuit(wxCommandEvent& WXUNUSED(event))
 	Close(true);
 }
 
-void 
-MainWindow::OnSettings(wxCommandEvent& WXUNUSED(event))
+void
+MainWindow::OnDisplayConsoleCheckbox(wxCommandEvent& event)
 {
-	wxMessageBox(	
-		wxT("A settings window will be used instead of this messagebox."), 			
-		wxT("Test message box"),			
-		wxOK | wxICON_INFORMATION);
+	wxMenuItem* menuItem = menubar->FindItem(ID_DISPLAY_CONSOLE);
+
+	if (menuItem->IsChecked())
+	{
+		mConsoleWindow->Show(true);
+	}
+	else
+	{
+		mConsoleWindow->Show(false);
+	}
+}
+
+void
+MainWindow::OnDisplaySettingsCheckbox(wxCommandEvent& event)
+{
+	wxMenuItem* menuItem = menubar->FindItem(ID_DISPLAY_SETTINGS);
+
+	if (menuItem->IsChecked())
+	{
+		mSettingsWindow->Show(true);
+	}
+	else
+	{
+		mSettingsWindow->Show(false);
+	}
 }
 
 void MainWindow::OnColourChanged(wxColourPickerEvent& evt)
@@ -137,4 +154,37 @@ void
 MainWindow::onClose(wxCloseEvent& evt)
 {
 	evt.Skip();
+}
+
+void MainWindow::createMenuBar()
+{
+	menubar = new wxMenuBar;
+
+	// "File" in menu bar
+	fileMenu = new wxMenu();
+	fileMenu->Append(ID_QUIT, wxT("&Quit"));
+	menubar->Append(fileMenu, wxT("&File"));
+
+	// "View" in menu bar
+	viewMenu = new wxMenu();
+	menubar->Append(viewMenu, wxT("&View"));
+
+	viewItems = viewMenu->AppendCheckItem(ID_DISPLAY_CONSOLE, "Display console");
+	if (mConsoleWindow->IsVisible())
+	{
+		viewItems->Check();
+	}
+	viewItems = viewMenu->AppendCheckItem(ID_DISPLAY_SETTINGS, "Display settings");
+	if (mSettingsWindow->IsVisible())
+	{
+		viewItems->Check();
+	}
+
+	SetMenuBar(menubar);
+	SetFocus();
+	
+	Connect(wxID_EXIT, wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MainWindow::OnQuit));
+	Connect(ID_QUIT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(MainWindow::OnQuit));
+	Connect(ID_DISPLAY_CONSOLE,  wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(MainWindow::OnDisplayConsoleCheckbox));
+	Connect(ID_DISPLAY_SETTINGS, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(MainWindow::OnDisplaySettingsCheckbox));
 }
