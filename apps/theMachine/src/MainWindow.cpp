@@ -9,7 +9,7 @@ END_EVENT_TABLE()
 
 
 MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoint& pos, const wxSize& size)
-	: wxFrame(parent, wxID_ANY, title, pos, size, wxMINIMIZE_BOX | wxCLOSE_BOX | wxSYSTEM_MENU | wxCAPTION | wxCLIP_CHILDREN | wxRESIZE_BORDER)
+	: wxFrame(parent, wxID_ANY, title, pos, size, wxMINIMIZE_BOX | wxMAXIMIZE_BOX| wxCLOSE_BOX | wxSYSTEM_MENU | wxCAPTION | wxCLIP_CHILDREN | wxRESIZE_BORDER)
 {
 	// Display MainWindow on screen center
 	Centre();
@@ -95,6 +95,8 @@ MainWindow::~MainWindow()
 void 
 MainWindow::OnResize(wxSizeEvent& event)
 {
+	moduleChoices->SetPosition({GetSize().GetWidth() - 215,0 });
+
 	if (gApi == API_OPENGL && glcanvas != NULL)
 	{
 		mMainPanel->SetSize(GetSize());
