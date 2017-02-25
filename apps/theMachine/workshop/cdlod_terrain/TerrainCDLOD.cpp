@@ -129,6 +129,7 @@ TerrainCDLOD::loadGUI()
 {
 	if (mRightPanel != NULL)
 	{
+		mRightPanel->DestroyChildren();
 		mRightPanel->SetBackgroundColour(wxT("#ededed"));
 
 		wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);

@@ -8,6 +8,7 @@
 #include "CGLCanvas.h"
 #include "CRenderer.h"
 #include "ERenderingWorkshop.h"
+#include <wx/combobox.h>
 
 class CRenderer;
 class CVulkanCanvas;
@@ -20,7 +21,8 @@ private:
 		ID_QUIT = wxID_HIGHEST + 1,
 		ID_DISPLAY_SETTINGS,
 		ID_ColorPicker,
-		ID_DISPLAY_CONSOLE
+		ID_DISPLAY_CONSOLE,
+		ID_MODULES_COMBOBOX
 	};
 
 	enum E_API3D
@@ -59,11 +61,14 @@ private:
 
 	wxFrame *mConsoleWindow;
 	wxFrame *mSettingsWindow;
+	wxPanel *consoleMainPanel;
+	wxPanel *settingsMainPanel;
 
 	wxMenuBar *menubar;
 	wxMenu *fileMenu;
 	wxMenu *viewMenu;
 	wxMenuItem* viewItems;
+	wxComboBox *moduleChoices;
 
 	void createMenuBar();
 	void OnDisplayConsoleCheckbox(wxCommandEvent& event);
@@ -71,6 +76,7 @@ private:
 	void OnQuit(wxCommandEvent& event);
 	void onClose(wxCloseEvent& evt);
 	void OnResize(wxSizeEvent& event);
+	void OnModulesCombobox(wxCommandEvent& event);
 	
 	DECLARE_EVENT_TABLE()
 };

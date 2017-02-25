@@ -11,21 +11,24 @@ END_EVENT_TABLE()
 MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoint& pos, const wxSize& size)
 	: wxFrame(parent, wxID_ANY, title, pos, size, wxMINIMIZE_BOX | wxCLOSE_BOX | wxSYSTEM_MENU | wxCAPTION | wxCLIP_CHILDREN | wxRESIZE_BORDER)
 {
-	
-	mMainPanel = new wxPanel(this, wxID_ANY);
-	
 	// Display MainWindow on screen center
 	Centre();
 
+	mMainPanel = new wxPanel(this, wxID_ANY);
+	moduleChoices = new wxComboBox(mMainPanel, ID_MODULES_COMBOBOX, "", { GetSize().GetWidth() - 215,0 }, { 200,20 });
+	moduleChoices->AppendString("OBJ_LOADER");
+	moduleChoices->AppendString("TERRAIN_CDLOD");
+	moduleChoices->SetStringSelection("TERRAIN_CDLOD");
+	
 	// Create console window
 	mConsoleWindow = new wxFrame(this, wxID_ANY, "Console", { GetPosition().x - 600, GetPosition().y }, { 600, 300 }, wxMINIMIZE_BOX |  wxCAPTION | wxCLIP_CHILDREN);
-	wxPanel *consoleMainPanel = new wxPanel(mConsoleWindow, wxID_ANY, { 0,0 }, { 600, 300 });
+	consoleMainPanel = new wxPanel(mConsoleWindow, wxID_ANY, { 0,0 }, { 600, 300 });
 	consoleMainPanel->SetBackgroundColour(wxT("#000000"));
 	mConsoleWindow->Show(true);
 
 	// Create custom settings window
 	mSettingsWindow = new wxFrame(this, wxID_ANY, "Settings", { GetPosition().x + size.x,  GetPosition().y }, { 300, 800 }, wxMINIMIZE_BOX | wxCAPTION | wxCLIP_CHILDREN);
-	wxPanel *settingsMainPanel = new wxPanel(mSettingsWindow, wxID_ANY, { 0,0 }, { 300, 800 });
+	settingsMainPanel = new wxPanel(mSettingsWindow, wxID_ANY, { 0,0 }, { 300, 800 });
 	settingsMainPanel->SetBackgroundColour(wxT("#ededed"));
 	//m_console = new wxTextCtrl(consoleMainPanel, wxID_ANY, wxEmptyString, { 0, 0 }, { 600, 300 }, wxTE_MULTILINE | wxTE_READONLY);
 	//wxLog::SetActiveTarget(new wxLogTextCtrl(m_console));
@@ -71,6 +74,7 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 	wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
 	
 	Bind(wxEVT_SIZE, &MainWindow::OnResize, this);
+	Connect(ID_MODULES_COMBOBOX, wxEVT_COMBOBOX, wxCommandEventHandler(MainWindow::OnModulesCombobox));
 }
 
 MainWindow::~MainWindow()
@@ -137,6 +141,31 @@ MainWindow::OnDisplaySettingsCheckbox(wxCommandEvent& event)
 	else
 	{
 		mSettingsWindow->Show(false);
+	}
+}
+
+void
+MainWindow::OnModulesCombobox(wxCommandEvent& event)
+{
+	//int s = event.GetSelection();
+	auto s = moduleChoices->GetStringSelection();
+
+	if (gApi == API_OPENGL && glcanvas != NULL)
+	{
+		delete mRenderer;
+		delete mGDriver;
+
+		mGDriver = new CGLDriver();
+		if (s == "TERRAIN_CDLOD")
+		{
+			mRenderer = new CRenderer(mGDriver, TERRAIN, settingsMainPanel);
+		}
+		else if (s == "OBJ_LOADER")
+		{
+			mRenderer = new CRenderer(mGDriver, OBJ_LOADER, settingsMainPanel);
+		}
+
+		glcanvas->setGModule(mRenderer);
 	}
 }
 
