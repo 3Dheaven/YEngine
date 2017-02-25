@@ -9,6 +9,8 @@
 #include "CRenderer.h"
 #include "ERenderingWorkshop.h"
 #include <wx/combobox.h>
+#include <wx/aui/auibook.h>
+#include "CLogWindow.h"
 
 class CRenderer;
 class CVulkanCanvas;
@@ -59,9 +61,9 @@ public:
 	
 private:
 
-	wxFrame *mConsoleWindow;
+	CLogWindow *mLogWindow;
+
 	wxFrame *mSettingsWindow;
-	wxPanel *consoleMainPanel;
 	wxPanel *settingsMainPanel;
 
 	wxMenuBar *menubar;

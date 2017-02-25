@@ -20,20 +20,15 @@ MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoin
 	moduleChoices->AppendString("TERRAIN_CDLOD");
 	moduleChoices->SetStringSelection("TERRAIN_CDLOD");
 	
-	// Create console window
-	mConsoleWindow = new wxFrame(this, wxID_ANY, "Console", { GetPosition().x - 600, GetPosition().y }, { 600, 300 }, wxMINIMIZE_BOX |  wxCAPTION | wxCLIP_CHILDREN);
-	consoleMainPanel = new wxPanel(mConsoleWindow, wxID_ANY, { 0,0 }, { 600, 300 });
-	consoleMainPanel->SetBackgroundColour(wxT("#000000"));
-	mConsoleWindow->Show(true);
+	mLogWindow = new CLogWindow(this);
+	wxLog::SetActiveTarget(new wxLogTextCtrl(mLogWindow->getOutputLogPanel()));
+	// All output to cout goes into the text control until the exit from current scope
+	wxStreamToTextRedirector redirect(mLogWindow->getOutputLogPanel());
 
 	// Create custom settings window
 	mSettingsWindow = new wxFrame(this, wxID_ANY, "Settings", { GetPosition().x + size.x,  GetPosition().y }, { 300, 800 }, wxMINIMIZE_BOX | wxCAPTION | wxCLIP_CHILDREN);
 	settingsMainPanel = new wxPanel(mSettingsWindow, wxID_ANY, { 0,0 }, { 300, 800 });
 	settingsMainPanel->SetBackgroundColour(wxT("#ededed"));
-	//m_console = new wxTextCtrl(consoleMainPanel, wxID_ANY, wxEmptyString, { 0, 0 }, { 600, 300 }, wxTE_MULTILINE | wxTE_READONLY);
-	//wxLog::SetActiveTarget(new wxLogTextCtrl(m_console));
-	// All output to cout goes into the text control until the exit from current scope
-	// wxStreamToTextRedirector redirect(m_console);
 	mSettingsWindow->Show(true);
 
 	createMenuBar();
@@ -123,11 +118,11 @@ MainWindow::OnDisplayConsoleCheckbox(wxCommandEvent& event)
 
 	if (menuItem->IsChecked())
 	{
-		mConsoleWindow->Show(true);
+		mLogWindow->getWindow()->Show(true);
 	}
 	else
 	{
-		mConsoleWindow->Show(false);
+		mLogWindow->getWindow()->Show(false);
 	}
 }
 
@@ -201,7 +196,7 @@ void MainWindow::createMenuBar()
 	menubar->Append(viewMenu, wxT("&View"));
 
 	viewItems = viewMenu->AppendCheckItem(ID_DISPLAY_CONSOLE, "Display console");
-	if (mConsoleWindow->IsVisible())
+	if (mLogWindow->getWindow()->IsVisible())
 	{
 		viewItems->Check();
 	}
