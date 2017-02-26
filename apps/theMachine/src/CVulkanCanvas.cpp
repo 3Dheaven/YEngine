@@ -1186,7 +1186,7 @@ void CVulkanCanvas::OnPaint(wxPaintEvent& event)
 		auto time = std::chrono::duration_cast<std::chrono::microseconds>(t_now - m_startTime).count();
 		*/
 
-		auto parent = (MainWindow *)m_pParent;
+		/*auto parent = (MainWindow *)m_pParent;
 		if (parent->colorHasChanged)
 		{
 			glm::vec4 newColor;
@@ -1194,13 +1194,14 @@ void CVulkanCanvas::OnPaint(wxPaintEvent& event)
 			newColor.y = static_cast<float>(parent->color.Green()) / 255.0f;
 			newColor.z = static_cast<float>(parent->color.Blue()) / 255.0f;
 			newColor.w = 1.0f;
-
+			*/
 			void* data;
+			glm::vec4 newColor = glm::vec4(1.0,0.0,0.0,1.0);
 			MapMemory(m_uniformMemorie, sizeof(glm::vec4), 0, &data);
 			memcpy(data, &newColor, sizeof(glm::vec4));
 			vkUnmapMemory(m_logicalDevice, m_uniformMemorie);
-			parent->colorHasChanged = false;
-		}
+			/*parent->colorHasChanged = false;
+		}*/
 
 		uint32_t imageIndex;
 		VkResult result = vkAcquireNextImageKHR(m_logicalDevice, m_swapchain,

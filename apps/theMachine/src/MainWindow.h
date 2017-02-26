@@ -1,19 +1,10 @@
 #pragma once
-#include <wx/timer.h>
-#include "../../../yengine/core/gl/CGLdriver.h"
-#include "../../../yengine/core/vk/CVKdriver.h"
-#include <wx/clrpicker.h>
 #include "wx/wxprec.h"
-#include "CVulkanCanvas.h"
-#include "CGLCanvas.h"
-#include "CRenderer.h"
-#include "ERenderingWorkshop.h"
-#include <wx/combobox.h>
-#include <wx/aui/auibook.h>
 #include "CLogWindow.h"
+#include "CSettingsWindow.h"
+#include "CRendererManager.h"
 
-class CRenderer;
-class CVulkanCanvas;
+class CRendererManager;
 
 class MainWindow : public wxFrame
 {
@@ -22,30 +13,32 @@ private:
 	{ 
 		ID_QUIT = wxID_HIGHEST + 1,
 		ID_DISPLAY_SETTINGS,
-		ID_ColorPicker,
-		ID_DISPLAY_CONSOLE,
-		ID_MODULES_COMBOBOX
+		ID_DISPLAY_LOG
 	};
 
-	enum E_API3D
-	{
-		API_VULKAN,
-		API_OPENGL
-	};
+	CLogWindow *mLogWindow;
+	CSettingsWindow *mSettingsWindow;
+	CRendererManager *mRendererManager;
 
-	CRenderer* mRenderer;
-	CGraphicDriver* mGDriver;
-	CVulkanCanvas* vcanvas;
-	CGLCanvas* glcanvas;
-	E_API3D gApi;
-	wxPanel *mMainPanel;
-	bool mInitDone;
+	// Menu bar
+	wxMenuBar *menubar;
+	wxMenu *fileMenu;
+	wxMenu *viewMenu;
+	wxMenuItem* viewItems;
+
+	void createMenuBar();
+	void OnDisplayLogWindowCheckbox(wxCommandEvent& event);
+	void OnDisplaySettingsWindowCheckbox(wxCommandEvent& event);
+
+	// Current (main) window events
+	void OnQuit(wxCommandEvent& event);
+	void onClose(wxCloseEvent& evt);
+	void OnResize(wxSizeEvent& event);
 
 public:
-
-	bool colorHasChanged;
-	wxColour color;
-	wxTextCtrl* m_console;
+	wxPanel* mMainPanel;
+	
+	CSettingsWindow* getSettingsWindow();
 
 	MainWindow(wxWindow* parent, const std::wstring& title, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize);
 	virtual ~MainWindow();
@@ -53,33 +46,5 @@ public:
 	MainWindow(MainWindow&& tw) = delete;
 	MainWindow& operator=(const MainWindow& tw) = delete;
 	MainWindow& operator=(MainWindow&&) = delete;
-
-	
-
-	wxTextCtrl *getDebugConsole();
-	void OnColourChanged(wxColourPickerEvent& evt);
-	
-private:
-
-	CLogWindow *mLogWindow;
-
-	wxFrame *mSettingsWindow;
-	wxPanel *settingsMainPanel;
-
-	wxMenuBar *menubar;
-	wxMenu *fileMenu;
-	wxMenu *viewMenu;
-	wxMenuItem* viewItems;
-	wxComboBox *moduleChoices;
-
-	void createMenuBar();
-	void OnDisplayConsoleCheckbox(wxCommandEvent& event);
-	void OnDisplaySettingsCheckbox(wxCommandEvent& event);
-	void OnQuit(wxCommandEvent& event);
-	void onClose(wxCloseEvent& evt);
-	void OnResize(wxSizeEvent& event);
-	void OnModulesCombobox(wxCommandEvent& event);
-	
-	DECLARE_EVENT_TABLE()
 };
 

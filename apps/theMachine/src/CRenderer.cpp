@@ -56,7 +56,7 @@ void CRenderer::loadModule()
 		}
 		break;
 
-		case TERRAIN:
+		case CDLOD_TERRAIN:
 		{
 			mActiveModule = new TerrainCDLOD(mGDriver, mRightPanel);
 		}

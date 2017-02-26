@@ -1,179 +1,69 @@
 ﻿#include "MainWindow.h"
 
-const int mainCanvasID = 2000;			// TriangleCanvas widget ID
-
-BEGIN_EVENT_TABLE(MainWindow, wxFrame)
-EVT_CLOSE(MainWindow::onClose)
-EVT_COLOURPICKER_CHANGED(ID_ColorPicker, MainWindow::OnColourChanged)
-END_EVENT_TABLE()
-
-
 MainWindow::MainWindow(wxWindow* parent, const std::wstring& title, const wxPoint& pos, const wxSize& size)
 	: wxFrame(parent, wxID_ANY, title, pos, size, wxMINIMIZE_BOX | wxMAXIMIZE_BOX| wxCLOSE_BOX | wxSYSTEM_MENU | wxCAPTION | wxCLIP_CHILDREN | wxRESIZE_BORDER)
 {
-	// Display MainWindow on screen center
+	// Display current window on screen center
 	Centre();
 
+	// This panel contains graphics canvas (GL or VK)
 	mMainPanel = new wxPanel(this, wxID_ANY);
-	moduleChoices = new wxComboBox(mMainPanel, ID_MODULES_COMBOBOX, "", { GetSize().GetWidth() - 215,0 }, { 200,20 });
-	moduleChoices->AppendString("OBJ_LOADER");
-	moduleChoices->AppendString("TERRAIN_CDLOD");
-	moduleChoices->SetStringSelection("TERRAIN_CDLOD");
 	
+	// All output to cout goes into this window
 	mLogWindow = new CLogWindow(this);
 	wxLog::SetActiveTarget(new wxLogTextCtrl(mLogWindow->getOutputLogPanel()));
-	// All output to cout goes into the text control until the exit from current scope
 	wxStreamToTextRedirector redirect(mLogWindow->getOutputLogPanel());
 
-	// Create custom settings window
-	mSettingsWindow = new wxFrame(this, wxID_ANY, "Settings", { GetPosition().x + size.x,  GetPosition().y }, { 300, 800 }, wxMINIMIZE_BOX | wxCAPTION | wxCLIP_CHILDREN);
-	settingsMainPanel = new wxPanel(mSettingsWindow, wxID_ANY, { 0,0 }, { 300, 800 });
-	settingsMainPanel->SetBackgroundColour(wxT("#ededed"));
-	mSettingsWindow->Show(true);
-
+	// Create module example settings window
+	mSettingsWindow = new CSettingsWindow(this);
+	
+	// Create a menu for this main window
 	createMenuBar();
-
-	mGDriver = NULL;
-	mRenderer = NULL;
-
-	gApi = API_OPENGL;
-	E_MODULES_EXAMPLES ex = TERRAIN;//OBJ_LOADER;
-	switch (gApi)
-	{
-		case API_VULKAN: 
-			{
-				vcanvas = new CVulkanCanvas(mMainPanel, wxID_ANY, { 0, 0 }, GetSize());
-				/*mGDriver = dynamic_cast<CGraphicDriver *>(new CVKDriver());
-				mRenderer = new CRenderer(mGDriver);
-				glcanvas->setGModule(mRenderer);*/
-			}
-			break;
-
-		case API_OPENGL: 
-			{
-				glcanvas = new CGLCanvas(mMainPanel, mainCanvasID, nullptr, { 0, 0 }, GetSize(), wxFULL_REPAINT_ON_RESIZE);
-				mGDriver = new CGLDriver();
-				mRenderer = new CRenderer(mGDriver, ex, settingsMainPanel);
-				glcanvas->setGModule(mRenderer);
-			}
-			break;
-	}
-
-
-
 	
-	// Create a wxColourPickerCtrl control
-	colorHasChanged = false;
-	wxColourPickerCtrl* colourPickerCtrl = new wxColourPickerCtrl(settingsMainPanel, ID_ColorPicker, wxStockGDI::COLOUR_RED, { 20, 20 });
-	colourPickerCtrl->Hide();
-	wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
-	
+	// The renderer manager handles creation of module example by using vk or gl.
+	mRendererManager = new CRendererManager(this);
+
 	Bind(wxEVT_SIZE, &MainWindow::OnResize, this);
-	Connect(ID_MODULES_COMBOBOX, wxEVT_COMBOBOX, wxCommandEventHandler(MainWindow::OnModulesCombobox));
+	Bind(wxEVT_CLOSE_WINDOW, &MainWindow::onClose, this);
 }
 
 MainWindow::~MainWindow()
 {
-	if (mRenderer != NULL)
+	if (mLogWindow != NULL)
 	{
-		delete mRenderer;
-		mRenderer = nullptr;
+		delete mLogWindow;
 	}
 
-	if (mGDriver != NULL)
+	if (mLogWindow != NULL)
 	{
-		delete mGDriver;
-		mGDriver = nullptr;
+		delete mSettingsWindow;
 	}
+
+	if (mLogWindow != NULL)
+	{
+		delete mRendererManager;
+	}
+}
+
+CSettingsWindow*
+MainWindow::getSettingsWindow()
+{
+	return mSettingsWindow;
 }
 
 void 
 MainWindow::OnResize(wxSizeEvent& event)
 {
-	moduleChoices->SetPosition({GetSize().GetWidth() - 215,0 });
+	mMainPanel->SetSize(GetSize());
 
-	if (gApi == API_OPENGL && glcanvas != NULL)
-	{
-		mMainPanel->SetSize(GetSize());
-		glcanvas->SetSize(GetSize());
-		glcanvas->resize();
-	}
-}
-
-wxTextCtrl* MainWindow::getDebugConsole()
-{
-	return m_console;
+	// Redirect resize event
+	mRendererManager->onResize();
 }
 
 void 
 MainWindow::OnQuit(wxCommandEvent& WXUNUSED(event))
 {
 	Close(true);
-}
-
-void
-MainWindow::OnDisplayConsoleCheckbox(wxCommandEvent& event)
-{
-	wxMenuItem* menuItem = menubar->FindItem(ID_DISPLAY_CONSOLE);
-
-	if (menuItem->IsChecked())
-	{
-		mLogWindow->getWindow()->Show(true);
-	}
-	else
-	{
-		mLogWindow->getWindow()->Show(false);
-	}
-}
-
-void
-MainWindow::OnDisplaySettingsCheckbox(wxCommandEvent& event)
-{
-	wxMenuItem* menuItem = menubar->FindItem(ID_DISPLAY_SETTINGS);
-
-	if (menuItem->IsChecked())
-	{
-		mSettingsWindow->Show(true);
-	}
-	else
-	{
-		mSettingsWindow->Show(false);
-	}
-}
-
-void
-MainWindow::OnModulesCombobox(wxCommandEvent& event)
-{
-	//int s = event.GetSelection();
-	auto s = moduleChoices->GetStringSelection();
-
-	if (gApi == API_OPENGL && glcanvas != NULL)
-	{
-		delete mRenderer;
-		delete mGDriver;
-
-		mGDriver = new CGLDriver();
-		if (s == "TERRAIN_CDLOD")
-		{
-			mRenderer = new CRenderer(mGDriver, TERRAIN, settingsMainPanel);
-		}
-		else if (s == "OBJ_LOADER")
-		{
-			mRenderer = new CRenderer(mGDriver, OBJ_LOADER, settingsMainPanel);
-		}
-
-		glcanvas->setGModule(mRenderer);
-	}
-}
-
-void MainWindow::OnColourChanged(wxColourPickerEvent& evt)
-{
-	// Use the wxColourPickerEvent::GetColour() function to get the selected
-	// color and set the color of the text control accordingly.
-	//m_textCtrl->SetForegroundColour(evt.GetColour());
-	//m_textCtrl->Refresh();
-	colorHasChanged = true;
-	color = evt.GetColour();
 }
 
 void 
@@ -195,13 +85,13 @@ void MainWindow::createMenuBar()
 	viewMenu = new wxMenu();
 	menubar->Append(viewMenu, wxT("&View"));
 
-	viewItems = viewMenu->AppendCheckItem(ID_DISPLAY_CONSOLE, "Display console");
+	viewItems = viewMenu->AppendCheckItem(ID_DISPLAY_LOG, "Display console");
 	if (mLogWindow->getWindow()->IsVisible())
 	{
 		viewItems->Check();
 	}
 	viewItems = viewMenu->AppendCheckItem(ID_DISPLAY_SETTINGS, "Display settings");
-	if (mSettingsWindow->IsVisible())
+	if (mSettingsWindow->getWindow()->IsVisible())
 	{
 		viewItems->Check();
 	}
@@ -211,6 +101,36 @@ void MainWindow::createMenuBar()
 	
 	Connect(wxID_EXIT, wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MainWindow::OnQuit));
 	Connect(ID_QUIT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(MainWindow::OnQuit));
-	Connect(ID_DISPLAY_CONSOLE,  wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(MainWindow::OnDisplayConsoleCheckbox));
-	Connect(ID_DISPLAY_SETTINGS, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(MainWindow::OnDisplaySettingsCheckbox));
+	Connect(ID_DISPLAY_LOG,  wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(MainWindow::OnDisplayLogWindowCheckbox));
+	Connect(ID_DISPLAY_SETTINGS, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(MainWindow::OnDisplaySettingsWindowCheckbox));
+}
+
+void
+MainWindow::OnDisplayLogWindowCheckbox(wxCommandEvent& event)
+{
+	wxMenuItem* menuItem = menubar->FindItem(ID_DISPLAY_LOG);
+
+	if (menuItem->IsChecked())
+	{
+		mLogWindow->getWindow()->Show(true);
+	}
+	else
+	{
+		mLogWindow->getWindow()->Show(false);
+	}
+}
+
+void
+MainWindow::OnDisplaySettingsWindowCheckbox(wxCommandEvent& event)
+{
+	wxMenuItem* menuItem = menubar->FindItem(ID_DISPLAY_SETTINGS);
+
+	if (menuItem->IsChecked())
+	{
+		mSettingsWindow->getWindow()->Show(true);
+	}
+	else
+	{
+		mSettingsWindow->getWindow()->Show(false);
+	}
 }

@@ -13,8 +13,8 @@ CGLCanvas::CGLCanvas(wxWindow* parent, wxWindowID id,
 	Bind(wxEVT_TIMER, &CGLCanvas::onTimer, this);
 
 	m_context = std::make_unique<wxGLContext>(this);
-	//m_context.Set
 	SetCurrent(*m_context);
+
 	initializeGLEW();
 
 	setupControls();
@@ -28,6 +28,7 @@ CGLCanvas::CGLCanvas(wxWindow* parent, wxWindowID id,
 CGLCanvas::~CGLCanvas()
 {
 	SetCurrent(*m_context);
+
 	mTimer->Stop();
 
 	Disconnect(wxEVT_LEFT_DOWN, wxMouseEventHandler(CGLCanvas::onMouseEvent), NULL, this);
@@ -35,7 +36,6 @@ CGLCanvas::~CGLCanvas()
 	Disconnect(wxEVT_MOTION, wxMouseEventHandler(CGLCanvas::onMouseEvent), NULL, this);
 	Disconnect(wxEVT_MOUSEWHEEL, wxMouseEventHandler(CGLCanvas::onMouseWheel), NULL, this);
 	Disconnect(wxEVT_KEY_DOWN, wxKeyEventHandler(CGLCanvas::onKeyDown), NULL, this);
-
 }
 
 void 
@@ -87,18 +87,18 @@ void
 CGLCanvas::onPaint(wxPaintEvent& event)
 {
 	SetCurrent(*m_context);
-	glClearColor(0.5, 0.5, 0.5, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//glDisable(GL_BLEND);
-	glEnable(GL_DEPTH_TEST);
-	glCullFace(GL_BACK);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	
 	auto t_now = std::chrono::high_resolution_clock::now();
 	auto time = std::chrono::duration_cast<std::chrono::microseconds>(t_now - mStartTime).count();
 
+	glClearColor(0.5, 0.5, 0.5, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+	glCullFace(GL_BACK);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 	mGModule->render();
 
-	// and display
 	glFlush();
 	SwapBuffers();
 }
