@@ -7,12 +7,12 @@
 #include "CGLCanvas.h"
 #include "MainWindow.h"
 #include "CRenderer.h"
-#include "ERenderingWorkshop.h"
 #include "CVulkanCanvas.h"
 #include "wx/wxprec.h"
 #include <wx/combobox.h>
 #include <wx/wx.h>
 #include <wx/event.h>
+#include "RendererFactory.h"
 
 class CRenderer;
 class CVulkanCanvas;

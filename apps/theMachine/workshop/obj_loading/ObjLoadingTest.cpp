@@ -1,10 +1,26 @@
 ﻿#include "ObjLoadingTest.h"
 
+ObjLoading::ObjLoading()
+{
+	mCam = NULL;
+	mGDriver = NULL;
+	mRightPanel = NULL;
+}
+
 ObjLoading::ObjLoading(CGraphicDriver *gdriver, wxPanel* panel)
 {
 	mCam = NULL;
 	mGDriver = gdriver;
 	mRightPanel = panel;
+	loadGUI();
+}
+
+void 
+ObjLoading::init(CGraphicDriver *gdriver, wxPanel* panel)
+{
+	mGDriver = gdriver;
+	mRightPanel = panel;
+	setupGraphics();
 	loadGUI();
 }
 
@@ -124,3 +140,5 @@ ObjLoading::cleanGUI()
 		mRightPanel->DestroyChildren();
 	}
 }
+
+RendererRegister<ObjLoading> regObjLoading("ObjLoading");

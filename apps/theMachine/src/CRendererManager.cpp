@@ -3,17 +3,23 @@
 CRendererManager::CRendererManager(MainWindow *mainWindow) : mMainWindow(mainWindow)
 {
 	mModulesCombobox = new wxComboBox(mainWindow->mMainPanel, ID_MODULES_COMBOBOX, "", { mMainWindow->GetSize().GetWidth() - 215,0 }, { 200,20 });
-	mModulesCombobox->AppendString("OBJ_LOADER");
-	mModulesCombobox->AppendString("TERRAIN_CDLOD");
-	mModulesCombobox->SetStringSelection("TERRAIN_CDLOD");
+	mModulesCombobox->AppendString("ObjLoading");
+	mModulesCombobox->AppendString("TerrainCDLOD");
+	/*ADD NEW RENDERERS HERE*/
+	mModulesCombobox->SetStringSelection("TerrainCDLOD");
 
-
+	map_type * rendererMap = RendererFactory::getMap();
+	map_type::iterator it;
+	for (it = rendererMap->begin(); it != rendererMap->end(); it++)
+	{
+		std::cout << "Renderer [] : " << it->first << std::endl;
+	}
+	
 
 	mGDriver = NULL;
-	mRenderer = NULL;
-
+	mRenderer = RendererFactory::createInstance((std::string)mModulesCombobox->GetStringSelection());
+	
 	gApi = API_OPENGL;
-	E_MODULES_EXAMPLES ex = CDLOD_TERRAIN;//OBJ_LOADER;
 	switch (gApi)
 	{
 	case API_VULKAN:
@@ -29,8 +35,8 @@ CRendererManager::CRendererManager(MainWindow *mainWindow) : mMainWindow(mainWin
 	{
 		glcanvas = new CGLCanvas(mMainWindow->mMainPanel, ID_GL_CANVAS, nullptr, { 0, 0 }, mMainWindow->GetSize(), wxFULL_REPAINT_ON_RESIZE);
 		mGDriver = new CGLDriver();
-		mRenderer = new CRenderer(mGDriver, ex, mMainWindow->getSettingsWindow()->getDynamicPanel());
-		glcanvas->setGModule(mRenderer);
+		mRenderer->init(mGDriver, mMainWindow->getSettingsWindow()->getDynamicPanel());
+		glcanvas->setRenderer(mRenderer);
 	}
 	break;
 	}
@@ -69,23 +75,15 @@ CRendererManager::onResize()
 void
 CRendererManager::OnModuleChanged(wxCommandEvent& event)
 {
-	auto s = mModulesCombobox->GetStringSelection();
-
 	if (gApi == API_OPENGL && glcanvas != NULL)
 	{
-		delete mRenderer;
+		//delete mRenderer;
 		delete mGDriver;
 
 		mGDriver = new CGLDriver();
-		if (s == "TERRAIN_CDLOD")
-		{
-			mRenderer = new CRenderer(mGDriver, CDLOD_TERRAIN, mMainWindow->getSettingsWindow()->getDynamicPanel());
-		}
-		else if (s == "OBJ_LOADER")
-		{
-			mRenderer = new CRenderer(mGDriver, OBJ_LOADER, mMainWindow->getSettingsWindow()->getDynamicPanel());
-		}
+		mRenderer = RendererFactory::createInstance((std::string)mModulesCombobox->GetStringSelection());
 
-		glcanvas->setGModule(mRenderer);
+		mRenderer->init(mGDriver, mMainWindow->getSettingsWindow()->getDynamicPanel());
+		glcanvas->setRenderer(mRenderer);
 	}
 }

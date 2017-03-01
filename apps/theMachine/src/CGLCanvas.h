@@ -3,8 +3,7 @@
 #include "../../../yengine/scene/CScene.h"
 #include "../../../yengine/scene/CCamera.h"
 #include "../../../yengine/core/CGraphicDriver.h"
-#include "CRenderer.h"
-
+#include "../../../yengine/apps/theMachine/src/CRenderer.h"
 #include <memory>
 #include "wx/glcanvas.h"
 #include "wx/wxprec.h"
@@ -35,7 +34,7 @@ public:
 	CGLCanvas& operator=(const CGLCanvas& tc) = delete;
 	CGLCanvas& operator=(CGLCanvas&& tc) = delete;
 
-	void setGModule(CRenderer *renderer);
+	void setRenderer(CRenderer *renderer);
 	void resize();
 
 private:
@@ -56,7 +55,7 @@ private:
 	typedef std::chrono::time_point<std::chrono::high_resolution_clock> sclock;
 	sclock mStartTime;
 
-	CRenderer* mGModule;
+	CRenderer* mRenderer;
 
 	GLfloat mLastMouseX;
 	GLfloat mLastMouseY;

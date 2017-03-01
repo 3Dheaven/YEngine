@@ -9,7 +9,8 @@
 #include "QuadTreeNode.h"
 #include "Grid.h"
 #include "HeightMap.h"
-#include "../CModuleBase.h"
+#include "../../src/CRenderer.h"
+#include "../../src/RendererFactory.h"
 #include "../../../../yengine/core/CGraphicDriver.h"
 #include "../../../../yengine/scene/CCamera.h"
 #include "../../../../yengine/scene/CScene.h"
@@ -20,7 +21,9 @@
 #include <wx/clrpicker.h>
 #include <wx/sizer.h>
 
-class TerrainCDLOD : public CModuleBase
+class CRenderer;
+
+class TerrainCDLOD : public CRenderer
 {
 
 private:
@@ -51,9 +54,11 @@ private:
 	bool mUniformColorHasChanged;
 
 public:
-
+	TerrainCDLOD();
 	TerrainCDLOD(CGraphicDriver *gdriver, wxPanel* panel = NULL);
 	~TerrainCDLOD();
+
+	void init(CGraphicDriver *gdriver, wxPanel* panel = NULL);
 
 	void setupGraphics();
 	void render();

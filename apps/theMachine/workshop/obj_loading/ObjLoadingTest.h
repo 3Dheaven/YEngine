@@ -1,9 +1,10 @@
 #pragma once
 
+#include "../../src/CRenderer.h"
+#include "../../src/RendererFactory.h"
 #include "../../../yengine/scene/CScene.h"
 #include "../../../yengine/scene/CCamera.h"
 #include "../../../yengine/core/CGraphicDriver.h"
-#include "../CModuleBase.h"
 #include "../../../../yengine/helpers/StringsHelper.h"
 #include "../../../../yengine/system/FileSystem.h"
 
@@ -20,14 +21,18 @@
 #include <wx/clrpicker.h>
 #include <wx/sizer.h>
 
+
+class CRenderer;
 using namespace glm;
 
-class ObjLoading : public CModuleBase
+class ObjLoading : public CRenderer
 {
 public:
+	ObjLoading();
 	ObjLoading(CGraphicDriver *gdriver, wxPanel* panel = NULL);
 	~ObjLoading();
-
+	
+	void init(CGraphicDriver *gdriver, wxPanel* panel = NULL);
 	void setupGraphics();
 	void render();
 	CCamera* getCam();

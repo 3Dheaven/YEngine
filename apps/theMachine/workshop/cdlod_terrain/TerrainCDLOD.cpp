@@ -1,5 +1,12 @@
 #include "TerrainCDLOD.h"
 
+TerrainCDLOD::TerrainCDLOD()
+{
+	mCam = NULL;
+	mGDriver = NULL;
+	mRightPanel = NULL;
+}
+
 TerrainCDLOD::TerrainCDLOD(CGraphicDriver *gdriver, wxPanel* panel)
 {
 	mCam = NULL;
@@ -7,6 +14,8 @@ TerrainCDLOD::TerrainCDLOD(CGraphicDriver *gdriver, wxPanel* panel)
 	mRightPanel = panel;
 	loadGUI();
 }
+
+RendererRegister<TerrainCDLOD> regTerrainCDLOD("TerrainCDLOD");
 
 TerrainCDLOD::~TerrainCDLOD()
 {
@@ -17,6 +26,15 @@ TerrainCDLOD::~TerrainCDLOD()
 	if (hmap != NULL) delete hmap;
 	if (mRootNode != NULL) delete mRootNode;
 	cleanGUI();
+}
+
+void
+TerrainCDLOD::init(CGraphicDriver *gdriver, wxPanel* panel)
+{
+	mGDriver = gdriver;
+	mRightPanel = panel;
+	setupGraphics();
+	loadGUI();
 }
 
 CCamera*

@@ -39,9 +39,9 @@ CGLCanvas::~CGLCanvas()
 }
 
 void 
-CGLCanvas::setGModule(CRenderer *renderer)
+CGLCanvas::setRenderer(CRenderer *renderer)
 {
-	mGModule = renderer;
+	mRenderer = renderer;
 }
 
 void 
@@ -97,7 +97,7 @@ CGLCanvas::onPaint(wxPaintEvent& event)
 	glCullFace(GL_BACK);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	mGModule->render();
+	mRenderer->render();
 
 	glFlush();
 	SwapBuffers();
@@ -113,7 +113,7 @@ void
 CGLCanvas::onKeyDown(wxKeyEvent& event)
 {
 	int code = event.GetKeyCode();
-	auto cam = mGModule->getCam();
+	CCamera* cam = mRenderer->getCam();
 
 	if (cam != NULL)
 	{
@@ -152,7 +152,7 @@ CGLCanvas::onMouseWheel(wxMouseEvent& event)
 		value -= (event.GetWheelDelta() / 240.0);
 	}
 
-	auto cam = mGModule->getCam();
+	CCamera* cam = mRenderer->getCam();
 	if (cam != NULL)
 	{
 		cam->processMouseWheel(value);
@@ -176,8 +176,7 @@ CGLCanvas::onMouseEvent(wxMouseEvent& event)
 
 		mLastMouseX = event.GetX();
 		mLastMouseY = event.GetY();
-
-		auto cam = mGModule->getCam();
+		CCamera* cam = mRenderer->getCam();
 
 		if (cam != NULL)
 		{

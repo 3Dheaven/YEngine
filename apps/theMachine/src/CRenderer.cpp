@@ -1,23 +1,23 @@
 ﻿#include "CRenderer.h"
 
-CRenderer::CRenderer(CGraphicDriver *gdriver, E_MODULES_EXAMPLES renderingWorshopChoice, wxPanel *panel)
+CRenderer::CRenderer(/*CGraphicDriver *gdriver, E_MODULES_EXAMPLES renderingWorshopChoice, wxPanel *panel*/)
 {
-	mRenderingWorkshopChoice = renderingWorshopChoice;
+	/*mRenderingWorkshopChoice = renderingWorshopChoice;
 	mGDriver = gdriver;
 	mRightPanel = panel;
 	loadModule();
-	setupGraphics();
+	setupGraphics();*/
 }
 
 CRenderer::~CRenderer()
 {
-	if (mActiveModule != NULL)
+	/*if (mActiveModule != NULL)
 	{
 		delete mActiveModule;
-	}
+	}*/
 }
 
-CCamera* 
+/*CCamera* 
 CRenderer::getCam() 
 {
 	if (mActiveModule != NULL)
@@ -26,27 +26,27 @@ CRenderer::getCam()
 	}
 
 	return NULL;
-}
+}*/
 
 void 
 CRenderer::setupGraphics()
 {
-	if (mActiveModule != NULL)
+	/*if (mActiveModule != NULL)
 	{
 		mActiveModule->setupGraphics();
-	}
+	}*/
 }
 
 void 
 CRenderer::render()
 {
-	if (mActiveModule != NULL)
+	/*if (mActiveModule != NULL)
 	{
 		mActiveModule->render();
-	}
+	}*/
 }
 
-void CRenderer::loadModule()
+/*void CRenderer::loadModule()
 {
 	switch (mRenderingWorkshopChoice)
 	{
@@ -65,4 +65,4 @@ void CRenderer::loadModule()
 		default:
 			mActiveModule = NULL;
 	}
-}
+}*/

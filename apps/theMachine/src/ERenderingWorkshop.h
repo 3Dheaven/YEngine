@@ -1,7 +1,0 @@
-#pragma once
-
-enum E_MODULES_EXAMPLES
-{
-	OBJ_LOADER,
-	CDLOD_TERRAIN
-};

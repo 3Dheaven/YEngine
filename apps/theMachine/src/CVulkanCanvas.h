@@ -41,8 +41,8 @@ public:
     virtual ~CVulkanCanvas() noexcept;
 	wxWindow *m_pParent;
 
-	void setGModule(CRenderer *renderer);
-	CRenderer*mGModule;
+	//void setGModule(CRenderer *renderer);
+	//CRenderer*mGModule;
 
 private:
 	void InitializeVulkan(std::vector<const char*> extensions);
