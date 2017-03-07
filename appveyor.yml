@@ -14,6 +14,9 @@ branches:
   - master
 skip_tags: true
 max_jobs: 1
+clone_folder: C:\app
+clone_depth: 3
+test: off
 
 #---------------------------------#
 #    environment configuration    #
@@ -22,6 +25,15 @@ max_jobs: 1
 image: Visual Studio 2015
 platform: x64
 
+before_build:
+  - 7z x wxWidgets.7z -aos -oC:\app\wxWidgets > null
+  
+install:
+  - appveyor DownloadFile "https://dl.dropboxusercontent.com/s/c1by0uulee6g8th/wxWidgets.7z?dl=0" -FileName wxWidgets.7z
+  - set WXWIN=C:\app\wxWidgets
+  - set PATH=C:\Program Files (x86)\MSBuild\14.0\Bin;C:\wxWidgets;%PATH%
+  - set COMMIT_SHA=%APPVEYOR_REPO_COMMIT:~0,8%
+  
 build:
   project:
   parallel: true

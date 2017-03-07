@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 2.8 )
+cmake_minimum_required(VERSION 2.8)
 
 project( Application )
 set(EXE_NAME Application)
@@ -46,21 +46,28 @@ SET(CMAKE_SUPPRESS_REGENERATION TRUE)
 # Set C++11
 set (CMAKE_CXX_STANDARD 11)
 
-# find the required packages
+# FIND REQUIRED PACKAGES
 find_package(GLEW REQUIRED)
 find_package(wxWidgets REQUIRED)
 find_package(SOIL REQUIRED)
 
+IF (NOT Vulkan_FOUND)
+	MESSAGE("Searching for embedded vulkan library version ...")
+	set (VULKAN_DIR ${CMAKE_MODULE_PATH}/../../dependencies/vulkan/)
+	find_library(Vulkan_LIBRARY NAMES vulkan-1 vulkan PATHS ${VULKAN_DIR}/lib)
+	IF (Vulkan_LIBRARY)
+		set(Vulkan_FOUND ON)
+		MESSAGE("Embedded Vulkan library version found : ${Vulkan_LIBRARY}")
+	ENDIF()
+	link_directories(${VULKAN_DIR}/lib) 
+	include_directories(${VULKAN_DIR}/include)
+ENDIF()
+
+link_directories(${wxWidgets_LIB_DIR})
+include_directories(${wxWidgets_ROOT_DIR}/include)
+include_directories(${wxWidgets_ROOT_DIR}/include/msvc)
 include_directories(${CMAKE_MODULE_PATH}/../../dependencies/glm/)
-link_directories(${CMAKE_MODULE_PATH}/../../dependencies/vulkan/lib/) 
-include_directories(${CMAKE_MODULE_PATH}/../../dependencies/vulkan/include/)
-link_directories(${wxWidgets_LIB_DIR})
-include_directories(${wxWidgets_ROOT_DIR}/include)
-include_directories(${wxWidgets_ROOT_DIR}/include/msvc)
 include_directories(${GLEW_INCLUDE_PATH})
-link_directories(${wxWidgets_LIB_DIR})
-include_directories(${wxWidgets_ROOT_DIR}/include)
-include_directories(${wxWidgets_ROOT_DIR}/include/msvc)
 include_directories(${SOIL_INCLUDE_DIR})
 
 #http://stackoverflow.com/questions/33400777/error-lnk2019-unresolved-external-symbol-main-referenced-in-function-int-cde
@@ -68,7 +75,7 @@ include_directories(${SOIL_INCLUDE_DIR})
 add_definitions(-DUNICODE -D_UNICODE)
 
 add_executable(${EXE_NAME} ${SRC_FILES})
-set(LIBS opengl32 vulkan-1) 
+set(LIBS opengl32 ${Vulkan_LIBRARY}) 
 target_link_libraries(${EXE_NAME} ${LIBS} ${GLEW_LIBRARY} ${SOIL_LIBRARY})
 set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
 set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS")
