@@ -26,7 +26,7 @@ build_script:
  - cmake .. -G "Visual Studio 14 Win64"
  - cd C:\projects\apps\theMachine\build
  - dir
- - msbuild Application /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+ - msbuild Application.sln /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
  
 install:
   # Create directory to store dependencies
