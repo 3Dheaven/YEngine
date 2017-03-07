@@ -43,10 +43,10 @@ build:
 notifications:
   - provider: Email
     to:
+      - webery84@gmail.com
       - yoan.audureau@gmail.com
-      - yoan.audureau@yahoo.fr
-    subject: 'Build {{status}}'                  # optional
-    message: "{{template_variable_1}}, {{template_variable_2}}"    # optional
+    subject: 'Build {{status}}'                 
+    message: "{{template_variable_1}}, {{template_variable_1}}"    
     on_build_success: true
     on_build_failure: true
     on_build_status_changed: true
