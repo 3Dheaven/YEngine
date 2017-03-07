@@ -44,7 +44,7 @@ notifications:
   - provider: Email
     to:
       - yoan.audureau@gmail.com
-      #- webery84@gmail.com
+      - webery84@gmail.com
     subject: 'Build {{status}}'                 
     on_build_success: true
     on_build_failure: true
