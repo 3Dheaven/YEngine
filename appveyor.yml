@@ -1,44 +1,51 @@
-# Notes:
-#   - Minimal appveyor.yml file is an empty file. All sections are optional.
-#   - Indent each level of configuration with 2 spaces. Do not use tabs!
-#   - All section names are case-sensitive.
-#   - Section names should be unique on each level.
-
-#---------------------------------#
-#      general configuration      #
-#---------------------------------#
-
 version: 1.0.{build}
 branches:
   only:
   - master
 skip_tags: true
 max_jobs: 1
-clone_folder: C:\app
-#clone_depth: 3
+clone_folder: C:\projects\YEngine
 test: off
 
-#---------------------------------#
-#    environment configuration    #
-#---------------------------------#
-
-image: Visual Studio 2015
+os: Visual Studio 2015
 platform: x64
 
 before_build:
-  - 7z x wxWidgets.7z -aos -oC:\app\wxWidgets > null
-  - cmake -G "Visual Studio 14 Win64" -DCMAKE_SOURCE_DIR=C:/app/YEngine/apps/theMachine/ -DCMAKE_BINARY_DIR=C:/app/YEngine/apps/theMachine/build/
+  - 7z x wxWidgets.7z -aos -oC:\projects\deps\wxWidgets > null
   
 build_script:
- - cmake --build . --config Debug -- /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+ - cd C:\projects\YEngine\apps\theMachine\build
+ - cmake .. -G "Visual Studio 14 Win64"
+ - msbuild Application.sln /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
  
 install:
+  # Create directory to store dependencies
+  - mkdir C:\projects\deps
+  - cd C:\projects\deps
+  # Install CMake
+  - set CMAKE_URL="https://cmake.org/files/v3.7/cmake-3.7.2-win64-x64.zip"
+  - appveyor DownloadFile %CMAKE_URL% -FileName cmake.zip
+  - 7z x cmake.zip -oC:\projects\deps > nul
+  - move C:\projects\deps\cmake-* C:\projects\deps\cmake # Move to a version-agnostic directory
+  - set PATH=C:\projects\deps\cmake\bin;%PATH%
+  - cmake --version
+  # Install wxwidget
   - appveyor DownloadFile "https://dl.dropboxusercontent.com/s/c1by0uulee6g8th/wxWidgets.7z?dl=0" -FileName wxWidgets.7z
-  - set WXWIN=C:\app\wxWidgets
-  - set PATH=C:\Program Files (x86)\MSBuild\14.0\Bin;C:\wxWidgets;%PATH%
+  - set WXWIN=C:\projects\deps\wxWidgets
+  - set PATH=C:\Program Files (x86)\MSBuild\14.0\Bin;C:\projects\deps\wxWidgets;%PATH%
   - set COMMIT_SHA=%APPVEYOR_REPO_COMMIT:~0,8%
   
 build:
   project:
   parallel: true
-  verbosity: minimal
+  verbosity: detailed
+  
+notifications:
+  - provider: Email
+    to:
+      - yoan.audureau@gmail.com
+      - webery84@gmail.com
+    subject: 'Build {{status}}'                 
+    on_build_success: true
+    on_build_failure: true
+    on_build_status_changed: true
