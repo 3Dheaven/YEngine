@@ -1,9 +1,3 @@
-# Notes:
-#   - Minimal appveyor.yml file is an empty file. All sections are optional.
-#   - Indent each level of configuration with 2 spaces. Do not use tabs!
-#   - All section names are case-sensitive.
-#   - Section names should be unique on each level.
-
 version: 1.0.{build}
 branches:
   only:
@@ -20,12 +14,8 @@ before_build:
   - 7z x wxWidgets.7z -aos -oC:\projects\deps\wxWidgets > null
   
 build_script:
- - cd C:\projects\YEngine
- - dir
  - cd C:\projects\YEngine\apps\theMachine\build
  - cmake .. -G "Visual Studio 14 Win64"
- - cd C:\projects\YEngine\apps\theMachine\build
- - dir
  - msbuild Application.sln /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
  
 install:
@@ -49,3 +39,14 @@ build:
   project:
   parallel: true
   verbosity: detailed
+  
+notifications:
+  - provider: Email
+    to:
+      - yoan.audureau@gmail.com
+      - yoan.audureau@yahoo.fr
+    subject: 'Build {{status}}'                  # optional
+    message: "{{template_variable_1}}, {{template_variable_2}}"    # optional
+    on_build_success: true
+    on_build_failure: true
+    on_build_status_changed: true
