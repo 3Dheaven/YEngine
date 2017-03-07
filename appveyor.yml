@@ -31,7 +31,7 @@ before_build:
 build_script:
  - cd C:\projects
  - dir
- - cd C:\projects\YEngine\apps\theMachine
+ - cd C:\projects\apps\theMachine
  - cmake -G "Visual Studio 14 Win64" -DCMAKE_BINARY_DIR="./build/"
 # - cmake --build . --config Debug -- /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
  
