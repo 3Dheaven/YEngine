@@ -2,7 +2,7 @@
 #include <stdexcept>
 #include <map>
 #include <string>
-#include <vulkan/vulkan.h>
+#include <vulkan.h>
 class CVulkanException :
     public std::runtime_error
 {

@@ -1,7 +1,7 @@
 #include "CVulkanCanvas.h"
 #include "CVulkanException.h"
 
-#include <vulkan/vulkan.h>
+#include <vulkan.h>
 #include <fstream>
 #include <sstream>
 

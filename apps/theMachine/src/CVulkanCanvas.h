@@ -2,7 +2,7 @@
 #include "wx/wxprec.h"
 #include <wx/timer.h>
 #define VK_USE_PLATFORM_WIN32_KHR
-#include <vulkan/vulkan.h>
+#include <vulkan.h>
 #include <string>
 #include <set>
 #include <memory>
