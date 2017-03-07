@@ -47,7 +47,7 @@ notifications:
     to:
       - yoan.audureau@gmail.com
       - webery84@gmail.com
-    subject: 'Build {{status}}'                 
+    #subject: 'Build {{status}}'                 
     on_build_success: true
     on_build_failure: true
     on_build_status_changed: true
