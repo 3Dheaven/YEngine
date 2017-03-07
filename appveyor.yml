@@ -27,7 +27,7 @@ platform: x64
 
 before_build:
   - 7z x wxWidgets.7z -aos -oC:\app\wxWidgets > null
-  - cmake -G "Visual Studio 14 Win64" -DCMAKE_SOURCE_DIR="C:\app\YEngine\apps\theMachine\" -DCMAKE_BINARY_DIR="C:\app\YEngine\apps\theMachine\build\"
+  - cmake -G "Visual Studio 14 Win64" -DCMAKE_SOURCE_DIR=C:/app/YEngine/apps/theMachine/ -DCMAKE_BINARY_DIR=C:/app/YEngine/apps/theMachine/build/
   
 build_script:
  - cmake --build . --config Debug -- /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
