@@ -12,6 +12,7 @@
 #include "CRenderer.h"
 #include "MainWindow.h"
 #include "CVkSwapChain.hpp"
+#include "CVkDevice.hpp"
 
 /*struct QueueFamilyIndices {
     int graphicsFamily = -1;
@@ -46,19 +47,24 @@ public:
 	//CRenderer*mGModule;
 
 private:
+	CVkSwapChain m_swapChain;
+	CVkDevice m_device;
+	CVkInstance m_instance;
 
-	CVkSwapChain mSwapChain;
+	void CreateFrameBuffers();
+	std::vector<VkFramebuffer> m_swapchainFramebuffers;
+	VkFramebufferCreateInfo CreateFramebufferCreateInfo(const VkImageView& attachments) const noexcept;
 
 	void InitializeVulkan(std::vector<const char*> extensions);
 	void CreateInstance(const VkInstanceCreateInfo& createInfo);
 	void CreateWindowSurface(HWND *hwnd);
-	void PickPhysicalDevice();
-	void CreateLogicalDevice();
+	//void PickPhysicalDevice();
+	//void CreateLogicalDevice();
 	//void CreateSwapChain(const wxSize& size);
 	void CreateImageViews();
 	void CreateRenderPass();
 	void CreateGraphicsPipeline(const std::string& vertexShaderFile, const std::string& fragmentShaderFile);
-	void CreateFrameBuffers();
+	
 	void CreateCommandPool();
 	void CreateCommandBuffers();
 	void CreateSemaphores();
@@ -75,9 +81,9 @@ private:
 		const std::vector<const char*>& layerNames) const noexcept;
 	std::vector<VkDeviceQueueCreateInfo> CreateQueueCreateInfos(
 		const std::set<int>& uniqueQueueFamilies) const noexcept;
-	VkDeviceCreateInfo CreateDeviceCreateInfo(
+	/*VkDeviceCreateInfo CreateDeviceCreateInfo(
 		const std::vector<VkDeviceQueueCreateInfo>& queueCreateInfos,
-		const VkPhysicalDeviceFeatures& deviceFeatures) const noexcept;
+		const VkPhysicalDeviceFeatures& deviceFeatures) const noexcept;*/
 	/*VkSwapchainCreateInfoKHR CreateSwapchainCreateInfo(
 		const SwapChainSupportDetails& swapChainSupport,
 		const VkSurfaceFormatKHR& surfaceFormat,
@@ -117,8 +123,6 @@ private:
 		const VkPipelineColorBlendStateCreateInfo& colorBlending) const noexcept;
 	VkShaderModuleCreateInfo CreateShaderModuleCreateInfo(
 		const std::vector<char>& code) const noexcept;
-	VkFramebufferCreateInfo CreateFramebufferCreateInfo(
-		const VkImageView& attachments) const noexcept;
 	VkCommandPoolCreateInfo CreateCommandPoolCreateInfo(QueueFamilyIndices& queueFamilyIndices) const noexcept;
 	VkCommandBufferAllocateInfo CreateCommandBufferAllocateInfo() const noexcept;
 	VkCommandBufferBeginInfo CreateCommandBufferBeginInfo() const noexcept;
@@ -126,15 +130,15 @@ private:
 	VkSemaphoreCreateInfo CreateSemaphoreCreateInfo() const noexcept;
 	VkSubmitInfo CreateSubmitInfo(uint32_t imageIndex, VkPipelineStageFlags* pipelineStageFlags) const noexcept;
 	VkPresentInfoKHR CreatePresentInfoKHR(uint32_t& imageIndex) const noexcept;
-	bool IsDeviceSuitable(const VkPhysicalDevice& device) const;
+	//bool IsDeviceSuitable(const VkPhysicalDevice& device) const;
 	QueueFamilyIndices FindQueueFamilies(const VkPhysicalDevice& device) const;
-	bool CheckDeviceExtensionSupport(const VkPhysicalDevice& device) const;
+	//bool CheckDeviceExtensionSupport(const VkPhysicalDevice& device) const;
 	//SwapChainSupportDetails QuerySwapChainSupport(const VkPhysicalDevice& device) const;
 	//VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) const noexcept;
 	//VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) const noexcept;
 	//VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, const wxSize& size) const noexcept;
 	static std::vector<char> ReadFile(const std::string& filename);
-	void CreateShaderModule(const std::vector<char>& code, VkShaderModule& shaderModule) const;
+	void CreateShaderModule(const std::vector<char>& code, VkShaderModule& shaderModule);
 	virtual void OnPaint(wxPaintEvent& event);
 	virtual void OnResize(wxSizeEvent& event);
 	virtual void onTimer(wxTimerEvent& event);
@@ -178,10 +182,10 @@ private:
 	VkDescriptorBufferInfo bufferInfo;
 	VkWriteDescriptorSet descriptorWrite;
 
-	VkInstance m_instance;
+	//VkInstance m_instance;
 	VkSurfaceKHR m_surface;
-	VkPhysicalDevice m_physicalDevice;
-	VkDevice m_logicalDevice;
+	//VkPhysicalDevice m_physicalDevice;
+	//VkDevice m_logicalDevice;
 	VkQueue m_graphicsQueue;
 	VkQueue m_presentQueue;
 	//VkSwapchainKHR m_swapchain;
@@ -192,7 +196,7 @@ private:
 	VkRenderPass m_renderPass;
 	VkPipelineLayout m_pipelineLayout;
 	VkPipeline m_graphicsPipeline;
-	std::vector<VkFramebuffer> m_swapchainFramebuffers;
+	
 	VkCommandPool m_commandPool;
 	std::vector<VkCommandBuffer> m_commandBuffers;
 	VkSemaphore m_imageAvailableSemaphore;
