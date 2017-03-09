@@ -3,31 +3,34 @@
 CRendererManager::CRendererManager(MainWindow *mainWindow) : mMainWindow(mainWindow)
 {
 	mModulesCombobox = new wxComboBox(mainWindow->mMainPanel, ID_MODULES_COMBOBOX, "", { mMainWindow->GetSize().GetWidth() - 215,0 }, { 200,20 });
+	// List renderer (must be a name of a class)
 	mModulesCombobox->AppendString("ObjLoading");
 	mModulesCombobox->AppendString("TerrainCDLOD");
-	/*ADD NEW RENDERERS HERE*/
-	mModulesCombobox->SetStringSelection("TerrainCDLOD");
+	mModulesCombobox->AppendString("vkSquare");
+	// ADD NEW RENDERERS HERE
+	mModulesCombobox->SetStringSelection("vkSquare");
 
 	map_type * rendererMap = RendererFactory::getMap();
 	map_type::iterator it;
+	int idxRenderer = 0;
 	for (it = rendererMap->begin(); it != rendererMap->end(); it++)
 	{
-		std::cout << "Renderer [] : " << it->first << std::endl;
+		std::cout << "Renderer [" << idxRenderer << "] : " << it->first << std::endl;
+		idxRenderer++;
 	}
 	
-
 	mGDriver = NULL;
 	mRenderer = RendererFactory::createInstance((std::string)mModulesCombobox->GetStringSelection());
 	
-	gApi = API_OPENGL;
+	gApi = API_VULKAN;
 	switch (gApi)
 	{
 	case API_VULKAN:
 	{
 		vcanvas = new CVulkanCanvas(mMainWindow->mMainPanel, wxID_ANY, { 0, 0 }, mMainWindow->GetSize());
-		/*mGDriver = dynamic_cast<CGraphicDriver *>(new CVKDriver());
-		mRenderer = new CRenderer(mGDriver);
-		glcanvas->setGModule(mRenderer);*/
+		//mGDriver = dynamic_cast<CGraphicDriver *>(new CVKDriver());
+		//mRenderer->init(mGDriver, mMainWindow->getSettingsWindow()->getDynamicPanel());
+		//vcanvas->setRenderer(mRenderer);
 	}
 	break;
 

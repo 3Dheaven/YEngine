@@ -14,7 +14,7 @@
 
 using namespace std;
 
-class CVKDriver : CGraphicDriver
+class CVKDriver : public CGraphicDriver
 {
 	public:
 
@@ -26,4 +26,5 @@ class CVKDriver : CGraphicDriver
 		void unbindMaterial(CMesh *mesh) const override;
 		void render(CMesh *mesh, CShader* shader) const override;
 		void clean(CMesh *mesh) const override;
+		void createShader(const string& vertexShader, const string& pixelShader) {};
 };
