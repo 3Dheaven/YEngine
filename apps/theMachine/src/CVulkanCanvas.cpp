@@ -30,7 +30,7 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	: wxWindow(pParent, id, pos, size, style, name),
 	m_vulkanInitialized(false), m_instance(VK_NULL_HANDLE),
 	m_surface(VK_NULL_HANDLE), m_physicalDevice(VK_NULL_HANDLE),
-	m_logicalDevice(VK_NULL_HANDLE), m_swapchain(VK_NULL_HANDLE),
+	m_logicalDevice(VK_NULL_HANDLE), /*m_swapchain(VK_NULL_HANDLE),*/
 	m_renderPass(VK_NULL_HANDLE), m_pipelineLayout(VK_NULL_HANDLE),
 	m_graphicsPipeline(VK_NULL_HANDLE), m_commandPool(VK_NULL_HANDLE),
 	m_imageAvailableSemaphore(VK_NULL_HANDLE), m_renderFinishedSemaphore(VK_NULL_HANDLE)
@@ -54,9 +54,17 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	}
 	VkInstanceCreateInfo createInfo = CreateInstanceCreateInfo(appInfo, requiredExtensions, layerNames);
 	CreateInstance(createInfo);
-	CreateWindowSurface();
+	mSwapChain.connectInstance(m_instance);
+	auto a = GetHwnd();
+	
+	CreateWindowSurface(&a);
+	mSwapChain.connectSurface(m_surface);
+
 	PickPhysicalDevice();
+	mSwapChain.connectPhysicalDevice(m_physicalDevice);
+
 	CreateLogicalDevice();
+	mSwapChain.connectDevice(m_logicalDevice);
 
 	m_pParent = pParent->GetParent();
 
@@ -154,12 +162,10 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	attributeDescription.offset = 0;
 
 
-
-
-	CreateSwapChain(size);
+	mSwapChain.CreateSwapChain(size);
 	CreateImageViews();
 	CreateRenderPass();
-	CreateGraphicsPipeline("../shaders/vk/vert.spv", "../shaders/vk/frag.spv");
+	CreateGraphicsPipeline("../workshop/vk_2d_square/vert.spv", "../workshop/vk_2d_square/frag.spv");
 	CreateFrameBuffers();
 	
 	CreateCommandBuffers();
@@ -182,10 +188,10 @@ CVulkanCanvas::~CVulkanCanvas() noexcept
 			if (m_renderPass != VK_NULL_HANDLE) {
 				vkDestroyRenderPass(m_logicalDevice, m_renderPass, nullptr);
 			}
-			if (m_swapchain != VK_NULL_HANDLE) {
-				vkDestroySwapchainKHR(m_logicalDevice, m_swapchain, nullptr);
+			if (mSwapChain.mSwapChain != VK_NULL_HANDLE) {
+				vkDestroySwapchainKHR(m_logicalDevice, mSwapChain.mSwapChain, nullptr);
 			}
-			for (auto& imageView : m_swapchainImageViews) {
+			for (auto& imageView : mSwapChain.m_swapchainImageViews) {
 				vkDestroyImageView(m_logicalDevice, imageView, nullptr);
 			}
 			for (auto& framebuffer : m_swapchainFramebuffers) {
@@ -299,24 +305,24 @@ void CVulkanCanvas::CreateInstance(const VkInstanceCreateInfo& createInfo)
 }
 
 #ifdef _WIN32
-VkWin32SurfaceCreateInfoKHR CVulkanCanvas::CreateWin32SurfaceCreateInfo() const noexcept
+VkWin32SurfaceCreateInfoKHR CVulkanCanvas::CreateWin32SurfaceCreateInfo(HWND *hwnd) const noexcept
 {
 	VkWin32SurfaceCreateInfoKHR sci = {};
 	sci.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-	sci.hwnd = GetHwnd();
+	sci.hwnd = *hwnd;//GetHwnd();
 	sci.hinstance = GetModuleHandle(NULL);
 	return sci;
 }
 #endif
 
-void CVulkanCanvas::CreateWindowSurface()
+void CVulkanCanvas::CreateWindowSurface(HWND *hwnd)
 {
 	if (!m_instance) {
 		throw std::runtime_error("Programming Error:\n"
 			"Attempted to create a window surface before the Vulkan instance was created.");
 	}
 #ifdef _WIN32
-	VkWin32SurfaceCreateInfoKHR sci = CreateWin32SurfaceCreateInfo();
+	VkWin32SurfaceCreateInfoKHR sci = CreateWin32SurfaceCreateInfo(hwnd);
 	VkResult err = vkCreateWin32SurfaceKHR(m_instance, &sci, nullptr, &m_surface);
 	if (err != VK_SUCCESS) {
 		throw CVulkanException(err, "Cannot create a Win32 Vulkan surface:");
@@ -358,7 +364,7 @@ bool CVulkanCanvas::IsDeviceSuitable(const VkPhysicalDevice& device) const
 
 	bool swapChainAdequate = false;
 	if (extensionsSupported) {
-		SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(device);
+		SwapChainSupportDetails swapChainSupport = mSwapChain.QuerySwapChainSupport(device);
 		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 	}
 	return indices.IsComplete() & extensionsSupported && swapChainAdequate;
@@ -413,41 +419,7 @@ bool CVulkanCanvas::CheckDeviceExtensionSupport(const VkPhysicalDevice& device) 
 	return requiredExtensions.empty();
 }
 
-SwapChainSupportDetails CVulkanCanvas::QuerySwapChainSupport(const VkPhysicalDevice& device) const
-{
-	SwapChainSupportDetails details;
 
-	VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, m_surface, &details.capabilities);
-	if (result != VK_SUCCESS) {
-		throw CVulkanException(result, "Unable to retrieve physical device surface capabilities:");
-	}
-	uint32_t formatCount = 0;
-	result = vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_surface, &formatCount, nullptr);
-	if (result != VK_SUCCESS) {
-		throw CVulkanException(result, "Unable to retrieve the number of formats for a surface on a physical device:");
-	}
-	if (formatCount != 0) {
-		details.formats.resize(formatCount);
-		result = vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_surface, &formatCount, details.formats.data());
-		if (result != VK_SUCCESS) {
-			throw CVulkanException(result, "Unable to retrieve the formats for a surface on a physical device:");
-		}
-	}
-
-	uint32_t presentModeCount = 0;
-	result = vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface, &presentModeCount, nullptr);
-	if (result != VK_SUCCESS) {
-		throw CVulkanException(result, "Unable to retrieve the count of present modes for a surface on a physical device:");
-	}
-	if (presentModeCount != 0) {
-		details.presentModes.resize(presentModeCount);
-		result = vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface, &presentModeCount, details.presentModes.data());
-		if (result != VK_SUCCESS) {
-			throw CVulkanException(result, "Unable to retrieve the present modes for a surface on a physical device:");
-		}
-	}
-	return details;
-}
 
 VkDeviceQueueCreateInfo CVulkanCanvas::CreateDeviceQueueCreateInfo(int queueFamily) const noexcept
 {
@@ -509,123 +481,15 @@ void CVulkanCanvas::CreateLogicalDevice()
 	vkGetDeviceQueue(m_logicalDevice, indices.graphicsFamily, 0, &m_presentQueue);
 }
 
-VkSwapchainCreateInfoKHR CVulkanCanvas::CreateSwapchainCreateInfo(
-	const SwapChainSupportDetails& swapChainSupport,
-	const VkSurfaceFormatKHR& surfaceFormat,
-	uint32_t imageCount, const VkExtent2D& extent)
-{
-	VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
 
-	VkSwapchainCreateInfoKHR createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	createInfo.surface = m_surface;
-	createInfo.minImageCount = imageCount;
-	createInfo.imageFormat = surfaceFormat.format;
-	createInfo.imageExtent = extent;
-	createInfo.imageArrayLayers = 1;
-	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-	QueueFamilyIndices indices = FindQueueFamilies(m_physicalDevice);
-	uint32_t queueFamilyIndices[] = { static_cast<uint32_t>(indices.graphicsFamily),
-		static_cast<uint32_t>(indices.presentFamily) };
-	if (indices.graphicsFamily != indices.presentFamily) {
-		createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-		createInfo.queueFamilyIndexCount = 2;
-		createInfo.pQueueFamilyIndices = queueFamilyIndices;
-	}
-	else {
-		createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	}
-	createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
-	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-	createInfo.presentMode = presentMode;
-	createInfo.clipped = VK_TRUE;
-	return createInfo;
-}
-
-void CVulkanCanvas::CreateSwapChain(const wxSize& size)
-{
-	SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(m_physicalDevice);
-	VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
-	VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities, size);
-	uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
-	if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
-		imageCount = swapChainSupport.capabilities.maxImageCount;
-	}
-	VkSwapchainCreateInfoKHR createInfo = CreateSwapchainCreateInfo(swapChainSupport,
-		surfaceFormat, imageCount, extent);
-	VkSwapchainKHR oldSwapchain = m_swapchain;
-	createInfo.oldSwapchain = oldSwapchain;
-	VkSwapchainKHR newSwapchain;
-	VkResult result = vkCreateSwapchainKHR(m_logicalDevice, &createInfo, nullptr, &newSwapchain);
-	if (result != VK_SUCCESS) {
-		throw CVulkanException(result, "Error attempting to create a swapchain:");
-	}
-	*&m_swapchain = newSwapchain;
-
-	result = vkGetSwapchainImagesKHR(m_logicalDevice, m_swapchain, &imageCount, nullptr);
-	if (result != VK_SUCCESS) {
-		throw CVulkanException(result, "Error attempting to retrieve the count of swapchain images:");
-	}
-	m_swapchainImages.resize(imageCount);
-	result = vkGetSwapchainImagesKHR(m_logicalDevice, m_swapchain, &imageCount, m_swapchainImages.data());
-	if (result != VK_SUCCESS) {
-		throw CVulkanException(result, "Error attempting to retrieve the swapchain images:");
-	}
-	m_swapchainImageFormat = surfaceFormat.format;
-	m_swapchainExtent = extent;
-}
-
-VkSurfaceFormatKHR CVulkanCanvas::ChooseSwapSurfaceFormat(
-	const std::vector<VkSurfaceFormatKHR>& availableFormats) const noexcept
-{
-	if (availableFormats.size() == 1 && availableFormats[0].format == VK_FORMAT_UNDEFINED) {
-		return{ VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
-	}
-	for (const auto& availableFormat : availableFormats) {
-		if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM &&
-			availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-			return availableFormat;
-		}
-	}
-	return availableFormats[0];
-}
-
-VkPresentModeKHR CVulkanCanvas::ChooseSwapPresentMode(
-	const std::vector<VkPresentModeKHR>& availablePresentModes) const noexcept
-{
-	for (const auto& availablePresentMode : availablePresentModes) {
-		if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-			return availablePresentMode;
-		}
-	}
-	return VK_PRESENT_MODE_FIFO_KHR;
-}
-
-VkExtent2D CVulkanCanvas::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities,
-	const wxSize& size) const noexcept
-{
-	if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
-		return capabilities.currentExtent;
-	}
-	else {
-		VkExtent2D actualExtent = { static_cast<uint32_t>(size.GetWidth()),
-			static_cast<uint32_t>(size.GetHeight()) };
-		actualExtent.width = std::max(capabilities.minImageExtent.width,
-			std::min(capabilities.maxImageExtent.width, actualExtent.width));
-		actualExtent.height = std::max(capabilities.minImageExtent.height,
-			std::min(capabilities.maxImageExtent.height, actualExtent.height));
-		return actualExtent;
-	}
-}
 
 VkImageViewCreateInfo CVulkanCanvas::CreateImageViewCreateInfo(uint32_t swapchainImage) const noexcept
 {
 	VkImageViewCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	createInfo.image = m_swapchainImages[swapchainImage];
+	createInfo.image = mSwapChain.m_swapchainImages[swapchainImage];
 	createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	createInfo.format = m_swapchainImageFormat;
+	createInfo.format = mSwapChain.m_swapchainImageFormat;
 	createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
 	createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
 	createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -640,11 +504,11 @@ VkImageViewCreateInfo CVulkanCanvas::CreateImageViewCreateInfo(uint32_t swapchai
 
 void CVulkanCanvas::CreateImageViews()
 {
-	m_swapchainImageViews.resize(m_swapchainImages.size());
-	for (uint32_t i = 0; i < m_swapchainImages.size(); i++) {
+	mSwapChain.m_swapchainImageViews.resize(mSwapChain.m_swapchainImages.size());
+	for (uint32_t i = 0; i < mSwapChain.m_swapchainImages.size(); i++) {
 		VkImageViewCreateInfo createInfo = CreateImageViewCreateInfo(i);
 
-		VkResult result = vkCreateImageView(m_logicalDevice, &createInfo, nullptr, &m_swapchainImageViews[i]);
+		VkResult result = vkCreateImageView(m_logicalDevice, &createInfo, nullptr, &mSwapChain.m_swapchainImageViews[i]);
 		if (result != VK_SUCCESS) {
 			throw CVulkanException(result, "Unable to create an image view for a swap chain image");
 		}
@@ -654,7 +518,7 @@ void CVulkanCanvas::CreateImageViews()
 VkAttachmentDescription CVulkanCanvas::CreateAttachmentDescription() const noexcept
 {
 	VkAttachmentDescription colorAttachment = {};
-	colorAttachment.format = m_swapchainImageFormat;
+	colorAttachment.format = mSwapChain.m_swapchainImageFormat;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -768,8 +632,8 @@ VkViewport CVulkanCanvas::CreateViewport() const noexcept
 	VkViewport viewport = {};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = (float)m_swapchainExtent.width;
-	viewport.height = (float)m_swapchainExtent.height;
+	viewport.width = (float)mSwapChain.m_swapchainExtent.width;
+	viewport.height = (float)mSwapChain.m_swapchainExtent.height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 	return viewport;
@@ -779,7 +643,7 @@ VkRect2D CVulkanCanvas::CreateScissor() const noexcept
 {
 	VkRect2D scissor = {};
 	scissor.offset = { 0, 0 };
-	scissor.extent = m_swapchainExtent;
+	scissor.extent = mSwapChain.m_swapchainExtent;
 	return scissor;
 }
 
@@ -974,8 +838,8 @@ VkFramebufferCreateInfo CVulkanCanvas::CreateFramebufferCreateInfo(
 	framebufferInfo.renderPass = m_renderPass;
 	framebufferInfo.attachmentCount = 1;
 	framebufferInfo.pAttachments = &attachments;
-	framebufferInfo.width = m_swapchainExtent.width;
-	framebufferInfo.height = m_swapchainExtent.height;
+	framebufferInfo.width = mSwapChain.m_swapchainExtent.width;
+	framebufferInfo.height = mSwapChain.m_swapchainExtent.height;
 	framebufferInfo.layers = 1;
 	return framebufferInfo;
 }
@@ -983,11 +847,11 @@ VkFramebufferCreateInfo CVulkanCanvas::CreateFramebufferCreateInfo(
 void CVulkanCanvas::CreateFrameBuffers()
 {
 	VkFramebuffer framebuffer;
-	m_swapchainFramebuffers.resize(m_swapchainImageViews.size(), framebuffer);
+	m_swapchainFramebuffers.resize(mSwapChain.m_swapchainImageViews.size(), framebuffer);
 
-	for (size_t i = 0; i < m_swapchainImageViews.size(); i++) {
+	for (size_t i = 0; i < mSwapChain.m_swapchainImageViews.size(); i++) {
 		VkImageView attachments[] = {
-			m_swapchainImageViews[i]
+			mSwapChain.m_swapchainImageViews[i]
 		};
 
 		VkFramebufferCreateInfo framebufferInfo = CreateFramebufferCreateInfo(*attachments);
@@ -1052,7 +916,7 @@ VkRenderPassBeginInfo CVulkanCanvas::CreateRenderPassBeginInfo(size_t swapchainB
 	renderPassInfo.renderPass = m_renderPass;
 	renderPassInfo.framebuffer = m_swapchainFramebuffers[swapchainBufferNumber];
 	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = m_swapchainExtent;
+	renderPassInfo.renderArea.extent = mSwapChain.m_swapchainExtent;
 
 	renderPassInfo.clearValueCount = 1;
 	renderPassInfo.pClearValues = &clearColor;
@@ -1131,10 +995,10 @@ void CVulkanCanvas::RecreateSwapchain()
 	vkDeviceWaitIdle(m_logicalDevice);
 
 	wxSize size = GetSize();
-	CreateSwapChain(size);
+	mSwapChain.CreateSwapChain(size);
 	CreateImageViews();
 	CreateRenderPass();
-	CreateGraphicsPipeline("../shaders/vert.spv", "../shaders/frag.spv");
+	CreateGraphicsPipeline("../workshop/vk_2d_square/vert.spv", "../workshop/vk_2d_square/frag.spv");
 	CreateFrameBuffers();
 	CreateCommandBuffers();
 }
@@ -1165,7 +1029,7 @@ VkPresentInfoKHR CVulkanCanvas::CreatePresentInfoKHR(uint32_t& imageIndex) const
 	presentInfo.pWaitSemaphores = &m_renderFinishedSemaphore;
 
 	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = &m_swapchain;
+	presentInfo.pSwapchains = &mSwapChain.mSwapChain;
 
 	presentInfo.pImageIndices = &imageIndex;
 
@@ -1204,7 +1068,7 @@ void CVulkanCanvas::OnPaint(wxPaintEvent& event)
 		}*/
 
 		uint32_t imageIndex;
-		VkResult result = vkAcquireNextImageKHR(m_logicalDevice, m_swapchain,
+		VkResult result = vkAcquireNextImageKHR(m_logicalDevice, mSwapChain.mSwapChain,
 			std::numeric_limits<uint64_t>::max(), m_imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR) {

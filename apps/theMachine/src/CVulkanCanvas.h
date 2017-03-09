@@ -11,8 +11,9 @@
 #include <wx/clrpicker.h>
 #include "CRenderer.h"
 #include "MainWindow.h"
+#include "CVkSwapChain.hpp"
 
-struct QueueFamilyIndices {
+/*struct QueueFamilyIndices {
     int graphicsFamily = -1;
     int presentFamily = -1;
 
@@ -25,7 +26,7 @@ struct SwapChainSupportDetails {
     VkSurfaceCapabilitiesKHR capabilities;
     std::vector<VkSurfaceFormatKHR> formats;
     std::vector<VkPresentModeKHR> presentModes;
-};
+};*/
 
 class CVulkanCanvas :
     public wxWindow
@@ -45,12 +46,15 @@ public:
 	//CRenderer*mGModule;
 
 private:
+
+	CVkSwapChain mSwapChain;
+
 	void InitializeVulkan(std::vector<const char*> extensions);
 	void CreateInstance(const VkInstanceCreateInfo& createInfo);
-	void CreateWindowSurface();
+	void CreateWindowSurface(HWND *hwnd);
 	void PickPhysicalDevice();
 	void CreateLogicalDevice();
-	void CreateSwapChain(const wxSize& size);
+	//void CreateSwapChain(const wxSize& size);
 	void CreateImageViews();
 	void CreateRenderPass();
 	void CreateGraphicsPipeline(const std::string& vertexShaderFile, const std::string& fragmentShaderFile);
@@ -59,7 +63,7 @@ private:
 	void CreateCommandBuffers();
 	void CreateSemaphores();
 	void RecreateSwapchain();
-	VkWin32SurfaceCreateInfoKHR CreateWin32SurfaceCreateInfo() const noexcept;
+	VkWin32SurfaceCreateInfoKHR CreateWin32SurfaceCreateInfo(HWND *hwnd) const noexcept;
 	VkDeviceQueueCreateInfo CreateDeviceQueueCreateInfo(int queueFamily) const noexcept;
 	VkApplicationInfo CreateApplicationInfo(const std::string& appName,
 		const int32_t appVersion = VK_MAKE_VERSION(1, 0, 0),
@@ -74,11 +78,11 @@ private:
 	VkDeviceCreateInfo CreateDeviceCreateInfo(
 		const std::vector<VkDeviceQueueCreateInfo>& queueCreateInfos,
 		const VkPhysicalDeviceFeatures& deviceFeatures) const noexcept;
-	VkSwapchainCreateInfoKHR CreateSwapchainCreateInfo(
+	/*VkSwapchainCreateInfoKHR CreateSwapchainCreateInfo(
 		const SwapChainSupportDetails& swapChainSupport,
 		const VkSurfaceFormatKHR& surfaceFormat,
 		uint32_t imageCount,
-		const VkExtent2D& extent);
+		const VkExtent2D& extent);*/
 	VkImageViewCreateInfo CreateImageViewCreateInfo(uint32_t swapchainImage) const noexcept;
 	VkAttachmentDescription CreateAttachmentDescription() const noexcept;
 	VkAttachmentReference CreateAttachmentReference() const noexcept;
@@ -125,10 +129,10 @@ private:
 	bool IsDeviceSuitable(const VkPhysicalDevice& device) const;
 	QueueFamilyIndices FindQueueFamilies(const VkPhysicalDevice& device) const;
 	bool CheckDeviceExtensionSupport(const VkPhysicalDevice& device) const;
-	SwapChainSupportDetails QuerySwapChainSupport(const VkPhysicalDevice& device) const;
-	VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) const noexcept;
-	VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) const noexcept;
-	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, const wxSize& size) const noexcept;
+	//SwapChainSupportDetails QuerySwapChainSupport(const VkPhysicalDevice& device) const;
+	//VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) const noexcept;
+	//VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) const noexcept;
+	//VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, const wxSize& size) const noexcept;
 	static std::vector<char> ReadFile(const std::string& filename);
 	void CreateShaderModule(const std::vector<char>& code, VkShaderModule& shaderModule) const;
 	virtual void OnPaint(wxPaintEvent& event);
@@ -180,11 +184,11 @@ private:
 	VkDevice m_logicalDevice;
 	VkQueue m_graphicsQueue;
 	VkQueue m_presentQueue;
-	VkSwapchainKHR m_swapchain;
-	std::vector<VkImage> m_swapchainImages;
-	VkFormat m_swapchainImageFormat;
-	VkExtent2D m_swapchainExtent;
-	std::vector<VkImageView> m_swapchainImageViews;
+	//VkSwapchainKHR m_swapchain;
+	//std::vector<VkImage> m_swapchainImages;
+	//VkFormat m_swapchainImageFormat;
+	//VkExtent2D m_swapchainExtent;
+	//std::vector<VkImageView> m_swapchainImageViews;
 	VkRenderPass m_renderPass;
 	VkPipelineLayout m_pipelineLayout;
 	VkPipeline m_graphicsPipeline;
