@@ -48,15 +48,15 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	m_device.connectSurface(m_surface);
 	
 
-	m_device.PickPhysicalDevice();
-	m_swapChain.connectPhysicalDevice(m_device.m_physicalDevice);
+	m_device.pickPhysicalDevice();
+	m_swapChain.connectPhysicalDevice(m_device.mPhysicalDevice);
 
-	m_device.CreateLogicalDevice();
+	m_device.createLogicalDevice();
 	m_swapChain.connectDevice(m_device);
 
 	m_device.connectSwapChain(m_swapChain.mSwapChain);
 	
-	mShader.connectDevice(m_device.m_logicalDevice);
+	mShader.connectDevice(m_device.mLogicalDevice);
 
 
 
@@ -70,7 +70,7 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	auto triangleColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
 	MapMemory(m_uniformMemorie, sizeof(glm::vec4), 0, &data);
 	memcpy(data, &triangleColor, sizeof(glm::vec4));
-	vkUnmapMemory(m_device.m_logicalDevice, m_uniformMemorie);
+	vkUnmapMemory(m_device.mLogicalDevice, m_uniformMemorie);
 
 	// Descriptor in the shader
 	CreateDescriptorSetLayout(1, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -86,7 +86,7 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	descriptorPoolCreateInfo.pNext = nullptr;
 	descriptorPoolCreateInfo.poolSizeCount = 1;
 	descriptorPoolCreateInfo.pPoolSizes = &m_descriptorPoolSize;
-	auto result = vkCreateDescriptorPool(m_device.m_logicalDevice, &descriptorPoolCreateInfo, nullptr, &m_descriptorPool);
+	auto result = vkCreateDescriptorPool(m_device.mLogicalDevice, &descriptorPoolCreateInfo, nullptr, &m_descriptorPool);
 
 	if (result != VK_SUCCESS)
 	{
@@ -99,7 +99,7 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	m_descriptorSetAllocateInfo.descriptorSetCount = 1;
 	m_descriptorSetAllocateInfo.pSetLayouts = &m_descriptorSetLayout;
 
-	result = vkAllocateDescriptorSets(m_device.m_logicalDevice, &m_descriptorSetAllocateInfo, &m_descriptorSet);
+	result = vkAllocateDescriptorSets(m_device.mLogicalDevice, &m_descriptorSetAllocateInfo, &m_descriptorSet);
 
 	if (result != VK_SUCCESS)
 	{
@@ -122,7 +122,7 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	descriptorWrite.pImageInfo = nullptr; // Optional
 	descriptorWrite.pTexelBufferView = nullptr; // Optional
 
-	vkUpdateDescriptorSets(m_device.m_logicalDevice, 1, &descriptorWrite, 0, nullptr);
+	vkUpdateDescriptorSets(m_device.mLogicalDevice, 1, &descriptorWrite, 0, nullptr);
 
 
 
@@ -144,12 +144,12 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	m_indices.insert(m_indices.begin(), indexRectangle.begin(), indexRectangle.end());
 	CreateIndexBuffer(m_indexBuffer, m_indexMemory);
 
-	mShader.m_bindingDescription.binding = 0;
-	mShader.m_bindingDescription.stride = sizeof(glm::vec2);
-	mShader.m_bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	mShader.mBindingDescription.binding = 0;
+	mShader.mBindingDescription.stride = sizeof(glm::vec2);
+	mShader.mBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-	mShader.m_attributeDescriptions.emplace_back();
-	auto &attributeDescription = mShader.m_attributeDescriptions.back();
+	mShader.mAttributeDescriptions.emplace_back();
+	auto &attributeDescription = mShader.mAttributeDescriptions.back();
 	attributeDescription.binding = 0;
 	attributeDescription.location = 0;
 	attributeDescription.format = VK_FORMAT_R32G32_SFLOAT;
@@ -168,7 +168,7 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 
 CVulkanCanvas::~CVulkanCanvas() noexcept
 {
-	auto & logicalDevice = m_device.getLogicalDevice();
+	auto &logicalDevice = m_device.mLogicalDevice;
 	m_timer->Stop();
 
 	if (m_instance != VK_NULL_HANDLE) {
@@ -349,13 +349,11 @@ VkImageViewCreateInfo CVulkanCanvas::CreateImageViewCreateInfo(uint32_t swapchai
 
 void CVulkanCanvas::CreateImageViews()
 {
-	auto & logicalDevice = m_device.getLogicalDevice();
-
 	m_swapChain.m_swapchainImageViews.resize(m_swapChain.m_swapchainImages.size());
 	for (uint32_t i = 0; i < m_swapChain.m_swapchainImages.size(); i++) {
 		VkImageViewCreateInfo createInfo = CreateImageViewCreateInfo(i);
 
-		VkResult result = vkCreateImageView(logicalDevice, &createInfo, nullptr, &m_swapChain.m_swapchainImageViews[i]);
+		VkResult result = vkCreateImageView(m_device.mLogicalDevice, &createInfo, nullptr, &m_swapChain.m_swapchainImageViews[i]);
 		if (result != VK_SUCCESS) {
 			throw CVulkanException(result, "Unable to create an image view for a swap chain image");
 		}
@@ -424,8 +422,6 @@ VkRenderPassCreateInfo CVulkanCanvas::CreateRenderPassCreateInfo(
 
 void CVulkanCanvas::CreateRenderPass()
 {
-	auto & logicalDevice = m_device.getLogicalDevice();
-
 	VkAttachmentDescription colorAttachment = CreateAttachmentDescription();
 	VkAttachmentReference colorAttachmentRef = CreateAttachmentReference();
 	VkSubpassDescription subPass = CreateSubpassDescription(colorAttachmentRef);
@@ -433,7 +429,7 @@ void CVulkanCanvas::CreateRenderPass()
 	VkRenderPassCreateInfo renderPassInfo = CreateRenderPassCreateInfo(colorAttachment,
 		subPass, dependency);
 
-	VkResult result = vkCreateRenderPass(logicalDevice, &renderPassInfo, nullptr, &m_renderPass);
+	VkResult result = vkCreateRenderPass(m_device.mLogicalDevice, &renderPassInfo, nullptr, &m_renderPass);
 	if (result != VK_SUCCESS) {
 		throw CVulkanException(result, "Failed to create a render pass:");
 	}
@@ -459,9 +455,9 @@ VkPipelineVertexInputStateCreateInfo CVulkanCanvas::CreatePipelineVertexInputSta
 	vertexInputInfo.vertexAttributeDescriptionCount = 0;*/
 
 	vertexInputInfo.vertexBindingDescriptionCount = 1;
-	vertexInputInfo.vertexAttributeDescriptionCount = mShader.m_attributeDescriptions.size();
-	vertexInputInfo.pVertexBindingDescriptions = &mShader.m_bindingDescription;
-	vertexInputInfo.pVertexAttributeDescriptions = mShader.m_attributeDescriptions.data();
+	vertexInputInfo.vertexAttributeDescriptionCount = mShader.mAttributeDescriptions.size();
+	vertexInputInfo.pVertexBindingDescriptions = &mShader.mBindingDescription;
+	vertexInputInfo.pVertexAttributeDescriptions = mShader.mAttributeDescriptions.data();
 
 	return vertexInputInfo;
 }
@@ -592,8 +588,6 @@ VkGraphicsPipelineCreateInfo CVulkanCanvas::CreateGraphicsPipelineCreateInfo(
 
 void CVulkanCanvas::CreateGraphicsPipeline(const std::string& vertexShaderFile, const std::string& fragmentShaderFile)
 {
-	auto & logicalDevice = m_device.getLogicalDevice();
-
 	auto vertShaderCode = ReadFile(vertexShaderFile);
 	auto fragShaderCode = ReadFile(fragmentShaderFile);
 
@@ -622,6 +616,8 @@ void CVulkanCanvas::CreateGraphicsPipeline(const std::string& vertexShaderFile, 
 	VkPipelineColorBlendStateCreateInfo colorBlending = CreatePipelineColorBlendStateCreateInfo(
 		colorBlendAttachment);
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = CreatePipelineLayoutCreateInfo();
+
+	auto &logicalDevice = m_device.mLogicalDevice;
 
 	VkResult result = vkCreatePipelineLayout(logicalDevice, &pipelineLayoutInfo, nullptr, &m_pipelineLayout);
 	if (result != VK_SUCCESS) {
@@ -680,8 +676,6 @@ void CVulkanCanvas::CreateFrameBuffers()
 	VkFramebuffer framebuffer;
 	m_swapchainFramebuffers.resize(m_swapChain.m_swapchainImageViews.size(), framebuffer);
 
-	auto & logicalDevice = m_device.getLogicalDevice();
-
 	for (size_t i = 0; i < m_swapChain.m_swapchainImageViews.size(); i++) {
 		VkImageView attachments[] = {
 			m_swapChain.m_swapchainImageViews[i]
@@ -689,7 +683,7 @@ void CVulkanCanvas::CreateFrameBuffers()
 
 		VkFramebufferCreateInfo framebufferInfo = CreateFramebufferCreateInfo(*attachments);
 
-		VkResult result = vkCreateFramebuffer(logicalDevice, &framebufferInfo, nullptr, &m_swapchainFramebuffers[i]);
+		VkResult result = vkCreateFramebuffer(m_device.mLogicalDevice, &framebufferInfo, nullptr, &m_swapchainFramebuffers[i]);
 		if (result != VK_SUCCESS) {
 			throw CVulkanException(result, "Failed to create framebuffer:");
 		}
@@ -712,14 +706,11 @@ VkCommandPoolCreateInfo CVulkanCanvas::CreateCommandPoolCreateInfo(
 
 void CVulkanCanvas::CreateCommandPool()
 {
-	auto & logicalDevice = m_device.getLogicalDevice();
-	auto & physicalDevice = m_device.getPhysicalDevice();
-
-	QueueFamilyIndices queueFamilyIndices = m_device.FindQueueFamilies(physicalDevice, m_surface);
+	QueueFamilyIndices queueFamilyIndices = m_device.findQueueFamilies(m_device.mPhysicalDevice, m_surface);
 
 	VkCommandPoolCreateInfo poolInfo = CreateCommandPoolCreateInfo(queueFamilyIndices);
 
-	VkResult result = vkCreateCommandPool(logicalDevice, &poolInfo, nullptr, &m_commandPool);
+	VkResult result = vkCreateCommandPool(m_device.mLogicalDevice, &poolInfo, nullptr, &m_commandPool);
 
 	if (result != VK_SUCCESS)
 	{
@@ -761,9 +752,10 @@ VkRenderPassBeginInfo CVulkanCanvas::CreateRenderPassBeginInfo(size_t swapchainB
 
 void CVulkanCanvas::CreateCommandBuffers()
 {
-	auto & logicalDevice = m_device.getLogicalDevice();
+	auto &logicalDevice = m_device.mLogicalDevice;
 
-	if (m_commandBuffers.size() > 0) {
+	if (m_commandBuffers.size() > 0)
+	{
 		vkFreeCommandBuffers(logicalDevice, m_commandPool, m_commandBuffers.size(), m_commandBuffers.data());
 	}
 	m_commandBuffers.resize(m_swapchainFramebuffers.size());
@@ -818,7 +810,7 @@ void CVulkanCanvas::CreateSemaphores()
 {
 	VkSemaphoreCreateInfo semaphoreInfo = CreateSemaphoreCreateInfo();
 
-	auto & logicalDevice = m_device.getLogicalDevice();
+	auto &logicalDevice = m_device.mLogicalDevice;
 
 	VkResult result = vkCreateSemaphore(logicalDevice, &semaphoreInfo, nullptr, &m_imageAvailableSemaphore);
 	if (result != VK_SUCCESS) {
@@ -832,9 +824,7 @@ void CVulkanCanvas::CreateSemaphores()
 
 void CVulkanCanvas::RecreateSwapchain()
 {
-	auto & logicalDevice = m_device.getLogicalDevice();
-
-	vkDeviceWaitIdle(logicalDevice);
+	vkDeviceWaitIdle(m_device.mLogicalDevice);
 
 	wxSize size = GetSize();
 	m_swapChain.CreateSwapChain(size);
@@ -885,7 +875,7 @@ void CVulkanCanvas::onTimer(wxTimerEvent& event)
 
 void CVulkanCanvas::OnPaint(wxPaintEvent& event)
 {
-	auto & logicalDevice = m_device.getLogicalDevice();
+	auto &logicalDevice = m_device.mLogicalDevice;
 
 	try {
 
@@ -926,13 +916,13 @@ void CVulkanCanvas::OnPaint(wxPaintEvent& event)
 		VkPipelineStageFlags waitFlags[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		VkSubmitInfo submitInfo = CreateSubmitInfo(imageIndex, waitFlags);
 
-		result = vkQueueSubmit(m_device.m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+		result = vkQueueSubmit(m_device.mGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 		if (result != VK_SUCCESS) {
 			throw CVulkanException(result, "Failed to submit draw command buffer:");
 		}
 
 		VkPresentInfoKHR presentInfo = CreatePresentInfoKHR(imageIndex);
-		result = vkQueuePresentKHR(m_device.m_presentQueue, &presentInfo);
+		result = vkQueuePresentKHR(m_device.mPresentQueue, &presentInfo);
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
 			RecreateSwapchain();
 		}
@@ -973,9 +963,7 @@ void CVulkanCanvas::OnPaintException(const std::string& msg)
 
 void CVulkanCanvas::MapMemory(VkDeviceMemory memory, uint64_t size, uint64_t offset, void **data)
 {
-	auto & logicalDevice = m_device.getLogicalDevice();
-
-	auto result = vkMapMemory(logicalDevice, memory, offset, size, 0, data);
+	auto result = vkMapMemory(m_device.mLogicalDevice, memory, offset, size, 0, data);
 
 	if (result != VK_SUCCESS)
 	{
@@ -985,11 +973,9 @@ void CVulkanCanvas::MapMemory(VkDeviceMemory memory, uint64_t size, uint64_t off
 
 void CVulkanCanvas::AllocateMemory(VkDeviceMemory &deviceMemorie, VkBuffer &buffer, VkMemoryPropertyFlags properties)
 {
-	auto & logicalDevice = m_device.getLogicalDevice();
-
 	auto createInfo = CreateMemoryAllocateInfo(buffer, properties);
 
-	auto result = vkAllocateMemory(logicalDevice, &createInfo, nullptr, &deviceMemorie);
+	auto result = vkAllocateMemory(m_device.mLogicalDevice, &createInfo, nullptr, &deviceMemorie);
 
 	if (result != VK_SUCCESS)
 	{
@@ -999,10 +985,8 @@ void CVulkanCanvas::AllocateMemory(VkDeviceMemory &deviceMemorie, VkBuffer &buff
 
 uint32_t CVulkanCanvas::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
 {
-	auto & physicalDevice = m_device.getPhysicalDevice();
-
 	VkPhysicalDeviceMemoryProperties memProperties;
-	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+	vkGetPhysicalDeviceMemoryProperties(m_device.mPhysicalDevice, &memProperties);
 
 	for (uint32_t i = 0; i < memProperties.memoryTypeCount; ++i)
 	{
@@ -1017,10 +1001,8 @@ uint32_t CVulkanCanvas::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlag
 
 VkMemoryAllocateInfo CVulkanCanvas::CreateMemoryAllocateInfo(VkBuffer &buffer, VkMemoryPropertyFlags properties)
 {
-	auto & logicalDevice = m_device.getLogicalDevice();
-
 	VkMemoryRequirements memoryRequirements;
-	vkGetBufferMemoryRequirements(logicalDevice, buffer, &memoryRequirements);
+	vkGetBufferMemoryRequirements(m_device.mLogicalDevice, buffer, &memoryRequirements);
 
 	VkMemoryAllocateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -1038,8 +1020,6 @@ void CVulkanCanvas::CreateUniformBuffer(VkBuffer &buffer, uint32_t size, VkDevic
 
 void CVulkanCanvas::CreateVertexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceMemorie)
 {
-	auto & logicalDevice = m_device.getLogicalDevice();
-
 	VkDeviceSize bufferSize = sizeof(glm::vec2) * m_vertices.size();
 
 	VkBuffer stagingBuffer;
@@ -1051,7 +1031,7 @@ void CVulkanCanvas::CreateVertexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceM
 	void* data;
 	MapMemory(stagingBufferMemory, bufferSize, 0, &data);
 	memcpy(data, m_vertices.data(), (size_t)bufferSize);
-	vkUnmapMemory(logicalDevice, stagingBufferMemory);
+	vkUnmapMemory(m_device.mLogicalDevice, stagingBufferMemory);
 
 	CreateBuffer(buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, bufferSize,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, deviceMemorie);
@@ -1061,8 +1041,6 @@ void CVulkanCanvas::CreateVertexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceM
 
 void CVulkanCanvas::CreateIndexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceMemorie)
 {
-	auto & logicalDevice = m_device.getLogicalDevice();
-
 	VkDeviceSize bufferSize = sizeof(uint16_t) * m_indices.size();
 
 	VkBuffer stagingBuffer;
@@ -1074,7 +1052,7 @@ void CVulkanCanvas::CreateIndexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceMe
 	void* data;
 	MapMemory(stagingBufferMemory, bufferSize, 0, &data);
 	memcpy(data, m_indices.data(), (size_t)bufferSize);
-	vkUnmapMemory(logicalDevice, stagingBufferMemory);
+	vkUnmapMemory(m_device.mLogicalDevice, stagingBufferMemory);
 
 	CreateBuffer(buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, bufferSize,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, deviceMemorie);
@@ -1091,7 +1069,7 @@ void CVulkanCanvas::CopyBuffer(const VkBuffer &srcBuffer, VkBuffer &dstBuffer, V
 	allocInfo.commandBufferCount = 1;
 
 	VkCommandBuffer commandBuffer;
-	auto result = vkAllocateCommandBuffers(m_device.m_logicalDevice, &allocInfo, &commandBuffer);
+	auto result = vkAllocateCommandBuffers(m_device.mLogicalDevice, &allocInfo, &commandBuffer);
 
 	if (result != VK_SUCCESS)
 	{
@@ -1127,21 +1105,21 @@ void CVulkanCanvas::CopyBuffer(const VkBuffer &srcBuffer, VkBuffer &dstBuffer, V
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &commandBuffer;
 
-	result = vkQueueSubmit(m_device.m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	result = vkQueueSubmit(m_device.mGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 
 	if (result != VK_SUCCESS)
 	{
 		throw CVulkanException(result, "Error attempting to submit queue:");
 	}
 
-	result = vkQueueWaitIdle(m_device.m_graphicsQueue);
+	result = vkQueueWaitIdle(m_device.mGraphicsQueue);
 
 	if (result != VK_SUCCESS)
 	{
 		throw CVulkanException(result, "Error attempting to wait queue:");
 	}
 
-	vkFreeCommandBuffers(m_device.m_logicalDevice, m_commandPool, 1, &commandBuffer);
+	vkFreeCommandBuffers(m_device.mLogicalDevice, m_commandPool, 1, &commandBuffer);
 }
 
 void CVulkanCanvas::CreateBuffer(VkBuffer &buffer,
@@ -1153,7 +1131,7 @@ void CVulkanCanvas::CreateBuffer(VkBuffer &buffer,
 
 	auto createInfo = CreateBufferCreateInfo(size, usage);
 
-	auto result = vkCreateBuffer(m_device.m_logicalDevice, &createInfo, nullptr, &buffer);
+	auto result = vkCreateBuffer(m_device.mLogicalDevice, &createInfo, nullptr, &buffer);
 
 	if (result != VK_SUCCESS)
 	{
@@ -1162,7 +1140,7 @@ void CVulkanCanvas::CreateBuffer(VkBuffer &buffer,
 
 	AllocateMemory(deviceMemorie, buffer, properties);
 
-	result = vkBindBufferMemory(m_device.m_logicalDevice, buffer, deviceMemorie, 0);
+	result = vkBindBufferMemory(m_device.mLogicalDevice, buffer, deviceMemorie, 0);
 
 	if (result != VK_SUCCESS)
 	{
@@ -1190,12 +1168,10 @@ VkBufferCreateInfo CVulkanCanvas::CreateBufferCreateInfo(uint64_t size,
 void CVulkanCanvas::CreateDescriptorSetLayout(uint32_t bindingCount, uint32_t binding, VkDescriptorType descriptorType,
 	uint32_t descriptorCount, uint32_t stageFlags)
 {
-	auto & logicalDevice = m_device.getLogicalDevice();
-
 	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = CreateDescriptorSetLayoutInfo(
 		bindingCount, binding, descriptorType, descriptorCount, stageFlags);
 
-	auto result = vkCreateDescriptorSetLayout(logicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &m_descriptorSetLayout);
+	auto result = vkCreateDescriptorSetLayout(m_device.mLogicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &m_descriptorSetLayout);
 
 	if (result != VK_SUCCESS)
 	{

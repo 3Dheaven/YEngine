@@ -2,8 +2,8 @@
 
 CVkDevice::CVkDevice()
 {
-	m_logicalDevice = VK_NULL_HANDLE;
-	m_physicalDevice = VK_NULL_HANDLE;
+	mLogicalDevice = VK_NULL_HANDLE;
+	mPhysicalDevice = VK_NULL_HANDLE;
 }
 
 CVkDevice::~CVkDevice()
@@ -29,7 +29,7 @@ CVkDevice::connectSurface(VkSurfaceKHR &surface)
 }
 
 void 
-CVkDevice::PickPhysicalDevice()
+CVkDevice::pickPhysicalDevice()
 {
 	if (!mInstance)
 	{
@@ -50,21 +50,21 @@ CVkDevice::PickPhysicalDevice()
 
 	for (const auto& device : devices)
 	{
-		if (IsDeviceSuitable(device))
+		if (isDeviceSuitable(device))
 		{
-			m_physicalDevice = device;
+			mPhysicalDevice = device;
 			break;
 		}
 	}
 
-	if (m_physicalDevice == VK_NULL_HANDLE)
+	if (mPhysicalDevice == VK_NULL_HANDLE)
 	{
 		throw std::runtime_error("No physical GPU could be found with the required extensions and swap chain support.");
 	}
 }
 
 bool 
-CVkDevice::CheckDeviceExtensionSupport(const VkPhysicalDevice& device) const
+CVkDevice::checkDeviceExtensionSupport(const VkPhysicalDevice& device) const
 {
 	uint32_t extensionCount;
 	VkResult result = vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
@@ -87,22 +87,10 @@ CVkDevice::CheckDeviceExtensionSupport(const VkPhysicalDevice& device) const
 	return requiredExtensions.empty();
 }
 
-VkPhysicalDevice& 
-CVkDevice::getPhysicalDevice()
-{
-	return m_physicalDevice;
-}
-
-VkDevice& 
-CVkDevice::getLogicalDevice()
-{
-	return m_logicalDevice;
-}
-
 void 
-CVkDevice::CreateLogicalDevice()
+CVkDevice::createLogicalDevice()
 {
-	QueueFamilyIndices indices = FindQueueFamilies(m_physicalDevice, mSurface);
+	QueueFamilyIndices indices = findQueueFamilies(mPhysicalDevice, mSurface);
 	std::set<int> uniqueQueueFamilies = { indices.graphicsFamily, indices.presentFamily };
 
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
@@ -138,19 +126,19 @@ CVkDevice::CreateLogicalDevice()
 		createInfo.enabledLayerCount = 0;
 	}
 
-	VkResult result = vkCreateDevice(m_physicalDevice, &createInfo, nullptr, &m_logicalDevice);
+	VkResult result = vkCreateDevice(mPhysicalDevice, &createInfo, nullptr, &mLogicalDevice);
 
 	if (result != VK_SUCCESS) 
 	{
 		throw CVulkanException(result, "Unable to create a logical device");
 	}
 
-	vkGetDeviceQueue(m_logicalDevice, indices.graphicsFamily, 0, &m_graphicsQueue);
-	vkGetDeviceQueue(m_logicalDevice, indices.graphicsFamily, 0, &m_presentQueue);
+	vkGetDeviceQueue(mLogicalDevice, indices.graphicsFamily, 0, &mGraphicsQueue);
+	vkGetDeviceQueue(mLogicalDevice, indices.graphicsFamily, 0, &mPresentQueue);
 }
 
 QueueFamilyIndices
-CVkDevice::FindQueueFamilies(const VkPhysicalDevice& device, const VkSurfaceKHR &surface) const
+CVkDevice::findQueueFamilies(const VkPhysicalDevice& device, const VkSurfaceKHR &surface) const
 {
 	QueueFamilyIndices indices;
 	uint32_t queueFamilyCount = 0;
@@ -175,7 +163,7 @@ CVkDevice::FindQueueFamilies(const VkPhysicalDevice& device, const VkSurfaceKHR 
 		{
 			indices.presentFamily = i;
 		}
-		if (indices.IsComplete())
+		if (indices.isComplete())
 		{
 			break;
 		}
@@ -185,22 +173,22 @@ CVkDevice::FindQueueFamilies(const VkPhysicalDevice& device, const VkSurfaceKHR 
 }
 
 bool 
-CVkDevice::IsDeviceSuitable(const VkPhysicalDevice& device) const
+CVkDevice::isDeviceSuitable(const VkPhysicalDevice& device) const
 {
-	QueueFamilyIndices indices = FindQueueFamilies(device, mSurface);
-	bool extensionsSupported = CheckDeviceExtensionSupport(device);
+	QueueFamilyIndices indices = findQueueFamilies(device, mSurface);
+	bool extensionsSupported = checkDeviceExtensionSupport(device);
 
 	bool swapChainAdequate = false;
 	if (extensionsSupported)
 	{
-		SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(device);
+		SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
 		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 	}
-	return indices.IsComplete() & extensionsSupported && swapChainAdequate;
+	return indices.isComplete() & extensionsSupported && swapChainAdequate;
 }
 
 SwapChainSupportDetails 
-CVkDevice::QuerySwapChainSupport(const VkPhysicalDevice& device) const
+CVkDevice::querySwapChainSupport(const VkPhysicalDevice& device) const
 {
 	SwapChainSupportDetails details;
 

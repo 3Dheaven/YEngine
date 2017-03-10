@@ -14,7 +14,8 @@
 #include "CVkCommon.hpp"
 #include <set>
 
-const std::vector<const char*> deviceExtensions = {
+const std::vector<const char*> deviceExtensions = 
+{
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
@@ -23,40 +24,33 @@ struct QueueFamilyIndices
 	int graphicsFamily = -1;
 	int presentFamily = -1;
 
-	bool IsComplete()
+	bool isComplete()
 	{
 		return graphicsFamily >= 0 && presentFamily >= 0;
 	}
 };
 
-class CVkDevice
+struct CVkDevice
 {
-
-public:
-	CVkDevice();
-	~CVkDevice();
-
 	VkSurfaceKHR mSurface;
 	VkInstance mInstance;
-	VkPhysicalDevice m_physicalDevice;
-	VkDevice m_logicalDevice;
-	VkQueue m_graphicsQueue;
-	VkQueue m_presentQueue;
+	VkPhysicalDevice mPhysicalDevice;
+	VkDevice mLogicalDevice;
+	VkQueue mGraphicsQueue;
+	VkQueue mPresentQueue;
 	VkSwapchainKHR mSwapChain;
+
+	CVkDevice();
+	~CVkDevice();
 
 	void connectInstance(VkInstance &instance);
 	void connectSwapChain(VkSwapchainKHR &swapChain);
 	void connectSurface(VkSurfaceKHR &surface);
 
-	void PickPhysicalDevice();
-	void CreateLogicalDevice();
-	bool IsDeviceSuitable(const VkPhysicalDevice& device) const;
-	bool CheckDeviceExtensionSupport(const VkPhysicalDevice& device) const;
-	QueueFamilyIndices FindQueueFamilies(const VkPhysicalDevice& device, const VkSurfaceKHR &surface) const;
-	SwapChainSupportDetails QuerySwapChainSupport(const VkPhysicalDevice& device) const;
-
-	// Maybe should be "const VkPhysicalDevice & getPhysicalDevice() const;"
-	// The same for "getLogicalDevice()"
-	VkPhysicalDevice & getPhysicalDevice();
-	VkDevice & getLogicalDevice();
+	void pickPhysicalDevice();
+	void createLogicalDevice();
+	bool isDeviceSuitable(const VkPhysicalDevice& device) const;
+	bool checkDeviceExtensionSupport(const VkPhysicalDevice& device) const;
+	QueueFamilyIndices findQueueFamilies(const VkPhysicalDevice& device, const VkSurfaceKHR &surface) const;
+	SwapChainSupportDetails querySwapChainSupport(const VkPhysicalDevice& device) const;
 };

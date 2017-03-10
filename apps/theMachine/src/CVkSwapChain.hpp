@@ -95,7 +95,7 @@ required to support other windowing systems.
 		createInfo.imageArrayLayers = 1;
 		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-		QueueFamilyIndices indices = mDevice.FindQueueFamilies(mPhysicalDevice, mSurface);
+		QueueFamilyIndices indices = mDevice.findQueueFamilies(mPhysicalDevice, mSurface);
 		uint32_t queueFamilyIndices[] = { static_cast<uint32_t>(indices.graphicsFamily),
 			static_cast<uint32_t>(indices.presentFamily) };
 		if (indices.graphicsFamily != indices.presentFamily) {
@@ -115,7 +115,7 @@ required to support other windowing systems.
 
 	void CreateSwapChain(const wxSize& size)
 	{
-		SwapChainSupportDetails swapChainSupport = mDevice.QuerySwapChainSupport(mPhysicalDevice);
+		SwapChainSupportDetails swapChainSupport = mDevice.querySwapChainSupport(mPhysicalDevice);
 		VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
 		VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities, size);
 		uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
@@ -128,20 +128,20 @@ required to support other windowing systems.
 		VkSwapchainKHR oldSwapchain = mSwapChain;
 		createInfo.oldSwapchain = oldSwapchain;
 		VkSwapchainKHR newSwapchain;
-		VkResult result = vkCreateSwapchainKHR(mDevice.m_logicalDevice, &createInfo, nullptr, &newSwapchain);
+		VkResult result = vkCreateSwapchainKHR(mDevice.mLogicalDevice, &createInfo, nullptr, &newSwapchain);
 		if (result != VK_SUCCESS)
 		{
 			throw CVulkanException(result, "Error attempting to create a swapchain:");
 		}
 		*&mSwapChain = newSwapchain;
 
-		result = vkGetSwapchainImagesKHR(mDevice.m_logicalDevice, mSwapChain, &imageCount, nullptr);
+		result = vkGetSwapchainImagesKHR(mDevice.mLogicalDevice, mSwapChain, &imageCount, nullptr);
 		if (result != VK_SUCCESS)
 		{
 			throw CVulkanException(result, "Error attempting to retrieve the count of swapchain images:");
 		}
 		m_swapchainImages.resize(imageCount);
-		result = vkGetSwapchainImagesKHR(mDevice.m_logicalDevice, mSwapChain, &imageCount, m_swapchainImages.data());
+		result = vkGetSwapchainImagesKHR(mDevice.mLogicalDevice, mSwapChain, &imageCount, m_swapchainImages.data());
 		if (result != VK_SUCCESS)
 		{
 			throw CVulkanException(result, "Error attempting to retrieve the swapchain images:");
