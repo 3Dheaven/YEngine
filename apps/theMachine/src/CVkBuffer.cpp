@@ -8,25 +8,23 @@ CVkBuffer::~CVkBuffer()
 {
 }
 
-void CVkBuffer::CreateBuffer(VkBuffer &buffer,
-	VkBufferUsageFlags usage,
+void CVkBuffer::CreateBuffer(VkBufferUsageFlags usage,
 	uint32_t size,
-	VkMemoryPropertyFlags properties,
-	VkDeviceMemory &deviceMemorie)
+	VkMemoryPropertyFlags properties)
 {
 
 	auto createInfo = CreateBufferCreateInfo(size, usage);
 
-	auto result = vkCreateBuffer(mDevice.mLogicalDevice, &createInfo, nullptr, &buffer);
+	auto result = vkCreateBuffer(mDevice.mLogicalDevice, &createInfo, nullptr, &mBuffer);
 
 	if (result != VK_SUCCESS)
 	{
 		throw CVulkanException(result, "Error attempting to create a buffer:");
 	}
 
-	AllocateMemory(deviceMemorie, buffer, properties);
+	AllocateMemory(properties);
 
-	result = vkBindBufferMemory(mDevice.mLogicalDevice, buffer, deviceMemorie, 0);
+	result = vkBindBufferMemory(mDevice.mLogicalDevice, mBuffer, mDeviceMemory, 0);
 
 	if (result != VK_SUCCESS)
 	{
@@ -34,9 +32,9 @@ void CVkBuffer::CreateBuffer(VkBuffer &buffer,
 	}
 }
 
-void CVkBuffer::CreateUniformBuffer(VkBuffer &buffer, uint32_t size, VkDeviceMemory &deviceMemorie)
+void CVkBuffer::CreateUniformBuffer(uint32_t size)
 {
-	CreateBuffer(buffer, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, size, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, deviceMemorie);
+	CreateBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, size, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 }
 
 VkBufferCreateInfo CVkBuffer::CreateBufferCreateInfo(uint64_t size,
@@ -56,11 +54,11 @@ VkBufferCreateInfo CVkBuffer::CreateBufferCreateInfo(uint64_t size,
 	return createInfo;
 }
 
-void CVkBuffer::AllocateMemory(VkDeviceMemory &deviceMemorie, VkBuffer &buffer, VkMemoryPropertyFlags properties)
+void CVkBuffer::AllocateMemory(VkMemoryPropertyFlags properties)
 {
-	auto createInfo = CreateMemoryAllocateInfo(buffer, properties);
+	auto createInfo = CreateMemoryAllocateInfo(properties);
 
-	auto result = vkAllocateMemory(mDevice.mLogicalDevice, &createInfo, nullptr, &deviceMemorie);
+	auto result = vkAllocateMemory(mDevice.mLogicalDevice, &createInfo, nullptr, &mDeviceMemory);
 
 	if (result != VK_SUCCESS)
 	{
@@ -68,10 +66,10 @@ void CVkBuffer::AllocateMemory(VkDeviceMemory &deviceMemorie, VkBuffer &buffer, 
 	}
 }
 
-VkMemoryAllocateInfo CVkBuffer::CreateMemoryAllocateInfo(VkBuffer &buffer, VkMemoryPropertyFlags properties)
+VkMemoryAllocateInfo CVkBuffer::CreateMemoryAllocateInfo(VkMemoryPropertyFlags properties)
 {
 	VkMemoryRequirements memoryRequirements;
-	vkGetBufferMemoryRequirements(mDevice.mLogicalDevice, buffer, &memoryRequirements);
+	vkGetBufferMemoryRequirements(mDevice.mLogicalDevice, mBuffer, &memoryRequirements);
 
 	VkMemoryAllocateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -82,9 +80,9 @@ VkMemoryAllocateInfo CVkBuffer::CreateMemoryAllocateInfo(VkBuffer &buffer, VkMem
 	return createInfo;
 }
 
-void CVkBuffer::MapMemory(VkDeviceMemory memory, uint64_t size, uint64_t offset, void **data)
+void CVkBuffer::MapMemory(uint64_t size, uint64_t offset, void **data)
 {
-	auto result = vkMapMemory(mDevice.mLogicalDevice, memory, offset, size, 0, data);
+	auto result = vkMapMemory(mDevice.mLogicalDevice, mDeviceMemory, offset, size, 0, data);
 
 	if (result != VK_SUCCESS)
 	{

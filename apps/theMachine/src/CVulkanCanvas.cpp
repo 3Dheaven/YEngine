@@ -17,7 +17,8 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	m_vulkanInitialized(false), m_instance(VK_NULL_HANDLE),
 	m_surface(VK_NULL_HANDLE), m_renderPass(VK_NULL_HANDLE), m_pipelineLayout(VK_NULL_HANDLE),
 	m_graphicsPipeline(VK_NULL_HANDLE), m_commandPool(VK_NULL_HANDLE),
-	m_imageAvailableSemaphore(VK_NULL_HANDLE), m_renderFinishedSemaphore(VK_NULL_HANDLE)
+	m_imageAvailableSemaphore(VK_NULL_HANDLE), m_renderFinishedSemaphore(VK_NULL_HANDLE),
+	mBuffer(m_device)
 {
 	Bind(wxEVT_PAINT, &CVulkanCanvas::OnPaint, this);
 	Bind(wxEVT_SIZE, &CVulkanCanvas::OnResize, this);

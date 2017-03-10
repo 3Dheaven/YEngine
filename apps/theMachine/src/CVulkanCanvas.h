@@ -40,7 +40,7 @@ private:
 	CVkSwapChain m_swapChain;
 	CVkDevice m_device;
 	CVkShader mShader;
-	//CVkBuffer mBuffer;
+	CVkBuffer mBuffer;
 
 	void CreateVertexBuffer(VkBuffer &, VkDeviceMemory &);
 	void CopyBuffer(const VkBuffer &, VkBuffer &, VkDeviceSize);
