@@ -40,7 +40,23 @@ private:
 	CVkSwapChain m_swapChain;
 	CVkDevice m_device;
 	CVkShader mShader;
-	CVkBuffer mBuffer;
+	//CVkBuffer mBuffer;
+
+	void CreateVertexBuffer(VkBuffer &, VkDeviceMemory &);
+	void CopyBuffer(const VkBuffer &, VkBuffer &, VkDeviceSize);
+	void CreateIndexBuffer(VkBuffer &, VkDeviceMemory &);
+	VkDeviceMemory m_uniformMemorie, m_vertexMemory, m_indexMemory;
+	std::vector<glm::vec2> m_vertices;
+	std::vector<uint16_t> m_indices;
+	VkBuffer m_uniformBuffer, m_vertexBuffer, m_indexBuffer;
+
+	void CreateBuffer(VkBuffer &, VkBufferUsageFlags, uint32_t size, VkMemoryPropertyFlags properties, VkDeviceMemory &deviceMemorie);
+	void CreateUniformBuffer(VkBuffer &, uint32_t size, VkDeviceMemory &deviceMemorie);
+	VkBufferCreateInfo CreateBufferCreateInfo(uint64_t, VkBufferUsageFlags);
+	void AllocateMemory(VkDeviceMemory &deviceMemorie, VkBuffer &buffer, VkMemoryPropertyFlags properties);
+	VkMemoryAllocateInfo CreateMemoryAllocateInfo(VkBuffer &buffer, VkMemoryPropertyFlags properties);
+	void MapMemory(VkDeviceMemory, uint64_t, uint64_t, void **);
+	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 	void CreateFrameBuffers();
 	std::vector<VkFramebuffer> m_swapchainFramebuffers;
@@ -112,28 +128,11 @@ private:
 	virtual void onTimer(wxTimerEvent& event);
 	void OnPaintException(const std::string& msg);
 
-	void CreateVertexBuffer(VkBuffer &, VkDeviceMemory &);
-	void CopyBuffer(const VkBuffer &, VkBuffer &, VkDeviceSize);
-	void CreateIndexBuffer(VkBuffer &, VkDeviceMemory &);
-
-	void CreateBuffer(VkBuffer &, VkBufferUsageFlags, uint32_t size, VkMemoryPropertyFlags properties, VkDeviceMemory &deviceMemorie);
-	void CreateUniformBuffer(VkBuffer &, uint32_t size, VkDeviceMemory &deviceMemorie);
-	VkBufferCreateInfo CreateBufferCreateInfo(uint64_t, VkBufferUsageFlags);
-	void AllocateMemory(VkDeviceMemory &deviceMemorie, VkBuffer &buffer, VkMemoryPropertyFlags properties);
-	VkMemoryAllocateInfo CreateMemoryAllocateInfo(VkBuffer &buffer, VkMemoryPropertyFlags properties);
-	void MapMemory(VkDeviceMemory, uint64_t, uint64_t, void **);
 	VkDescriptorSetLayoutBinding CreateDescriptorSetLayoutBinding(uint32_t, VkDescriptorType, uint32_t, uint32_t);
 	void CreateDescriptorSetLayout(uint32_t, uint32_t, VkDescriptorType, uint32_t, uint32_t);
 	VkDescriptorSetLayoutCreateInfo CreateDescriptorSetLayoutInfo(uint32_t, uint32_t, VkDescriptorType, uint32_t, uint32_t);
 
-	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-
 	VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-	VkDeviceMemory m_uniformMemorie, m_vertexMemory, m_indexMemory;
-	std::vector<glm::vec2> m_vertices;
-	std::vector<uint16_t> m_indices;
-	VkBuffer m_uniformBuffer, m_vertexBuffer, m_indexBuffer;
 	VkDescriptorSet m_descriptorSet;
 	VkDescriptorSetLayout m_descriptorSetLayout;
 	VkDescriptorPoolSize m_descriptorPoolSize;
