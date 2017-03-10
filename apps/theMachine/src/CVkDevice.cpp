@@ -1,9 +1,7 @@
 #include "CVkDevice.hpp"
 
-CVkDevice::CVkDevice()
+CVkDevice::CVkDevice(): mLogicalDevice(VK_NULL_HANDLE), mPhysicalDevice(VK_NULL_HANDLE)
 {
-	mLogicalDevice = VK_NULL_HANDLE;
-	mPhysicalDevice = VK_NULL_HANDLE;
 }
 
 CVkDevice::~CVkDevice()

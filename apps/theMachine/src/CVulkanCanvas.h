@@ -1,4 +1,5 @@
 #pragma once
+
 #include "wx/wxprec.h"
 #include <wx/timer.h>
 #define VK_USE_PLATFORM_WIN32_KHR
@@ -15,6 +16,7 @@
 #include "CVkDevice.hpp"
 #include "CVkCommon.hpp"
 #include "CVkShader.hpp"
+#include "CVkBuffer.hpp"
 
 class CVulkanCanvas :
     public wxWindow
@@ -38,6 +40,7 @@ private:
 	CVkSwapChain m_swapChain;
 	CVkDevice m_device;
 	CVkShader mShader;
+	CVkBuffer mBuffer;
 
 	void CreateFrameBuffers();
 	std::vector<VkFramebuffer> m_swapchainFramebuffers;
