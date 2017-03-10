@@ -56,7 +56,7 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 
 	m_device.connectSwapChain(m_swapChain.mSwapChain);
 	
-	mShader.connectDevice(m_device.mLogicalDevice);
+	mShader.ConnectDevice(m_device.mLogicalDevice);
 
 
 
@@ -435,43 +435,6 @@ void CVulkanCanvas::CreateRenderPass()
 	}
 }
 
-VkPipelineShaderStageCreateInfo CVulkanCanvas::CreatePipelineShaderStageCreateInfo(
-	VkShaderStageFlagBits stage, VkShaderModule& module, const char* entryName) const noexcept
-{
-	VkPipelineShaderStageCreateInfo shaderStageInfo = {};
-	shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	shaderStageInfo.stage = stage;
-	shaderStageInfo.module = module;
-	shaderStageInfo.pName = entryName;
-	return shaderStageInfo;
-}
-
-VkPipelineVertexInputStateCreateInfo CVulkanCanvas::CreatePipelineVertexInputStateCreateInfo() const noexcept
-{
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
-	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-
-	/*vertexInputInfo.vertexBindingDescriptionCount = 0;
-	vertexInputInfo.vertexAttributeDescriptionCount = 0;*/
-
-	vertexInputInfo.vertexBindingDescriptionCount = 1;
-	vertexInputInfo.vertexAttributeDescriptionCount = mShader.mAttributeDescriptions.size();
-	vertexInputInfo.pVertexBindingDescriptions = &mShader.mBindingDescription;
-	vertexInputInfo.pVertexAttributeDescriptions = mShader.mAttributeDescriptions.data();
-
-	return vertexInputInfo;
-}
-
-VkPipelineInputAssemblyStateCreateInfo CVulkanCanvas::CreatePipelineInputAssemblyStateCreateInfo(
-	const VkPrimitiveTopology& topology, uint32_t restartEnable) const noexcept
-{
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = topology;
-	inputAssembly.primitiveRestartEnable = restartEnable;
-	return inputAssembly;
-}
-
 VkViewport CVulkanCanvas::CreateViewport() const noexcept
 {
 	VkViewport viewport = {};
@@ -597,14 +560,14 @@ void CVulkanCanvas::CreateGraphicsPipeline(const std::string& vertexShaderFile, 
 	mShader.CreateShaderModule(vertShaderCode, vertShaderModule);
 	mShader.CreateShaderModule(fragShaderCode, fragShaderModule);
 
-	VkPipelineShaderStageCreateInfo vertShaderStageInfo = CreatePipelineShaderStageCreateInfo(
+	VkPipelineShaderStageCreateInfo vertShaderStageInfo = mShader.CreatePipelineShaderStageCreateInfo(
 		VK_SHADER_STAGE_VERTEX_BIT, vertShaderModule, "main");
-	VkPipelineShaderStageCreateInfo fragShaderStageInfo = CreatePipelineShaderStageCreateInfo(
+	VkPipelineShaderStageCreateInfo fragShaderStageInfo = mShader.CreatePipelineShaderStageCreateInfo(
 		VK_SHADER_STAGE_FRAGMENT_BIT, fragShaderModule, "main");
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo = CreatePipelineVertexInputStateCreateInfo();
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly = CreatePipelineInputAssemblyStateCreateInfo(
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo = mShader.CreatePipelineVertexInputStateCreateInfo();
+	VkPipelineInputAssemblyStateCreateInfo inputAssembly = mShader.CreatePipelineInputAssemblyStateCreateInfo(
 		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE);
 	VkViewport viewport = CreateViewport();
 	VkRect2D scissor = CreateScissor();

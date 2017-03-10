@@ -66,7 +66,6 @@ private:
 		const std::vector<const char*>& extensionNames,
 		const std::vector<const char*>& layerNames) const noexcept;
 
-
 	VkImageViewCreateInfo CreateImageViewCreateInfo(uint32_t swapchainImage) const noexcept;
 	VkAttachmentDescription CreateAttachmentDescription() const noexcept;
 	VkAttachmentReference CreateAttachmentReference() const noexcept;
@@ -76,11 +75,6 @@ private:
 		const VkAttachmentDescription& colorAttachment,
 		const VkSubpassDescription& subPass,
 		const VkSubpassDependency& dependency) const noexcept;
-	VkPipelineShaderStageCreateInfo CreatePipelineShaderStageCreateInfo(
-		VkShaderStageFlagBits stage, VkShaderModule& module, const char* entryName) const noexcept;
-	VkPipelineVertexInputStateCreateInfo CreatePipelineVertexInputStateCreateInfo() const noexcept;
-	VkPipelineInputAssemblyStateCreateInfo CreatePipelineInputAssemblyStateCreateInfo(
-		const VkPrimitiveTopology& topology, uint32_t restartEnable) const noexcept;
 	VkViewport CreateViewport() const noexcept;
 	VkRect2D CreateScissor() const noexcept;
 	VkPipelineViewportStateCreateInfo CreatePipelineViewportStateCreateInfo(

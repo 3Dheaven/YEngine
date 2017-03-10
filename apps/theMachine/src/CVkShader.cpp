@@ -1,6 +1,6 @@
 #include "CVkShader.hpp"
 
-void CVkShader::connectDevice(VkDevice & device)
+void CVkShader::ConnectDevice(VkDevice & device)
 {
 	this->mLogicalDevice = device;
 }

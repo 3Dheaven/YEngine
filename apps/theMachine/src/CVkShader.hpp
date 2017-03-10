@@ -13,7 +13,7 @@
 class CVkShader
 {
 public:
-	void connectDevice(VkDevice &device);
+	void ConnectDevice(VkDevice &device);
 
 	VkVertexInputBindingDescription mBindingDescription;
 	std::vector<VkVertexInputAttributeDescription> mAttributeDescriptions;
