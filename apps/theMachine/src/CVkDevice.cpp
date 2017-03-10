@@ -1,26 +1,44 @@
 #include "CVkDevice.hpp"
 
-CVkDevice::CVkDevice(CVkInstance &instance):m_physicalDevice(VK_NULL_HANDLE), m_logicalDevice(VK_NULL_HANDLE)
+CVkDevice::CVkDevice()
 {
-	PickPhysicalDevice(instance);
-	CreateLogicalDevice();
+	m_logicalDevice = VK_NULL_HANDLE;
+	m_physicalDevice = VK_NULL_HANDLE;
 }
 
 CVkDevice::~CVkDevice()
 {
 }
 
-void CVkDevice::PickPhysicalDevice(CVkInstance &instance)
+void 
+CVkDevice::connectInstance(VkInstance &instance)
 {
-	auto &inst = instance.getInstance();
-	if (!inst)
+	this->mInstance = instance;
+}
+
+void 
+CVkDevice::connectSwapChain(VkSwapchainKHR &swapChain)
+{
+	this->mSwapChain = swapChain;
+}
+
+void 
+CVkDevice::connectSurface(VkSurfaceKHR &surface)
+{
+	this->mSurface = surface;
+}
+
+void 
+CVkDevice::PickPhysicalDevice()
+{
+	if (!mInstance)
 	{
 		throw std::runtime_error("Programming Error:\n"
 			"Attempted to get a Vulkan physical device before the Vulkan instance was created.");
 	}
 
 	uint32_t deviceCount = 0;
-	vkEnumeratePhysicalDevices(inst, &deviceCount, nullptr);
+	vkEnumeratePhysicalDevices(mInstance, &deviceCount, nullptr);
 
 	if (deviceCount == 0)
 	{
@@ -28,7 +46,7 @@ void CVkDevice::PickPhysicalDevice(CVkInstance &instance)
 	}
 
 	std::vector<VkPhysicalDevice> devices(deviceCount);
-	vkEnumeratePhysicalDevices(inst, &deviceCount, devices.data());
+	vkEnumeratePhysicalDevices(mInstance, &deviceCount, devices.data());
 
 	for (const auto& device : devices)
 	{
@@ -45,40 +63,63 @@ void CVkDevice::PickPhysicalDevice(CVkInstance &instance)
 	}
 }
 
-bool CVkDevice::CheckDeviceExtensionSupport(const VkPhysicalDevice& device) const
+bool 
+CVkDevice::CheckDeviceExtensionSupport(const VkPhysicalDevice& device) const
 {
 	uint32_t extensionCount;
 	VkResult result = vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
-	if (result != VK_SUCCESS) {
+	if (result != VK_SUCCESS) 
+	{
 		throw CVulkanException(result, "Cannot retrieve count of properties for a physical device:");
 	}
 	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
 	result = vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
-	if (result != VK_SUCCESS) {
+	if (result != VK_SUCCESS) 
+	{
 		throw CVulkanException(result, "Cannot retrieve properties for a physical device:");
 	}
 	std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
-	for (const auto& extension : availableExtensions) {
+	for (const auto& extension : availableExtensions) 
+	{
 		requiredExtensions.erase(extension.extensionName);
 	}
 
 	return requiredExtensions.empty();
 }
 
-VkPhysicalDevice & CVkDevice::getPhysicalDevice()
+VkPhysicalDevice& 
+CVkDevice::getPhysicalDevice()
 {
 	return m_physicalDevice;
 }
 
-VkDevice & CVkDevice::getLogicalDevice()
+VkDevice& 
+CVkDevice::getLogicalDevice()
 {
 	return m_logicalDevice;
 }
 
-VkDeviceCreateInfo CVkDevice::CreateDeviceCreateInfo(
-	const std::vector<VkDeviceQueueCreateInfo>& queueCreateInfos,
-	const VkPhysicalDeviceFeatures& deviceFeatures) const noexcept
+void 
+CVkDevice::CreateLogicalDevice()
 {
+	QueueFamilyIndices indices = FindQueueFamilies(m_physicalDevice, mSurface);
+	std::set<int> uniqueQueueFamilies = { indices.graphicsFamily, indices.presentFamily };
+
+	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+	for (int queueFamily : uniqueQueueFamilies)
+	{
+		float queuePriority = 1.0f;
+		VkDeviceQueueCreateInfo queueCreateInfo = {};
+		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		queueCreateInfo.queueFamilyIndex = queueFamily;
+		queueCreateInfo.queueCount = 1;
+		queueCreateInfo.pQueuePriorities = &queuePriority;
+
+		queueCreateInfos.push_back(queueCreateInfo);
+	}
+
+	VkPhysicalDeviceFeatures deviceFeatures = {};
+
 	VkDeviceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
@@ -86,41 +127,111 @@ VkDeviceCreateInfo CVkDevice::CreateDeviceCreateInfo(
 	createInfo.pEnabledFeatures = &deviceFeatures;
 	createInfo.enabledExtensionCount = deviceExtensions.size();
 	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
-	if (enableValidationLayers) {
+
+	if (enableValidationLayers) 
+	{
 		createInfo.enabledLayerCount = validationLayers.size();
 		createInfo.ppEnabledLayerNames = validationLayers.data();
 	}
-	else {
+	else 
+	{
 		createInfo.enabledLayerCount = 0;
 	}
-	return createInfo;
-}
-
-void CVkDevice::CreateLogicalDevice()
-{
-	QueueFamilyIndices indices = FindQueueFamilies(m_physicalDevice);
-	std::set<int> uniqueQueueFamilies = { indices.graphicsFamily, indices.presentFamily };
-	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos = CreateQueueCreateInfos(uniqueQueueFamilies);
-	VkPhysicalDeviceFeatures deviceFeatures = {};
-	VkDeviceCreateInfo createInfo = CreateDeviceCreateInfo(queueCreateInfos, deviceFeatures);
 
 	VkResult result = vkCreateDevice(m_physicalDevice, &createInfo, nullptr, &m_logicalDevice);
-	if (result != VK_SUCCESS) {
+
+	if (result != VK_SUCCESS) 
+	{
 		throw CVulkanException(result, "Unable to create a logical device");
 	}
+
 	vkGetDeviceQueue(m_logicalDevice, indices.graphicsFamily, 0, &m_graphicsQueue);
 	vkGetDeviceQueue(m_logicalDevice, indices.graphicsFamily, 0, &m_presentQueue);
 }
 
-bool CVkDevice::IsDeviceSuitable(const VkPhysicalDevice& device) const
+QueueFamilyIndices
+CVkDevice::FindQueueFamilies(const VkPhysicalDevice& device, const VkSurfaceKHR &surface) const
 {
-	QueueFamilyIndices indices = FindQueueFamilies(device);
+	QueueFamilyIndices indices;
+	uint32_t queueFamilyCount = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+	int i = 0;
+	for (const auto& queueFamily : queueFamilies)
+	{
+		if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		{
+			indices.graphicsFamily = i;
+		}
+		VkBool32 presentSupport = false;
+		VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+		if (result != VK_SUCCESS)
+		{
+			throw CVulkanException(result, "Error while attempting to check if a surface supports presentation:");
+		}
+		if (queueFamily.queueCount > 0 && presentSupport)
+		{
+			indices.presentFamily = i;
+		}
+		if (indices.IsComplete())
+		{
+			break;
+		}
+		++i;
+	}
+	return indices;
+}
+
+bool 
+CVkDevice::IsDeviceSuitable(const VkPhysicalDevice& device) const
+{
+	QueueFamilyIndices indices = FindQueueFamilies(device, mSurface);
 	bool extensionsSupported = CheckDeviceExtensionSupport(device);
 
 	bool swapChainAdequate = false;
-	if (extensionsSupported) {
-		SwapChainSupportDetails swapChainSupport = mSwapChain.QuerySwapChainSupport(device);
+	if (extensionsSupported)
+	{
+		SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(device);
 		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 	}
 	return indices.IsComplete() & extensionsSupported && swapChainAdequate;
+}
+
+SwapChainSupportDetails 
+CVkDevice::QuerySwapChainSupport(const VkPhysicalDevice& device) const
+{
+	SwapChainSupportDetails details;
+
+	VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, mSurface, &details.capabilities);
+	if (result != VK_SUCCESS) {
+		throw CVulkanException(result, "Unable to retrieve physical device surface capabilities:");
+	}
+	uint32_t formatCount = 0;
+	result = vkGetPhysicalDeviceSurfaceFormatsKHR(device, mSurface, &formatCount, nullptr);
+	if (result != VK_SUCCESS) {
+		throw CVulkanException(result, "Unable to retrieve the number of formats for a surface on a physical device:");
+	}
+	if (formatCount != 0) {
+		details.formats.resize(formatCount);
+		result = vkGetPhysicalDeviceSurfaceFormatsKHR(device, mSurface, &formatCount, details.formats.data());
+		if (result != VK_SUCCESS) {
+			throw CVulkanException(result, "Unable to retrieve the formats for a surface on a physical device:");
+		}
+	}
+
+	uint32_t presentModeCount = 0;
+	result = vkGetPhysicalDeviceSurfacePresentModesKHR(device, mSurface, &presentModeCount, nullptr);
+	if (result != VK_SUCCESS) {
+		throw CVulkanException(result, "Unable to retrieve the count of present modes for a surface on a physical device:");
+	}
+	if (presentModeCount != 0) {
+		details.presentModes.resize(presentModeCount);
+		result = vkGetPhysicalDeviceSurfacePresentModesKHR(device, mSurface, &presentModeCount, details.presentModes.data());
+		if (result != VK_SUCCESS) {
+			throw CVulkanException(result, "Unable to retrieve the present modes for a surface on a physical device:");
+		}
+	}
+	return details;
 }

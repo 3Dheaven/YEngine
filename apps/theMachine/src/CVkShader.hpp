@@ -12,11 +12,19 @@
 
 class CVkShader
 {
-private: 
-	std::vector<VkVertexInputAttributeDescription> m_attributeDescriptions;
-	VkVertexInputBindingDescription m_bindingDescription;
-	VkDevice m_logicalDevice;
+
 public:
+
+	VkDevice mLogicalDevice;
+
+	void connectDevice(VkDevice &device)
+	{
+		this->mLogicalDevice = device;
+	}
+
+	VkVertexInputBindingDescription m_bindingDescription;
+	std::vector<VkVertexInputAttributeDescription> m_attributeDescriptions;
+
 
 	VkPipelineShaderStageCreateInfo CreatePipelineShaderStageCreateInfo(
 		VkShaderStageFlagBits stage, VkShaderModule& module, const char* entryName) const noexcept
@@ -54,7 +62,7 @@ public:
 		inputAssembly.primitiveRestartEnable = restartEnable;
 		return inputAssembly;
 	}
-	
+
 	VkShaderModuleCreateInfo CreateShaderModuleCreateInfo(
 		const std::vector<char>& code) const noexcept
 	{
@@ -65,11 +73,11 @@ public:
 		return createInfo;
 	}
 
-	void CreateShaderModule(const std::vector<char>& code, VkShaderModule& shaderModule) const
+	void CreateShaderModule(const std::vector<char>& code, VkShaderModule& shaderModule)
 	{
 		VkShaderModuleCreateInfo createInfo = CreateShaderModuleCreateInfo(code);
 
-		VkResult result = vkCreateShaderModule(m_logicalDevice, &createInfo, nullptr, &shaderModule);
+		auto result = vkCreateShaderModule(mLogicalDevice, &createInfo, nullptr, &shaderModule);
 		if (result != VK_SUCCESS)
 		{
 			throw CVulkanException(result, "Failed to create shader module:");

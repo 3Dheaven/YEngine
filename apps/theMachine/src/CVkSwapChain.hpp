@@ -7,19 +7,14 @@
 #include <windows.h>
 #include <vulkan.h>
 #include "CVkCommon.hpp"
+#include "CVkDevice.hpp"
 
-struct SwapChainSupportDetails 
-{
-	VkSurfaceCapabilitiesKHR capabilities;
-	std::vector<VkSurfaceFormatKHR> formats;
-	std::vector<VkPresentModeKHR> presentModes;
-};
 
 class CVkSwapChain
 {
 private: 
 	VkInstance mInstance;
-	VkDevice mDevice;
+	CVkDevice mDevice;
 	VkPhysicalDevice mPhysicalDevice;
 	
 public:
@@ -48,7 +43,7 @@ public:
 		this->mPhysicalDevice = physicalDevice;
 	}
 
-	void connectDevice(VkDevice &device)
+	void connectDevice(CVkDevice &device)
 	{
 		this->mDevice = device;
 	}
@@ -84,9 +79,43 @@ required to support other windowing systems.
 #endif
 	}*/
 	
+	VkSwapchainCreateInfoKHR CreateSwapchainCreateInfo(
+		const SwapChainSupportDetails& swapChainSupport,
+		const VkSurfaceFormatKHR& surfaceFormat,
+		uint32_t imageCount, const VkExtent2D& extent)
+	{
+		VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
+
+		VkSwapchainCreateInfoKHR createInfo = {};
+		createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		createInfo.surface = mSurface;
+		createInfo.minImageCount = imageCount;
+		createInfo.imageFormat = surfaceFormat.format;
+		createInfo.imageExtent = extent;
+		createInfo.imageArrayLayers = 1;
+		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+		QueueFamilyIndices indices = mDevice.FindQueueFamilies(mPhysicalDevice, mSurface);
+		uint32_t queueFamilyIndices[] = { static_cast<uint32_t>(indices.graphicsFamily),
+			static_cast<uint32_t>(indices.presentFamily) };
+		if (indices.graphicsFamily != indices.presentFamily) {
+			createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+			createInfo.queueFamilyIndexCount = 2;
+			createInfo.pQueueFamilyIndices = queueFamilyIndices;
+		}
+		else {
+			createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		}
+		createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+		createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		createInfo.presentMode = presentMode;
+		createInfo.clipped = VK_TRUE;
+		return createInfo;
+	};
+
 	void CreateSwapChain(const wxSize& size)
 	{
-		SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(mPhysicalDevice);
+		SwapChainSupportDetails swapChainSupport = mDevice.QuerySwapChainSupport(mPhysicalDevice);
 		VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
 		VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities, size);
 		uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
@@ -99,20 +128,20 @@ required to support other windowing systems.
 		VkSwapchainKHR oldSwapchain = mSwapChain;
 		createInfo.oldSwapchain = oldSwapchain;
 		VkSwapchainKHR newSwapchain;
-		VkResult result = vkCreateSwapchainKHR(mDevice, &createInfo, nullptr, &newSwapchain);
+		VkResult result = vkCreateSwapchainKHR(mDevice.m_logicalDevice, &createInfo, nullptr, &newSwapchain);
 		if (result != VK_SUCCESS)
 		{
 			throw CVulkanException(result, "Error attempting to create a swapchain:");
 		}
 		*&mSwapChain = newSwapchain;
 
-		result = vkGetSwapchainImagesKHR(mDevice, mSwapChain, &imageCount, nullptr);
+		result = vkGetSwapchainImagesKHR(mDevice.m_logicalDevice, mSwapChain, &imageCount, nullptr);
 		if (result != VK_SUCCESS)
 		{
 			throw CVulkanException(result, "Error attempting to retrieve the count of swapchain images:");
 		}
 		m_swapchainImages.resize(imageCount);
-		result = vkGetSwapchainImagesKHR(mDevice, mSwapChain, &imageCount, m_swapchainImages.data());
+		result = vkGetSwapchainImagesKHR(mDevice.m_logicalDevice, mSwapChain, &imageCount, m_swapchainImages.data());
 		if (result != VK_SUCCESS)
 		{
 			throw CVulkanException(result, "Error attempting to retrieve the swapchain images:");
@@ -139,40 +168,6 @@ required to support other windowing systems.
 				std::min(capabilities.maxImageExtent.height, actualExtent.height));
 			return actualExtent;
 		}
-	};
-
-	VkSwapchainCreateInfoKHR CreateSwapchainCreateInfo(
-		const SwapChainSupportDetails& swapChainSupport,
-		const VkSurfaceFormatKHR& surfaceFormat,
-		uint32_t imageCount, const VkExtent2D& extent)
-	{
-		VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
-
-		VkSwapchainCreateInfoKHR createInfo = {};
-		createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		createInfo.surface = mSurface;
-		createInfo.minImageCount = imageCount;
-		createInfo.imageFormat = surfaceFormat.format;
-		createInfo.imageExtent = extent;
-		createInfo.imageArrayLayers = 1;
-		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-		QueueFamilyIndices indices = FindQueueFamilies(mPhysicalDevice, mSurface);
-		uint32_t queueFamilyIndices[] = { static_cast<uint32_t>(indices.graphicsFamily),
-			static_cast<uint32_t>(indices.presentFamily) };
-		if (indices.graphicsFamily != indices.presentFamily) {
-			createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-			createInfo.queueFamilyIndexCount = 2;
-			createInfo.pQueueFamilyIndices = queueFamilyIndices;
-		}
-		else {
-			createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		}
-		createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
-		createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-		createInfo.presentMode = presentMode;
-		createInfo.clipped = VK_TRUE;
-		return createInfo;
 	};
 
 	VkSurfaceFormatKHR ChooseSwapSurfaceFormat(
@@ -202,42 +197,4 @@ required to support other windowing systems.
 		}
 		return VK_PRESENT_MODE_FIFO_KHR;
 	}
-
-	SwapChainSupportDetails QuerySwapChainSupport(const VkPhysicalDevice& device) const
-	{
-		SwapChainSupportDetails details;
-
-		VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, mSurface, &details.capabilities);
-		if (result != VK_SUCCESS) {
-			throw CVulkanException(result, "Unable to retrieve physical device surface capabilities:");
-		}
-		uint32_t formatCount = 0;
-		result = vkGetPhysicalDeviceSurfaceFormatsKHR(device, mSurface, &formatCount, nullptr);
-		if (result != VK_SUCCESS) {
-			throw CVulkanException(result, "Unable to retrieve the number of formats for a surface on a physical device:");
-		}
-		if (formatCount != 0) {
-			details.formats.resize(formatCount);
-			result = vkGetPhysicalDeviceSurfaceFormatsKHR(device, mSurface, &formatCount, details.formats.data());
-			if (result != VK_SUCCESS) {
-				throw CVulkanException(result, "Unable to retrieve the formats for a surface on a physical device:");
-			}
-		}
-
-		uint32_t presentModeCount = 0;
-		result = vkGetPhysicalDeviceSurfacePresentModesKHR(device, mSurface, &presentModeCount, nullptr);
-		if (result != VK_SUCCESS) {
-			throw CVulkanException(result, "Unable to retrieve the count of present modes for a surface on a physical device:");
-		}
-		if (presentModeCount != 0) {
-			details.presentModes.resize(presentModeCount);
-			result = vkGetPhysicalDeviceSurfacePresentModesKHR(device, mSurface, &presentModeCount, details.presentModes.data());
-			if (result != VK_SUCCESS) {
-				throw CVulkanException(result, "Unable to retrieve the present modes for a surface on a physical device:");
-			}
-		}
-		return details;
-	}
-
-
 };
