@@ -195,7 +195,7 @@ CVulkanCanvas::~CVulkanCanvas() noexcept
 			for (auto& imageView : m_swapChain.m_swapchainImageViews) {
 				vkDestroyImageView(logicalDevice, imageView, nullptr);
 			}
-			for (auto& framebuffer : mFramebuffers.m_swapchainFramebuffers) {
+			for (auto& framebuffer : mFramebuffers.mSwapchainFramebuffers) {
 				vkDestroyFramebuffer(logicalDevice, framebuffer, nullptr);
 			}
 			if (m_device.mCommandPool != VK_NULL_HANDLE) {
@@ -683,7 +683,7 @@ VkRenderPassBeginInfo CVulkanCanvas::CreateRenderPassBeginInfo(size_t swapchainB
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = m_renderPass;
-	renderPassInfo.framebuffer = mFramebuffers.m_swapchainFramebuffers[swapchainBufferNumber];
+	renderPassInfo.framebuffer = mFramebuffers.mSwapchainFramebuffers[swapchainBufferNumber];
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = m_swapChain.m_swapchainExtent;
 
@@ -700,7 +700,7 @@ void CVulkanCanvas::CreateCommandBuffers()
 	{
 		vkFreeCommandBuffers(logicalDevice, m_device.mCommandPool, m_commandBuffers.size(), m_commandBuffers.data());
 	}
-	m_commandBuffers.resize(mFramebuffers.m_swapchainFramebuffers.size());
+	m_commandBuffers.resize(mFramebuffers.mSwapchainFramebuffers.size());
 
 	VkCommandBufferAllocateInfo allocInfo = CreateCommandBufferAllocateInfo();
 	VkResult result = vkAllocateCommandBuffers(logicalDevice, &allocInfo, m_commandBuffers.data());
