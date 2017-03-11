@@ -18,6 +18,7 @@
 #include "CVkShader.hpp"
 #include "CVkBuffer.hpp"
 #include "CVkFramebuffer.hpp"
+#include "CVkInstance.h"
 
 class CVulkanCanvas :
     public wxWindow
@@ -38,12 +39,13 @@ public:
 
 private:
 	
+	CVkInstance mVulkanInstance;
 	CVkSwapChain m_swapChain;
 	CVkDevice m_device;
 	CVkShader mShader;
 	CVkBuffer mBuffer;
 	CVkFramebuffer mFramebuffers;
-
+	
 	void CreateVertexBuffer(VkBuffer &, VkDeviceMemory &);
 	void CopyBuffer(const VkBuffer &, VkBuffer &, VkDeviceSize);
 	void CreateIndexBuffer(VkBuffer &, VkDeviceMemory &);
@@ -60,9 +62,6 @@ private:
 	void MapMemory(VkDeviceMemory, uint64_t, uint64_t, void **);
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
-
-	void InitializeVulkan(std::vector<const char*> extensions);
-	void CreateInstance(const VkInstanceCreateInfo& createInfo);
 	void CreateWindowSurface(HWND *hwnd);
 
 
@@ -74,16 +73,6 @@ private:
 	void RecreateSwapchain();
 	VkWin32SurfaceCreateInfoKHR CreateWin32SurfaceCreateInfo(HWND *hwnd) const noexcept;
 
-	VkApplicationInfo CreateApplicationInfo(const std::string& appName,
-		const int32_t appVersion = VK_MAKE_VERSION(1, 0, 0),
-		const std::string& engineName = "YEngine",
-		const int32_t engineVersion = VK_MAKE_VERSION(1, 0, 0),
-		const int32_t apiVersion = VK_API_VERSION_1_0) const noexcept;
-	VkInstanceCreateInfo CreateInstanceCreateInfo(const VkApplicationInfo& appInfo,
-		const std::vector<const char*>& extensionNames,
-		const std::vector<const char*>& layerNames) const noexcept;
-
-	VkImageViewCreateInfo CreateImageViewCreateInfo(uint32_t swapchainImage) const noexcept;
 
 	VkViewport CreateViewport() const noexcept;
 	VkRect2D CreateScissor() const noexcept;
@@ -138,7 +127,6 @@ private:
 	VkDescriptorBufferInfo bufferInfo;
 	VkWriteDescriptorSet descriptorWrite;
 
-	VkInstance m_instance;
 	VkSurfaceKHR m_surface;
 
 	VkPipelineLayout m_pipelineLayout;
@@ -148,7 +136,6 @@ private:
 	std::vector<VkCommandBuffer> m_commandBuffers;
 	VkSemaphore m_imageAvailableSemaphore;
 	VkSemaphore m_renderFinishedSemaphore;
-	bool m_vulkanInitialized;
 
 	std::unique_ptr<wxTimer> m_timer;
 	typedef std::chrono::time_point<std::chrono::high_resolution_clock> sclock;

@@ -14,7 +14,7 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	long style,
 	const wxString& name)
 	: wxWindow(pParent, id, pos, size, style, name),
-	m_vulkanInitialized(false), m_instance(VK_NULL_HANDLE),
+	
 	m_surface(VK_NULL_HANDLE),  m_pipelineLayout(VK_NULL_HANDLE),
 	m_graphicsPipeline(VK_NULL_HANDLE), 
 	m_imageAvailableSemaphore(VK_NULL_HANDLE), m_renderFinishedSemaphore(VK_NULL_HANDLE),
@@ -29,23 +29,15 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	m_timer->Start(3);
 	m_startTime = std::chrono::high_resolution_clock::now();
 
-	std::vector<const char*> requiredExtensions = { "VK_KHR_surface", "VK_KHR_win32_surface" };
-	InitializeVulkan(requiredExtensions);
-	VkApplicationInfo appInfo = CreateApplicationInfo("YEngine");
-	std::vector<const char*> layerNames;
-	if (enableValidationLayers)
-	{
-		layerNames = validationLayers;
-	}
-	VkInstanceCreateInfo createInfo = CreateInstanceCreateInfo(appInfo, requiredExtensions, layerNames);
-	CreateInstance(createInfo);
-	m_swapChain.connectInstance(m_instance);
+	
+
+	m_swapChain.connectInstance(mVulkanInstance.get());
 	auto a = GetHwnd();
 	
 	CreateWindowSurface(&a);
 	m_swapChain.connectSurface(m_surface);
 	
-	m_device.connectInstance(m_instance);
+	m_device.connectInstance(mVulkanInstance.get());
 	m_device.connectSurface(m_surface);
 	
 
@@ -159,6 +151,7 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 
 
 	m_swapChain.CreateSwapChain(size);
+
 	mFramebuffers.connectSwapChain(m_swapChain);
 	mFramebuffers.connectDevice(m_device);
 	mFramebuffers.CreateRenderPass();
@@ -175,7 +168,7 @@ CVulkanCanvas::~CVulkanCanvas() noexcept
 	auto &logicalDevice = m_device.mLogicalDevice;
 	m_timer->Stop();
 
-	if (m_instance != VK_NULL_HANDLE) {
+	if (mVulkanInstance.get() != VK_NULL_HANDLE) {
 		if (logicalDevice != VK_NULL_HANDLE) {
 			vkDeviceWaitIdle(logicalDevice);
 			if (m_graphicsPipeline != VK_NULL_HANDLE) {
@@ -214,95 +207,8 @@ CVulkanCanvas::~CVulkanCanvas() noexcept
 
 			vkDestroyDevice(logicalDevice, nullptr);
 		}
-		vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
-		vkDestroyInstance(m_instance, nullptr);
-	}
-}
-
-void CVulkanCanvas::InitializeVulkan(std::vector<const char*> requiredExtensions)
-{
-	// make sure that the Vulkan library is available on this system
-#ifdef _WIN32
-	HMODULE vulkanModule = ::LoadLibraryA("vulkan-1.dll");
-	if (vulkanModule == NULL) {
-		throw std::runtime_error("Vulkan library is not available on this system, so program cannot run.\n"
-			"You must install the appropriate Vulkan library and also have a graphics card that supports Vulkan.");
-	}
-#else
-#error Only Win32 is currently supported. To see how to support other windowing systems, \
- see the definition of _glfw_dlopen in XXX_platform.h and its use in vulkan.c in the glfw\
- source code. XXX specifies the windowing system (e.g. x11 for X11, and wl for Wayland).
-#endif
-	// make sure that the correct extensions are available
-	uint32_t count;
-	VkResult err = vkEnumerateInstanceExtensionProperties(nullptr, &count, nullptr);
-	if (err != VK_SUCCESS) {
-		throw CVulkanException(err, "Failed to retrieve the instance extension properties:");
-	}
-	std::vector<VkExtensionProperties> extensions(count);
-	err = vkEnumerateInstanceExtensionProperties(nullptr, &count, extensions.data());
-	if (err != VK_SUCCESS) {
-		throw CVulkanException(err, "Failed to retrieve the instance extension properties:");
-	}
-	for (int extNum = 0; extNum < extensions.size(); ++extNum) {
-		for (auto& iter = requiredExtensions.begin(); iter < requiredExtensions.end(); ++iter) {
-			if (std::string(*iter) == extensions[extNum].extensionName) {
-				requiredExtensions.erase(iter);
-				break;
-			}
-		}
-	};
-	if (!requiredExtensions.empty()) {
-		std::stringstream ss;
-		ss << "The following required Vulkan extensions could not be found:\n";
-		for (int extNum = 0; extNum < requiredExtensions.size(); ++extNum) {
-			ss << requiredExtensions[extNum] << "\n";
-		}
-		ss << "Program cannot continue.";
-		throw std::runtime_error(ss.str());
-	}
-
-	m_vulkanInitialized = true;
-}
-
-VkApplicationInfo CVulkanCanvas::CreateApplicationInfo(const std::string& appName,
-	const int32_t appVersion,
-	const std::string& engineName,
-	const int32_t engineVersion,
-	const int32_t apiVersion) const noexcept
-{
-	VkApplicationInfo appInfo = {};
-	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	appInfo.pApplicationName = appName.c_str();
-	appInfo.applicationVersion = appVersion;
-	appInfo.pEngineName = engineName.c_str();
-	appInfo.engineVersion = engineVersion;
-	appInfo.apiVersion = apiVersion;
-	return appInfo;
-}
-
-VkInstanceCreateInfo CVulkanCanvas::CreateInstanceCreateInfo(const VkApplicationInfo& appInfo,
-	const std::vector<const char*>& extensionNames,
-	const std::vector<const char*>& layerNames) const noexcept
-{
-	VkInstanceCreateInfo createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-	createInfo.pApplicationInfo = &appInfo;
-	createInfo.enabledExtensionCount = extensionNames.size();
-	createInfo.ppEnabledExtensionNames = extensionNames.data();
-	createInfo.enabledLayerCount = layerNames.size();
-	createInfo.ppEnabledLayerNames = layerNames.data();
-	return createInfo;
-}
-
-void CVulkanCanvas::CreateInstance(const VkInstanceCreateInfo& createInfo)
-{
-	if (!m_vulkanInitialized) {
-		throw std::runtime_error("Programming Error:\nAttempted to create a Vulkan instance before Vulkan was initialized.");
-	}
-	VkResult err = vkCreateInstance(&createInfo, nullptr, &m_instance);
-	if (err != VK_SUCCESS) {
-		throw CVulkanException(err, "Unable to create a Vulkan instance:");
+		vkDestroySurfaceKHR(mVulkanInstance.get(), m_surface, nullptr);
+		vkDestroyInstance(mVulkanInstance.get(), nullptr);
 	}
 }
 
@@ -319,13 +225,13 @@ VkWin32SurfaceCreateInfoKHR CVulkanCanvas::CreateWin32SurfaceCreateInfo(HWND *hw
 
 void CVulkanCanvas::CreateWindowSurface(HWND *hwnd)
 {
-	if (!m_instance) {
+	if (!mVulkanInstance.get()) {
 		throw std::runtime_error("Programming Error:\n"
 			"Attempted to create a window surface before the Vulkan instance was created.");
 	}
 #ifdef _WIN32
 	VkWin32SurfaceCreateInfoKHR sci = CreateWin32SurfaceCreateInfo(hwnd);
-	VkResult err = vkCreateWin32SurfaceKHR(m_instance, &sci, nullptr, &m_surface);
+	VkResult err = vkCreateWin32SurfaceKHR(mVulkanInstance.get(), &sci, nullptr, &m_surface);
 	if (err != VK_SUCCESS) {
 		throw CVulkanException(err, "Cannot create a Win32 Vulkan surface:");
 	}
