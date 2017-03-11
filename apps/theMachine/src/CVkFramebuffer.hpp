@@ -20,6 +20,9 @@ struct CVkFramebuffer
 	CVkSwapChain mSwapChain;
 	CVkDevice mDevice;
 
+	CVkFramebuffer();
+	~CVkFramebuffer();
+
 	inline void CVkFramebuffer::connectSwapChain(CVkSwapChain &swapChain)
 	{
 		this->mSwapChain = swapChain;
@@ -36,4 +39,16 @@ struct CVkFramebuffer
 	}
 
 	void CreateFrameBuffers();
+	void CreateRenderPass();
+	VkRenderPassCreateInfo CreateRenderPassCreateInfo(
+		const VkAttachmentDescription& colorAttachment,
+		const VkSubpassDescription& subPass,
+		const VkSubpassDependency& dependency) const noexcept;
+	VkSubpassDependency CreateSubpassDependency() const noexcept;
+
+	VkSubpassDescription CreateSubpassDescription(
+		const VkAttachmentReference& attachmentRef) const noexcept;
+
+	VkAttachmentReference CreateAttachmentReference() const noexcept;
+	VkAttachmentDescription CreateAttachmentDescription() const noexcept;
 };

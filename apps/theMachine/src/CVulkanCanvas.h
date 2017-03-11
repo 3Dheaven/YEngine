@@ -66,7 +66,7 @@ private:
 	void CreateWindowSurface(HWND *hwnd);
 
 	void CreateImageViews();
-	void CreateRenderPass();
+	
 	void CreateGraphicsPipeline(const std::string& vertexShaderFile, const std::string& fragmentShaderFile);
 	
 
@@ -149,7 +149,7 @@ private:
 	VkInstance m_instance;
 	VkSurfaceKHR m_surface;
 
-	VkRenderPass m_renderPass;
+	//VkRenderPass m_renderPass;
 	VkPipelineLayout m_pipelineLayout;
 	VkPipeline m_graphicsPipeline;
 

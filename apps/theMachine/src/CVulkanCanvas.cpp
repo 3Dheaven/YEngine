@@ -15,7 +15,7 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	const wxString& name)
 	: wxWindow(pParent, id, pos, size, style, name),
 	m_vulkanInitialized(false), m_instance(VK_NULL_HANDLE),
-	m_surface(VK_NULL_HANDLE), m_renderPass(VK_NULL_HANDLE), m_pipelineLayout(VK_NULL_HANDLE),
+	m_surface(VK_NULL_HANDLE),  m_pipelineLayout(VK_NULL_HANDLE),
 	m_graphicsPipeline(VK_NULL_HANDLE), 
 	m_imageAvailableSemaphore(VK_NULL_HANDLE), m_renderFinishedSemaphore(VK_NULL_HANDLE),
 	mBuffer(m_device)
@@ -160,12 +160,11 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 
 	m_swapChain.CreateSwapChain(size);
 	CreateImageViews();
-	CreateRenderPass();
-	CreateGraphicsPipeline("../workshop/vk_2d_square/vert.spv", "../workshop/vk_2d_square/frag.spv");
-
 	mFramebuffers.connectSwapChain(m_swapChain);
 	mFramebuffers.connectDevice(m_device);
-	mFramebuffers.connectRenderpass(m_renderPass);
+	mFramebuffers.CreateRenderPass();
+	CreateGraphicsPipeline("../workshop/vk_2d_square/vert.spv", "../workshop/vk_2d_square/frag.spv");
+
 	mFramebuffers.CreateFrameBuffers();
 	
 	CreateCommandBuffers();
@@ -186,9 +185,12 @@ CVulkanCanvas::~CVulkanCanvas() noexcept
 			if (m_pipelineLayout != VK_NULL_HANDLE) {
 				vkDestroyPipelineLayout(logicalDevice, m_pipelineLayout, nullptr);
 			}
-			if (m_renderPass != VK_NULL_HANDLE) {
-				vkDestroyRenderPass(logicalDevice, m_renderPass, nullptr);
+			
+			if (mFramebuffers.mRenderPass != VK_NULL_HANDLE)
+			{
+				vkDestroyRenderPass(logicalDevice, mFramebuffers.mRenderPass, nullptr);
 			}
+
 			if (m_swapChain.mSwapChain != VK_NULL_HANDLE) {
 				vkDestroySwapchainKHR(logicalDevice, m_swapChain.mSwapChain, nullptr);
 			}
@@ -366,80 +368,8 @@ void CVulkanCanvas::CreateImageViews()
 	}
 }
 
-VkAttachmentDescription CVulkanCanvas::CreateAttachmentDescription() const noexcept
-{
-	VkAttachmentDescription colorAttachment = {};
-	colorAttachment.format = m_swapChain.m_swapchainImageFormat;
-	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-	return colorAttachment;
-}
 
-VkAttachmentReference CVulkanCanvas::CreateAttachmentReference() const noexcept
-{
-	VkAttachmentReference colorAttachmentRef = {};
-	colorAttachmentRef.attachment = 0;
-	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	return colorAttachmentRef;
-}
 
-VkSubpassDescription CVulkanCanvas::CreateSubpassDescription(
-	const VkAttachmentReference& attachmentRef) const noexcept
-{
-	VkSubpassDescription subPass = {};
-	subPass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subPass.colorAttachmentCount = 1;
-	subPass.pColorAttachments = &attachmentRef;
-	return subPass;
-}
-
-VkSubpassDependency CVulkanCanvas::CreateSubpassDependency() const noexcept
-{
-	VkSubpassDependency dependency = {};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	return dependency;
-}
-
-VkRenderPassCreateInfo CVulkanCanvas::CreateRenderPassCreateInfo(
-	const VkAttachmentDescription& colorAttachment,
-	const VkSubpassDescription& subPass,
-	const VkSubpassDependency& dependency) const noexcept
-{
-	VkRenderPassCreateInfo renderPassInfo = {};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = 1;
-	renderPassInfo.pAttachments = &colorAttachment;
-	renderPassInfo.subpassCount = 1;
-	renderPassInfo.pSubpasses = &subPass;
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &dependency;
-	return renderPassInfo;
-}
-
-void CVulkanCanvas::CreateRenderPass()
-{
-	VkAttachmentDescription colorAttachment = CreateAttachmentDescription();
-	VkAttachmentReference colorAttachmentRef = CreateAttachmentReference();
-	VkSubpassDescription subPass = CreateSubpassDescription(colorAttachmentRef);
-	VkSubpassDependency dependency = CreateSubpassDependency();
-	VkRenderPassCreateInfo renderPassInfo = CreateRenderPassCreateInfo(colorAttachment,
-		subPass, dependency);
-
-	VkResult result = vkCreateRenderPass(m_device.mLogicalDevice, &renderPassInfo, nullptr, &m_renderPass);
-	if (result != VK_SUCCESS) {
-		throw CVulkanException(result, "Failed to create a render pass:");
-	}
-}
 
 VkViewport CVulkanCanvas::CreateViewport() const noexcept
 {
@@ -549,7 +479,7 @@ VkGraphicsPipelineCreateInfo CVulkanCanvas::CreateGraphicsPipelineCreateInfo(
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.layout = m_pipelineLayout;
-	pipelineInfo.renderPass = m_renderPass;
+	pipelineInfo.renderPass = mFramebuffers.mRenderPass;
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 	return pipelineInfo;
@@ -682,7 +612,7 @@ VkRenderPassBeginInfo CVulkanCanvas::CreateRenderPassBeginInfo(size_t swapchainB
 {
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = m_renderPass;
+	renderPassInfo.renderPass = mFramebuffers.mRenderPass;
 	renderPassInfo.framebuffer = mFramebuffers.mSwapchainFramebuffers[swapchainBufferNumber];
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = m_swapChain.m_swapchainExtent;
@@ -771,7 +701,7 @@ void CVulkanCanvas::RecreateSwapchain()
 	wxSize size = GetSize();
 	m_swapChain.CreateSwapChain(size);
 	CreateImageViews();
-	CreateRenderPass();
+	mFramebuffers.CreateRenderPass();
 	CreateGraphicsPipeline("../workshop/vk_2d_square/vert.spv", "../workshop/vk_2d_square/frag.spv");
 	mFramebuffers.CreateFrameBuffers();
 	CreateCommandBuffers();
