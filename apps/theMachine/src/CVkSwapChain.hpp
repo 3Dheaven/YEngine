@@ -26,6 +26,7 @@ public:
 	std::vector<VkImage> m_swapchainImages;
 	VkFormat m_swapchainImageFormat;
 	VkExtent2D m_swapchainExtent;
+	// Images are accessed through image views rather than directly.
 	std::vector<VkImageView> m_swapchainImageViews;
 
 	VkFormat colorFormat;
@@ -118,6 +119,7 @@ required to support other windowing systems.
 
 	void CreateSwapChain(const wxSize& size)
 	{
+		// Checking for swap chain support from the device.
 		SwapChainSupportDetails swapChainSupport = mDevice.querySwapChainSupport(mPhysicalDevice);
 		VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
 		VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities, size);
@@ -151,6 +153,32 @@ required to support other windowing systems.
 		}
 		m_swapchainImageFormat = surfaceFormat.format;
 		m_swapchainExtent = extent;
+
+		// Create an image view for eacj image in the swapchain.
+		m_swapchainImageViews.resize(m_swapchainImages.size());
+		for (uint32_t i = 0; i < m_swapchainImages.size(); i++) 
+		{
+			VkImageViewCreateInfo createInfo = {};
+			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			createInfo.image = m_swapchainImages[i];
+			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			createInfo.format = m_swapchainImageFormat;
+			createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			createInfo.subresourceRange.baseMipLevel = 0;
+			createInfo.subresourceRange.levelCount = 1;
+			createInfo.subresourceRange.baseArrayLayer = 0;
+			createInfo.subresourceRange.layerCount = 1;
+
+			VkResult result = vkCreateImageView(mDevice.mLogicalDevice, &createInfo, nullptr, &m_swapchainImageViews[i]);
+			if (result != VK_SUCCESS) 
+			{
+				throw CVulkanException(result, "Unable to create an image view for a swap chain image");
+			}
+		}
 	};
 
 
@@ -200,4 +228,5 @@ required to support other windowing systems.
 		}
 		return VK_PRESENT_MODE_FIFO_KHR;
 	}
+
 };

@@ -65,8 +65,7 @@ private:
 	void CreateInstance(const VkInstanceCreateInfo& createInfo);
 	void CreateWindowSurface(HWND *hwnd);
 
-	void CreateImageViews();
-	
+
 	void CreateGraphicsPipeline(const std::string& vertexShaderFile, const std::string& fragmentShaderFile);
 	
 
@@ -85,14 +84,7 @@ private:
 		const std::vector<const char*>& layerNames) const noexcept;
 
 	VkImageViewCreateInfo CreateImageViewCreateInfo(uint32_t swapchainImage) const noexcept;
-	VkAttachmentDescription CreateAttachmentDescription() const noexcept;
-	VkAttachmentReference CreateAttachmentReference() const noexcept;
-	VkSubpassDescription CreateSubpassDescription(const VkAttachmentReference& attachmentRef) const noexcept;
-	VkSubpassDependency CreateSubpassDependency() const noexcept;
-	VkRenderPassCreateInfo CreateRenderPassCreateInfo(
-		const VkAttachmentDescription& colorAttachment,
-		const VkSubpassDescription& subPass,
-		const VkSubpassDependency& dependency) const noexcept;
+
 	VkViewport CreateViewport() const noexcept;
 	VkRect2D CreateScissor() const noexcept;
 	VkPipelineViewportStateCreateInfo CreatePipelineViewportStateCreateInfo(
@@ -149,7 +141,6 @@ private:
 	VkInstance m_instance;
 	VkSurfaceKHR m_surface;
 
-	//VkRenderPass m_renderPass;
 	VkPipelineLayout m_pipelineLayout;
 	VkPipeline m_graphicsPipeline;
 
@@ -158,6 +149,7 @@ private:
 	VkSemaphore m_imageAvailableSemaphore;
 	VkSemaphore m_renderFinishedSemaphore;
 	bool m_vulkanInitialized;
+
 	std::unique_ptr<wxTimer> m_timer;
 	typedef std::chrono::time_point<std::chrono::high_resolution_clock> sclock;
 	sclock m_startTime;

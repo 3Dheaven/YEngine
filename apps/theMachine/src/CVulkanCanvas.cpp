@@ -159,7 +159,6 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 
 
 	m_swapChain.CreateSwapChain(size);
-	CreateImageViews();
 	mFramebuffers.connectSwapChain(m_swapChain);
 	mFramebuffers.connectDevice(m_device);
 	mFramebuffers.CreateRenderPass();
@@ -336,37 +335,7 @@ required to support other windowing systems.
 #endif
 }
 
-VkImageViewCreateInfo CVulkanCanvas::CreateImageViewCreateInfo(uint32_t swapchainImage) const noexcept
-{
-	VkImageViewCreateInfo createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	createInfo.image = m_swapChain.m_swapchainImages[swapchainImage];
-	createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	createInfo.format = m_swapChain.m_swapchainImageFormat;
-	createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-	createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-	createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-	createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-	createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	createInfo.subresourceRange.baseMipLevel = 0;
-	createInfo.subresourceRange.levelCount = 1;
-	createInfo.subresourceRange.baseArrayLayer = 0;
-	createInfo.subresourceRange.layerCount = 1;
-	return createInfo;
-}
 
-void CVulkanCanvas::CreateImageViews()
-{
-	m_swapChain.m_swapchainImageViews.resize(m_swapChain.m_swapchainImages.size());
-	for (uint32_t i = 0; i < m_swapChain.m_swapchainImages.size(); i++) {
-		VkImageViewCreateInfo createInfo = CreateImageViewCreateInfo(i);
-
-		VkResult result = vkCreateImageView(m_device.mLogicalDevice, &createInfo, nullptr, &m_swapChain.m_swapchainImageViews[i]);
-		if (result != VK_SUCCESS) {
-			throw CVulkanException(result, "Unable to create an image view for a swap chain image");
-		}
-	}
-}
 
 
 
@@ -556,40 +525,6 @@ std::vector<char> CVulkanCanvas::ReadFile(const std::string& filename)
 	return buffer;
 }
 
-/*VkFramebufferCreateInfo CVulkanCanvas::CreateFramebufferCreateInfo(
-	const VkImageView& attachments) const noexcept
-{
-	VkFramebufferCreateInfo framebufferInfo = {};
-	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	framebufferInfo.renderPass = m_renderPass;
-	framebufferInfo.attachmentCount = 1;
-	framebufferInfo.pAttachments = &attachments;
-	framebufferInfo.width = m_swapChain.m_swapchainExtent.width;
-	framebufferInfo.height = m_swapChain.m_swapchainExtent.height;
-	framebufferInfo.layers = 1;
-	return framebufferInfo;
-}*/
-
-/*void CVulkanCanvas::CreateFrameBuffers()
-{
-	VkFramebuffer framebuffer;
-	m_swapchainFramebuffers.resize(m_swapChain.m_swapchainImageViews.size(), framebuffer);
-
-	for (size_t i = 0; i < m_swapChain.m_swapchainImageViews.size(); i++) {
-		VkImageView attachments[] = {
-			m_swapChain.m_swapchainImageViews[i]
-		};
-
-		VkFramebufferCreateInfo framebufferInfo = CreateFramebufferCreateInfo(*attachments);
-
-		VkResult result = vkCreateFramebuffer(m_device.mLogicalDevice, &framebufferInfo, nullptr, &m_swapchainFramebuffers[i]);
-		if (result != VK_SUCCESS) {
-			throw CVulkanException(result, "Failed to create framebuffer:");
-		}
-	}
-}*/
-
-
 VkCommandBufferAllocateInfo CVulkanCanvas::CreateCommandBufferAllocateInfo() const noexcept
 {
 	VkCommandBufferAllocateInfo allocInfo = {};
@@ -700,7 +635,6 @@ void CVulkanCanvas::RecreateSwapchain()
 
 	wxSize size = GetSize();
 	m_swapChain.CreateSwapChain(size);
-	CreateImageViews();
 	mFramebuffers.CreateRenderPass();
 	CreateGraphicsPipeline("../workshop/vk_2d_square/vert.spv", "../workshop/vk_2d_square/frag.spv");
 	mFramebuffers.CreateFrameBuffers();
