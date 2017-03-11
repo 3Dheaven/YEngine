@@ -70,7 +70,7 @@ private:
 	void CreateRenderPass();
 	void CreateGraphicsPipeline(const std::string& vertexShaderFile, const std::string& fragmentShaderFile);
 	
-	void CreateCommandPool();
+
 	void CreateCommandBuffers();
 	void CreateSemaphores();
 	void RecreateSwapchain();
@@ -113,7 +113,7 @@ private:
 		const VkPipelineMultisampleStateCreateInfo& multisampling,
 		const VkPipelineColorBlendStateCreateInfo& colorBlending) const noexcept;
 	
-	VkCommandPoolCreateInfo CreateCommandPoolCreateInfo(QueueFamilyIndices& queueFamilyIndices) const noexcept;
+
 	VkCommandBufferAllocateInfo CreateCommandBufferAllocateInfo() const noexcept;
 	VkCommandBufferBeginInfo CreateCommandBufferBeginInfo() const noexcept;
 	VkRenderPassBeginInfo CreateRenderPassBeginInfo(size_t swapchainBufferNumber) const noexcept;
@@ -154,7 +154,7 @@ private:
 	VkPipelineLayout m_pipelineLayout;
 	VkPipeline m_graphicsPipeline;
 
-	VkCommandPool m_commandPool;
+
 	std::vector<VkCommandBuffer> m_commandBuffers;
 	VkSemaphore m_imageAvailableSemaphore;
 	VkSemaphore m_renderFinishedSemaphore;

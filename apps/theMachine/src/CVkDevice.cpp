@@ -1,6 +1,9 @@
 #include "CVkDevice.hpp"
 
-CVkDevice::CVkDevice(): mLogicalDevice(VK_NULL_HANDLE), mPhysicalDevice(VK_NULL_HANDLE)
+CVkDevice::CVkDevice(): 
+	mLogicalDevice(VK_NULL_HANDLE), 
+	mPhysicalDevice(VK_NULL_HANDLE),
+	mCommandPool(VK_NULL_HANDLE)
 {
 }
 
@@ -46,6 +49,7 @@ CVkDevice::pickPhysicalDevice()
 	std::vector<VkPhysicalDevice> devices(deviceCount);
 	vkEnumeratePhysicalDevices(mInstance, &deviceCount, devices.data());
 
+	// We need to iterate over all physical devices and find the one that supports rendering to our surface and has a graphics queue.
 	for (const auto& device : devices)
 	{
 		if (isDeviceSuitable(device))
@@ -220,4 +224,22 @@ CVkDevice::querySwapChainSupport(const VkPhysicalDevice& device) const
 		}
 	}
 	return details;
+}
+
+void CVkDevice::createCommandPool()
+{
+	QueueFamilyIndices queueFamilyIndices = findQueueFamilies(mPhysicalDevice, mSurface);
+
+	VkCommandPoolCreateInfo poolInfo = {};
+	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+	poolInfo.pNext = nullptr;
+	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
+
+	VkResult result = vkCreateCommandPool(mLogicalDevice, &poolInfo, nullptr, &mCommandPool);
+
+	if (result != VK_SUCCESS)
+	{
+		throw CVulkanException(result, "Failed to create command pool:");
+	}
 }

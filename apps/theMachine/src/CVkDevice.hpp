@@ -39,6 +39,7 @@ struct CVkDevice
 	VkQueue mGraphicsQueue;
 	VkQueue mPresentQueue;
 	VkSwapchainKHR mSwapChain;
+	VkCommandPool mCommandPool;
 
 	CVkDevice();
 	~CVkDevice();
@@ -49,8 +50,17 @@ struct CVkDevice
 
 	void pickPhysicalDevice();
 	void createLogicalDevice();
+
+	// Check if a physical devices supports rendering to our surface and has a graphics queue.
 	bool isDeviceSuitable(const VkPhysicalDevice& device) const;
 	bool checkDeviceExtensionSupport(const VkPhysicalDevice& device) const;
 	QueueFamilyIndices findQueueFamilies(const VkPhysicalDevice& device, const VkSurfaceKHR &surface) const;
 	SwapChainSupportDetails querySwapChainSupport(const VkPhysicalDevice& device) const;
+
+	/* 
+	Command pools are opaque objects from where we allocate command buffers.
+	They allow the Vulkan implementation to amortise the cost of resource creation across multiple command buffers.
+	Command buffers are submitted to a work queue.
+	*/
+	void createCommandPool();
 };

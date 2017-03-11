@@ -9,6 +9,9 @@
 #include "CVkCommon.hpp"
 #include "CVkDevice.hpp"
 
+/*
+The swap chain handles the image buffers we will be writing to. 
+*/
 
 class CVkSwapChain
 {

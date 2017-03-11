@@ -16,7 +16,7 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	: wxWindow(pParent, id, pos, size, style, name),
 	m_vulkanInitialized(false), m_instance(VK_NULL_HANDLE),
 	m_surface(VK_NULL_HANDLE), m_renderPass(VK_NULL_HANDLE), m_pipelineLayout(VK_NULL_HANDLE),
-	m_graphicsPipeline(VK_NULL_HANDLE), m_commandPool(VK_NULL_HANDLE),
+	m_graphicsPipeline(VK_NULL_HANDLE), 
 	m_imageAvailableSemaphore(VK_NULL_HANDLE), m_renderFinishedSemaphore(VK_NULL_HANDLE),
 	mBuffer(m_device)
 {
@@ -59,9 +59,12 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	
 	mShader.ConnectDevice(m_device.mLogicalDevice);
 
-
+	m_device.createCommandPool();
 
 	m_pParent = pParent->GetParent();
+
+
+
 
 	// Uniform buffer, allocation memory and binding
 	CreateUniformBuffer(m_uniformBuffer, sizeof(glm::vec4), m_uniformMemorie);
@@ -75,8 +78,6 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 
 	// Descriptor in the shader
 	CreateDescriptorSetLayout(1, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
-
-
 
 	// NEED A BIT OF REFACTORING...
 	m_descriptorPoolSize.descriptorCount = 1;
@@ -127,7 +128,7 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 
 
 
-	CreateCommandPool();
+	
 
 	// Rectangle vertices
 	m_vertices.push_back(glm::vec2(-0.5f, -0.5f));
@@ -193,8 +194,8 @@ CVulkanCanvas::~CVulkanCanvas() noexcept
 			for (auto& framebuffer : m_swapchainFramebuffers) {
 				vkDestroyFramebuffer(logicalDevice, framebuffer, nullptr);
 			}
-			if (m_commandPool != VK_NULL_HANDLE) {
-				vkDestroyCommandPool(logicalDevice, m_commandPool, nullptr);
+			if (m_device.mCommandPool != VK_NULL_HANDLE) {
+				vkDestroyCommandPool(logicalDevice, m_device.mCommandPool, nullptr);
 			}
 			if (m_imageAvailableSemaphore != VK_NULL_HANDLE) {
 				vkDestroySemaphore(logicalDevice, m_imageAvailableSemaphore, nullptr);
@@ -654,39 +655,12 @@ void CVulkanCanvas::CreateFrameBuffers()
 	}
 }
 
-VkCommandPoolCreateInfo CVulkanCanvas::CreateCommandPoolCreateInfo(
-	QueueFamilyIndices& queueFamilyIndices) const noexcept
-{
-	VkCommandPoolCreateInfo poolInfo = {};
-
-	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-	poolInfo.pNext = nullptr;
-
-	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
-
-	return poolInfo;
-}
-
-void CVulkanCanvas::CreateCommandPool()
-{
-	QueueFamilyIndices queueFamilyIndices = m_device.findQueueFamilies(m_device.mPhysicalDevice, m_surface);
-
-	VkCommandPoolCreateInfo poolInfo = CreateCommandPoolCreateInfo(queueFamilyIndices);
-
-	VkResult result = vkCreateCommandPool(m_device.mLogicalDevice, &poolInfo, nullptr, &m_commandPool);
-
-	if (result != VK_SUCCESS)
-	{
-		throw CVulkanException(result, "Failed to create command pool:");
-	}
-}
 
 VkCommandBufferAllocateInfo CVulkanCanvas::CreateCommandBufferAllocateInfo() const noexcept
 {
 	VkCommandBufferAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.commandPool = m_commandPool;
+	allocInfo.commandPool = m_device.mCommandPool;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocInfo.commandBufferCount = (uint32_t)m_commandBuffers.size();
 	return allocInfo;
@@ -720,7 +694,7 @@ void CVulkanCanvas::CreateCommandBuffers()
 
 	if (m_commandBuffers.size() > 0)
 	{
-		vkFreeCommandBuffers(logicalDevice, m_commandPool, m_commandBuffers.size(), m_commandBuffers.data());
+		vkFreeCommandBuffers(logicalDevice, m_device.mCommandPool, m_commandBuffers.size(), m_commandBuffers.data());
 	}
 	m_commandBuffers.resize(m_swapchainFramebuffers.size());
 
@@ -880,6 +854,7 @@ void CVulkanCanvas::OnPaint(wxPaintEvent& event)
 		VkPipelineStageFlags waitFlags[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		VkSubmitInfo submitInfo = CreateSubmitInfo(imageIndex, waitFlags);
 
+		// Submit command buffer to the queue
 		result = vkQueueSubmit(m_device.mGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 		if (result != VK_SUCCESS) {
 			throw CVulkanException(result, "Failed to submit draw command buffer:");
@@ -1029,7 +1004,7 @@ void CVulkanCanvas::CopyBuffer(const VkBuffer &srcBuffer, VkBuffer &dstBuffer, V
 	VkCommandBufferAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandPool = m_commandPool;
+	allocInfo.commandPool = m_device.mCommandPool;
 	allocInfo.commandBufferCount = 1;
 
 	VkCommandBuffer commandBuffer;
@@ -1044,6 +1019,7 @@ void CVulkanCanvas::CopyBuffer(const VkBuffer &srcBuffer, VkBuffer &dstBuffer, V
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
+	// Start recording a command buffer
 	result = vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
 	if (result != VK_SUCCESS)
@@ -1083,7 +1059,7 @@ void CVulkanCanvas::CopyBuffer(const VkBuffer &srcBuffer, VkBuffer &dstBuffer, V
 		throw CVulkanException(result, "Error attempting to wait queue:");
 	}
 
-	vkFreeCommandBuffers(m_device.mLogicalDevice, m_commandPool, 1, &commandBuffer);
+	vkFreeCommandBuffers(m_device.mLogicalDevice, m_device.mCommandPool, 1, &commandBuffer);
 }
 
 void CVulkanCanvas::CreateBuffer(VkBuffer &buffer,
