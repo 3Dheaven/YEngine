@@ -162,7 +162,11 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	CreateImageViews();
 	CreateRenderPass();
 	CreateGraphicsPipeline("../workshop/vk_2d_square/vert.spv", "../workshop/vk_2d_square/frag.spv");
-	CreateFrameBuffers();
+
+	mFramebuffers.connectSwapChain(m_swapChain);
+	mFramebuffers.connectDevice(m_device);
+	mFramebuffers.connectRenderpass(m_renderPass);
+	mFramebuffers.CreateFrameBuffers();
 	
 	CreateCommandBuffers();
 	CreateSemaphores();
@@ -191,7 +195,7 @@ CVulkanCanvas::~CVulkanCanvas() noexcept
 			for (auto& imageView : m_swapChain.m_swapchainImageViews) {
 				vkDestroyImageView(logicalDevice, imageView, nullptr);
 			}
-			for (auto& framebuffer : m_swapchainFramebuffers) {
+			for (auto& framebuffer : mFramebuffers.m_swapchainFramebuffers) {
 				vkDestroyFramebuffer(logicalDevice, framebuffer, nullptr);
 			}
 			if (m_device.mCommandPool != VK_NULL_HANDLE) {
@@ -622,7 +626,7 @@ std::vector<char> CVulkanCanvas::ReadFile(const std::string& filename)
 	return buffer;
 }
 
-VkFramebufferCreateInfo CVulkanCanvas::CreateFramebufferCreateInfo(
+/*VkFramebufferCreateInfo CVulkanCanvas::CreateFramebufferCreateInfo(
 	const VkImageView& attachments) const noexcept
 {
 	VkFramebufferCreateInfo framebufferInfo = {};
@@ -634,9 +638,9 @@ VkFramebufferCreateInfo CVulkanCanvas::CreateFramebufferCreateInfo(
 	framebufferInfo.height = m_swapChain.m_swapchainExtent.height;
 	framebufferInfo.layers = 1;
 	return framebufferInfo;
-}
+}*/
 
-void CVulkanCanvas::CreateFrameBuffers()
+/*void CVulkanCanvas::CreateFrameBuffers()
 {
 	VkFramebuffer framebuffer;
 	m_swapchainFramebuffers.resize(m_swapChain.m_swapchainImageViews.size(), framebuffer);
@@ -653,7 +657,7 @@ void CVulkanCanvas::CreateFrameBuffers()
 			throw CVulkanException(result, "Failed to create framebuffer:");
 		}
 	}
-}
+}*/
 
 
 VkCommandBufferAllocateInfo CVulkanCanvas::CreateCommandBufferAllocateInfo() const noexcept
@@ -679,7 +683,7 @@ VkRenderPassBeginInfo CVulkanCanvas::CreateRenderPassBeginInfo(size_t swapchainB
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = m_renderPass;
-	renderPassInfo.framebuffer = m_swapchainFramebuffers[swapchainBufferNumber];
+	renderPassInfo.framebuffer = mFramebuffers.m_swapchainFramebuffers[swapchainBufferNumber];
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = m_swapChain.m_swapchainExtent;
 
@@ -696,7 +700,7 @@ void CVulkanCanvas::CreateCommandBuffers()
 	{
 		vkFreeCommandBuffers(logicalDevice, m_device.mCommandPool, m_commandBuffers.size(), m_commandBuffers.data());
 	}
-	m_commandBuffers.resize(m_swapchainFramebuffers.size());
+	m_commandBuffers.resize(mFramebuffers.m_swapchainFramebuffers.size());
 
 	VkCommandBufferAllocateInfo allocInfo = CreateCommandBufferAllocateInfo();
 	VkResult result = vkAllocateCommandBuffers(logicalDevice, &allocInfo, m_commandBuffers.data());
@@ -769,7 +773,7 @@ void CVulkanCanvas::RecreateSwapchain()
 	CreateImageViews();
 	CreateRenderPass();
 	CreateGraphicsPipeline("../workshop/vk_2d_square/vert.spv", "../workshop/vk_2d_square/frag.spv");
-	CreateFrameBuffers();
+	mFramebuffers.CreateFrameBuffers();
 	CreateCommandBuffers();
 }
 

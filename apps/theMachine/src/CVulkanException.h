@@ -3,6 +3,16 @@
 #include <map>
 #include <string>
 #include <vulkan.h>
+
+#define VK_CHECK_RESULT(f, m)  																		\
+{																									\
+	VkResult res = (f);																				\
+	if (res != VK_SUCCESS)																			\
+	{																								\
+		throw CVulkanException(res, m);																\
+	}																								\
+}
+
 class CVulkanException :
     public std::runtime_error
 {

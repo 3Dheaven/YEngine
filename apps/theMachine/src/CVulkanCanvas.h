@@ -17,6 +17,7 @@
 #include "CVkCommon.hpp"
 #include "CVkShader.hpp"
 #include "CVkBuffer.hpp"
+#include "CVkFramebuffer.hpp"
 
 class CVulkanCanvas :
     public wxWindow
@@ -41,6 +42,7 @@ private:
 	CVkDevice m_device;
 	CVkShader mShader;
 	CVkBuffer mBuffer;
+	CVkFramebuffer mFramebuffers;
 
 	void CreateVertexBuffer(VkBuffer &, VkDeviceMemory &);
 	void CopyBuffer(const VkBuffer &, VkBuffer &, VkDeviceSize);
@@ -58,9 +60,6 @@ private:
 	void MapMemory(VkDeviceMemory, uint64_t, uint64_t, void **);
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
-	void CreateFrameBuffers();
-	std::vector<VkFramebuffer> m_swapchainFramebuffers;
-	VkFramebufferCreateInfo CreateFramebufferCreateInfo(const VkImageView& attachments) const noexcept;
 
 	void InitializeVulkan(std::vector<const char*> extensions);
 	void CreateInstance(const VkInstanceCreateInfo& createInfo);
