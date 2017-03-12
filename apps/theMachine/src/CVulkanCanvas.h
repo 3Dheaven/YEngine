@@ -19,6 +19,7 @@
 #include "CVkBuffer.hpp"
 #include "CVkFramebuffer.hpp"
 #include "CVkInstance.h"
+#include "CFileReader.h"
 
 class CVulkanCanvas :
     public wxWindow
@@ -69,13 +70,17 @@ private:
 	
 
 	void CreateCommandBuffers();
+
+	/*Create two semaphores. The first one is used to signal that an image has been acquired and is ready for rendering, 
+	and the second one to signal that rendering has finished and presentation can happen.*/
 	void CreateSemaphores();
+
+
+
 	void RecreateSwapchain();
-	VkWin32SurfaceCreateInfoKHR CreateWin32SurfaceCreateInfo(HWND *hwnd) const noexcept;
 
 
-	VkViewport CreateViewport() const noexcept;
-	VkRect2D CreateScissor() const noexcept;
+
 	VkPipelineViewportStateCreateInfo CreatePipelineViewportStateCreateInfo(
 		const VkViewport& viewport, const VkRect2D& scissor) const noexcept;
 	VkPipelineRasterizationStateCreateInfo CreatePipelineRasterizationStateCreateInfo() const noexcept;
@@ -92,16 +97,6 @@ private:
 		const VkPipelineRasterizationStateCreateInfo& rasterizer,
 		const VkPipelineMultisampleStateCreateInfo& multisampling,
 		const VkPipelineColorBlendStateCreateInfo& colorBlending) const noexcept;
-	
-
-	VkCommandBufferAllocateInfo CreateCommandBufferAllocateInfo() const noexcept;
-	VkCommandBufferBeginInfo CreateCommandBufferBeginInfo() const noexcept;
-	VkRenderPassBeginInfo CreateRenderPassBeginInfo(size_t swapchainBufferNumber) const noexcept;
-	VkSemaphoreCreateInfo CreateSemaphoreCreateInfo() const noexcept;
-	VkSubmitInfo CreateSubmitInfo(uint32_t imageIndex, VkPipelineStageFlags* pipelineStageFlags) const noexcept;
-	VkPresentInfoKHR CreatePresentInfoKHR(uint32_t& imageIndex) const noexcept;
-	
-	static std::vector<char> ReadFile(const std::string& filename);
 	
 	virtual void OnPaint(wxPaintEvent& event);
 	virtual void OnResize(wxSizeEvent& event);
@@ -134,7 +129,12 @@ private:
 
 
 	std::vector<VkCommandBuffer> m_commandBuffers;
+
+
+	/* Specify synchronization objects that are to be signaled when the presentation engine is finished using the image.
+	That's the point in time where we can start drawing to it.*/
 	VkSemaphore m_imageAvailableSemaphore;
+	// This semaphore is signaled once the command buffer(s) have finished execution. 
 	VkSemaphore m_renderFinishedSemaphore;
 
 	std::unique_ptr<wxTimer> m_timer;

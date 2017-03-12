@@ -29,22 +29,22 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	m_timer->Start(3);
 	m_startTime = std::chrono::high_resolution_clock::now();
 
-	
-
-	m_swapChain.connectInstance(mVulkanInstance.get());
+	// Create instance
+	// Create windows surface
 	auto a = GetHwnd();
-	
 	CreateWindowSurface(&a);
-	m_swapChain.connectSurface(m_surface);
-	
+
+	// Pick physical device
 	m_device.connectInstance(mVulkanInstance.get());
 	m_device.connectSurface(m_surface);
-	
-
 	m_device.pickPhysicalDevice();
-	m_swapChain.connectPhysicalDevice(m_device.mPhysicalDevice);
 
+	// Create device
 	m_device.createLogicalDevice();
+
+	m_swapChain.connectPhysicalDevice(m_device.mPhysicalDevice);
+	m_swapChain.connectInstance(mVulkanInstance.get());
+	m_swapChain.connectSurface(m_surface);
 	m_swapChain.connectDevice(m_device);
 
 	m_device.connectSwapChain(m_swapChain.mSwapChain);
@@ -55,6 +55,12 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 
 	m_pParent = pParent->GetParent();
 
+	m_swapChain.CreateSwapChain(size);
+
+	mFramebuffers.connectSwapChain(m_swapChain);
+	mFramebuffers.connectDevice(m_device);
+	mFramebuffers.CreateRenderPass();
+	mFramebuffers.CreateFrameBuffers();
 
 
 
@@ -119,9 +125,6 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	vkUpdateDescriptorSets(m_device.mLogicalDevice, 1, &descriptorWrite, 0, nullptr);
 
 
-
-	
-
 	// Rectangle vertices
 	m_vertices.push_back(glm::vec2(-0.5f, -0.5f));
 	m_vertices.push_back(glm::vec2(0.5f, -0.5f));
@@ -150,15 +153,13 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	attributeDescription.offset = 0;
 
 
-	m_swapChain.CreateSwapChain(size);
 
-	mFramebuffers.connectSwapChain(m_swapChain);
-	mFramebuffers.connectDevice(m_device);
-	mFramebuffers.CreateRenderPass();
+
+
+
 	CreateGraphicsPipeline("../workshop/vk_2d_square/vert.spv", "../workshop/vk_2d_square/frag.spv");
 
-	mFramebuffers.CreateFrameBuffers();
-	
+
 	CreateCommandBuffers();
 	CreateSemaphores();
 }
@@ -212,59 +213,31 @@ CVulkanCanvas::~CVulkanCanvas() noexcept
 	}
 }
 
-#ifdef _WIN32
-VkWin32SurfaceCreateInfoKHR CVulkanCanvas::CreateWin32SurfaceCreateInfo(HWND *hwnd) const noexcept
+void CVulkanCanvas::CreateWindowSurface(HWND *hwnd)
 {
+	if (!mVulkanInstance.get()) 
+	{
+		throw std::runtime_error("Programming Error:\n"
+			"Attempted to create a window surface before the Vulkan instance was created.");
+	}
+
+#ifdef _WIN32
 	VkWin32SurfaceCreateInfoKHR sci = {};
 	sci.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 	sci.hwnd = *hwnd;//GetHwnd();
 	sci.hinstance = GetModuleHandle(NULL);
-	return sci;
-}
-#endif
 
-void CVulkanCanvas::CreateWindowSurface(HWND *hwnd)
-{
-	if (!mVulkanInstance.get()) {
-		throw std::runtime_error("Programming Error:\n"
-			"Attempted to create a window surface before the Vulkan instance was created.");
-	}
-#ifdef _WIN32
-	VkWin32SurfaceCreateInfoKHR sci = CreateWin32SurfaceCreateInfo(hwnd);
 	VkResult err = vkCreateWin32SurfaceKHR(mVulkanInstance.get(), &sci, nullptr, &m_surface);
-	if (err != VK_SUCCESS) {
+	if (err != VK_SUCCESS) 
+	{
 		throw CVulkanException(err, "Cannot create a Win32 Vulkan surface:");
 	}
 #else
-#error The code in CVulkanCanvas::CreateWindowSurface only supports Win32. Changes are \
-required to support other windowing systems.
+	#error The code in CVulkanCanvas::CreateWindowSurface only supports Win32. Changes are \
+	required to support other windowing systems.
 #endif
 }
 
-
-
-
-
-
-VkViewport CVulkanCanvas::CreateViewport() const noexcept
-{
-	VkViewport viewport = {};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = (float)m_swapChain.m_swapchainExtent.width;
-	viewport.height = (float)m_swapChain.m_swapchainExtent.height;
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	return viewport;
-}
-
-VkRect2D CVulkanCanvas::CreateScissor() const noexcept
-{
-	VkRect2D scissor = {};
-	scissor.offset = { 0, 0 };
-	scissor.extent = m_swapChain.m_swapchainExtent;
-	return scissor;
-}
 
 VkPipelineViewportStateCreateInfo CVulkanCanvas::CreatePipelineViewportStateCreateInfo(
 	const VkViewport& viewport, const VkRect2D& scissor) const noexcept
@@ -362,8 +335,8 @@ VkGraphicsPipelineCreateInfo CVulkanCanvas::CreateGraphicsPipelineCreateInfo(
 
 void CVulkanCanvas::CreateGraphicsPipeline(const std::string& vertexShaderFile, const std::string& fragmentShaderFile)
 {
-	auto vertShaderCode = ReadFile(vertexShaderFile);
-	auto fragShaderCode = ReadFile(fragmentShaderFile);
+	auto vertShaderCode = fs::readFile(vertexShaderFile);
+	auto fragShaderCode = fs::readFile(fragmentShaderFile);
 
 	VkShaderModule vertShaderModule;
 	VkShaderModule fragShaderModule;
@@ -380,8 +353,21 @@ void CVulkanCanvas::CreateGraphicsPipeline(const std::string& vertexShaderFile, 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = mShader.CreatePipelineVertexInputStateCreateInfo();
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = mShader.CreatePipelineInputAssemblyStateCreateInfo(
 		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE);
-	VkViewport viewport = CreateViewport();
-	VkRect2D scissor = CreateScissor();
+
+	// Create viewport
+	VkViewport viewport = {};
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+	viewport.width = (float)m_swapChain.m_swapchainExtent.width;
+	viewport.height = (float)m_swapChain.m_swapchainExtent.height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	
+	// CreateScissor
+	VkRect2D scissor = {};
+	scissor.offset = { 0, 0 };
+	scissor.extent = m_swapChain.m_swapchainExtent;
+
 	VkPipelineViewportStateCreateInfo viewportState = CreatePipelineViewportStateCreateInfo(
 		viewport, scissor);
 	VkPipelineRasterizationStateCreateInfo rasterizer = CreatePipelineRasterizationStateCreateInfo();
@@ -410,78 +396,47 @@ void CVulkanCanvas::CreateGraphicsPipeline(const std::string& vertexShaderFile, 
 	}
 }
 
-std::vector<char> CVulkanCanvas::ReadFile(const std::string& filename)
-{
-	std::ifstream file(filename, std::ios::ate | std::ios::binary);
-
-	if (!file.is_open()) {
-		std::stringstream ss;
-		ss << "Failed to open file: " << filename;
-		throw std::runtime_error(ss.str().c_str());
-	}
-
-	size_t fileSize = (size_t)file.tellg();
-	std::vector<char> buffer(fileSize);
-
-	file.seekg(0);
-	file.read(buffer.data(), fileSize);
-
-	file.close();
-
-	return buffer;
-}
-
-VkCommandBufferAllocateInfo CVulkanCanvas::CreateCommandBufferAllocateInfo() const noexcept
-{
-	VkCommandBufferAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.commandPool = m_device.mCommandPool;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandBufferCount = (uint32_t)m_commandBuffers.size();
-	return allocInfo;
-}
-
-VkCommandBufferBeginInfo CVulkanCanvas::CreateCommandBufferBeginInfo() const noexcept
-{
-	VkCommandBufferBeginInfo beginInfo = {};
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-	return beginInfo;
-}
-
-VkRenderPassBeginInfo CVulkanCanvas::CreateRenderPassBeginInfo(size_t swapchainBufferNumber) const noexcept
-{
-	VkRenderPassBeginInfo renderPassInfo = {};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = mFramebuffers.mRenderPass;
-	renderPassInfo.framebuffer = mFramebuffers.mSwapchainFramebuffers[swapchainBufferNumber];
-	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = m_swapChain.m_swapchainExtent;
-
-	renderPassInfo.clearValueCount = 1;
-	renderPassInfo.pClearValues = &clearColor;
-	return renderPassInfo;
-}
 
 void CVulkanCanvas::CreateCommandBuffers()
 {
 	auto &logicalDevice = m_device.mLogicalDevice;
 
+	//----------------------------------------------------------------------------------------------------------
+	// Command buffer allocation
+	//----------------------------------------------------------------------------------------------------------
+
+	// Cleaning up command buffers
 	if (m_commandBuffers.size() > 0)
 	{
 		vkFreeCommandBuffers(logicalDevice, m_device.mCommandPool, m_commandBuffers.size(), m_commandBuffers.data());
 	}
 	m_commandBuffers.resize(mFramebuffers.mSwapchainFramebuffers.size());
 
-	VkCommandBufferAllocateInfo allocInfo = CreateCommandBufferAllocateInfo();
+	VkCommandBufferAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.commandPool = m_device.mCommandPool;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;						// Can be submitted to a queue for execution, but cannot be called from other command buffers.
+	allocInfo.commandBufferCount = (uint32_t)m_commandBuffers.size();
+
 	VkResult result = vkAllocateCommandBuffers(logicalDevice, &allocInfo, m_commandBuffers.data());
-	if (result != VK_SUCCESS) {
+	if (result != VK_SUCCESS) 
+	{
 		throw CVulkanException(result, "Failed to allocate command buffers:");
 	}
 
 	for (size_t i = 0; i < m_commandBuffers.size(); i++)
 	{
-		VkCommandBufferBeginInfo beginInfo = CreateCommandBufferBeginInfo();
+		//----------------------------------------------------------------------------------------------------------
+		// Starting command buffer recording
+		//----------------------------------------------------------------------------------------------------------
+
+		VkCommandBufferBeginInfo beginInfo = {};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;		/* The command buffer can be resubmitted while it is also already pending execution.
+																			   We have used the last flag because we may already be scheduling the drawing commands 
+																			   for the next frame while the last frame is not finished yet.*/
+		beginInfo.pInheritanceInfo = nullptr;								// Optional
+
 		result = vkBeginCommandBuffer(m_commandBuffers[i], &beginInfo);
 
 		if (result != VK_SUCCESS)
@@ -489,21 +444,34 @@ void CVulkanCanvas::CreateCommandBuffers()
 			throw CVulkanException(result, "Failed to begin command buffer:");
 		}
 
-		VkRenderPassBeginInfo renderPassInfo = CreateRenderPassBeginInfo(i);
+		//----------------------------------------------------------------------------------------------------------
+		// Starting a render pass
+		//----------------------------------------------------------------------------------------------------------
+	
+		VkRenderPassBeginInfo renderPassInfo = {};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = mFramebuffers.mRenderPass;
+		renderPassInfo.framebuffer = mFramebuffers.mSwapchainFramebuffers[i];
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = m_swapChain.m_swapchainExtent;
+		renderPassInfo.clearValueCount = 1;
+		renderPassInfo.pClearValues = &clearColor;
 
 		vkCmdBeginRenderPass(m_commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		// We can now bind the graphics pipeline
 		vkCmdBindPipeline(m_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
 
 		VkBuffer vertexBuffers[] = { m_vertexBuffer };
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(m_commandBuffers[i], 0, 1, vertexBuffers, offsets);
 		vkCmdBindIndexBuffer(m_commandBuffers[i], m_indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-
 		vkCmdBindDescriptorSets(m_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);
 		//vkCmdDraw(m_commandBuffers[i], m_vertices.size(), 1, 0, 0);
 		vkCmdDrawIndexed(m_commandBuffers[i], m_indices.size(), 1, 0, 0, 0);
+		
 		vkCmdEndRenderPass(m_commandBuffers[i]);
 
+		// We've finished recording the command buffer
 		result = vkEndCommandBuffer(m_commandBuffers[i]);
 		if (result != VK_SUCCESS)
 		{
@@ -512,25 +480,24 @@ void CVulkanCanvas::CreateCommandBuffers()
 	}
 }
 
-VkSemaphoreCreateInfo CVulkanCanvas::CreateSemaphoreCreateInfo() const noexcept
-{
-	VkSemaphoreCreateInfo semaphoreInfo = {};
-	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-	return semaphoreInfo;
-}
-
 void CVulkanCanvas::CreateSemaphores()
 {
-	VkSemaphoreCreateInfo semaphoreInfo = CreateSemaphoreCreateInfo();
-
 	auto &logicalDevice = m_device.mLogicalDevice;
 
+	VkSemaphoreCreateInfo semaphoreInfo = {};
+	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+	// Semaphore to signal that an image has been acquired and is ready for rendering.
 	VkResult result = vkCreateSemaphore(logicalDevice, &semaphoreInfo, nullptr, &m_imageAvailableSemaphore);
-	if (result != VK_SUCCESS) {
+	if (result != VK_SUCCESS) 
+	{
 		throw CVulkanException(result, "Failed to create image available semaphore:");
 	}
+
+	// Semaphore to signal that rendering has finished and presentation can happen.
 	result = vkCreateSemaphore(logicalDevice, &semaphoreInfo, nullptr, &m_renderFinishedSemaphore);
-	if (result != VK_SUCCESS) {
+	if (result != VK_SUCCESS) 
+	{
 		throw CVulkanException(result, "Failed to create render finished semaphore:");
 	}
 }
@@ -547,39 +514,6 @@ void CVulkanCanvas::RecreateSwapchain()
 	CreateCommandBuffers();
 }
 
-VkSubmitInfo CVulkanCanvas::CreateSubmitInfo(uint32_t imageIndex, VkPipelineStageFlags* waitStageFlags) const noexcept
-{
-	VkSubmitInfo submitInfo = {};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-	submitInfo.waitSemaphoreCount = 1;
-	submitInfo.pWaitSemaphores = &m_imageAvailableSemaphore;
-	submitInfo.pWaitDstStageMask = waitStageFlags;
-
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &m_commandBuffers[imageIndex];
-
-	submitInfo.signalSemaphoreCount = 1;
-	submitInfo.pSignalSemaphores = &m_renderFinishedSemaphore;
-	return submitInfo;
-}
-
-VkPresentInfoKHR CVulkanCanvas::CreatePresentInfoKHR(uint32_t& imageIndex) const noexcept
-{
-	VkPresentInfoKHR presentInfo = {};
-	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
-	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = &m_renderFinishedSemaphore;
-
-	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = &m_swapChain.mSwapChain;
-
-	presentInfo.pImageIndices = &imageIndex;
-
-	return presentInfo;
-}
-
 void CVulkanCanvas::onTimer(wxTimerEvent& event)
 {
 	ProcessEvent(wxPaintEvent());
@@ -588,14 +522,11 @@ void CVulkanCanvas::onTimer(wxTimerEvent& event)
 void CVulkanCanvas::OnPaint(wxPaintEvent& event)
 {
 	auto &logicalDevice = m_device.mLogicalDevice;
+	auto t_now = std::chrono::high_resolution_clock::now();
+	auto time = std::chrono::duration_cast<std::chrono::microseconds>(t_now - m_startTime).count();
 
-	try {
-
-		/*
-		auto t_now = std::chrono::high_resolution_clock::now();
-		auto time = std::chrono::duration_cast<std::chrono::microseconds>(t_now - m_startTime).count();
-		*/
-
+	try 
+	{
 		/*auto parent = (MainWindow *)m_pParent;
 		if (parent->colorHasChanged)
 		{
@@ -613,43 +544,94 @@ void CVulkanCanvas::OnPaint(wxPaintEvent& event)
 			/*parent->colorHasChanged = false;
 		}*/
 
+		// ------------------------------------------------------------------------------------------------------------
+		// The first thing to do is to acquiring an image from the swap chain
+		// The swap chain is an extension feature, so we must use a function with the vk*KHR naming convention.
+		// ------------------------------------------------------------------------------------------------------------
+
+		/* Index of the swap chain image that has become available
+		The index refers to the VkImage in our swapChainImages array.
+		We're going to use that index to pick the right command buffer.*/
 		uint32_t imageIndex;
+		
+		/*The first two parameters of vkAcquireNextImageKHR are the logical device and the swap chain from which we wish
+		to acquire an image. The third parameter specifies a timeout in nanoseconds for an image to become available. 
+		Using the maximum value of a 64 bit unsigned integer disables the timeout.*/
 		VkResult result = vkAcquireNextImageKHR(logicalDevice, m_swapChain.mSwapChain,
 			std::numeric_limits<uint64_t>::max(), m_imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
-		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+		if (result == VK_ERROR_OUT_OF_DATE_KHR) 
+		{
 			RecreateSwapchain();
 			return;
 		}
-		else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+		else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) 
+		{
 			throw CVulkanException(result, "Failed to acquire swap chain image");
 		}
 
-		VkPipelineStageFlags waitFlags[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-		VkSubmitInfo submitInfo = CreateSubmitInfo(imageIndex, waitFlags);
+		// ------------------------------------------------------------------------------------------------------------
+		// Submit the command buffer
+		// ------------------------------------------------------------------------------------------------------------
 
-		// Submit command buffer to the queue
+		// We want to wait with writing colors to the image until it's available, 
+		// so we're specifying the stage of the graphics pipeline that writes to the color attachment. 
+		VkPipelineStageFlags waitFlags[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+		VkSubmitInfo submitInfo = {};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = &m_imageAvailableSemaphore;	// Specify which semaphores to wait on before execution begins 
+		submitInfo.pWaitDstStageMask = waitFlags;					// Specify in which stage(s) of the pipeline to wait.
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &m_commandBuffers[imageIndex];	// Specify which command buffers to actually submit for execution.
+																	// We should submit the command buffer that binds the swap chain image we just acquired as color attachment.
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = &m_renderFinishedSemaphore;  // Specify which semaphores to signal once the command buffer(s) have finished execution. 
+
+		// We can now submit the command buffer to the graphics queue
 		result = vkQueueSubmit(m_device.mGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-		if (result != VK_SUCCESS) {
+		if (result != VK_SUCCESS) 
+		{
 			throw CVulkanException(result, "Failed to submit draw command buffer:");
 		}
 
-		VkPresentInfoKHR presentInfo = CreatePresentInfoKHR(imageIndex);
+		// ------------------------------------------------------------------------------------------------------------
+		// Presentation
+		// The last step of drawing a frame is submitting the result back to the swap chain to have it eventually show up on the screen.
+		// ------------------------------------------------------------------------------------------------------------
+
+		VkPresentInfoKHR presentInfo = {};
+		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		presentInfo.waitSemaphoreCount = 1;
+		presentInfo.pWaitSemaphores = &m_renderFinishedSemaphore;	// Specify which semaphores to wait on before presentation can happen
+		presentInfo.swapchainCount = 1;
+		presentInfo.pSwapchains = &m_swapChain.mSwapChain;			// Specify the swap chains to present images to
+		presentInfo.pImageIndices = &imageIndex;					// Specify the index of the image for each swap chain
+		presentInfo.pResults = nullptr;								// Optional. It allows to specify an array of VkResult values to check 
+																	// for every individual swap chain if presentation was successful
+
+		// Submits the request to present an image to the swap chain. 
 		result = vkQueuePresentKHR(m_device.mPresentQueue, &presentInfo);
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) 
+		{
 			RecreateSwapchain();
 		}
-		else if (result != VK_SUCCESS) {
+		else if (result != VK_SUCCESS) 
+		{
 			throw CVulkanException(result, "Failed to present swap chain image:");
 		}
 	}
-	catch (const CVulkanException& ve) {
+	catch (const CVulkanException& ve) 
+	{
 		std::string status = ve.GetStatus();
 		std::stringstream ss;
 		ss << ve.what() << "\n" << status;
 		CallAfter(&CVulkanCanvas::OnPaintException, ss.str());
 	}
-	catch (const std::exception& err) {
+	catch (const std::exception& err) 
+	{
 		std::stringstream ss;
 		ss << "Error encountered trying to create the Vulkan canvas:\n";
 		ss << err.what();
