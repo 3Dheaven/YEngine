@@ -57,62 +57,34 @@ private:
 
 	void CreateBuffer(VkBuffer &, VkBufferUsageFlags, uint32_t size, VkMemoryPropertyFlags properties, VkDeviceMemory &deviceMemorie);
 	void CreateUniformBuffer(VkBuffer &, uint32_t size, VkDeviceMemory &deviceMemorie);
-	VkBufferCreateInfo CreateBufferCreateInfo(uint64_t, VkBufferUsageFlags);
+
 	void AllocateMemory(VkDeviceMemory &deviceMemorie, VkBuffer &buffer, VkMemoryPropertyFlags properties);
 	VkMemoryAllocateInfo CreateMemoryAllocateInfo(VkBuffer &buffer, VkMemoryPropertyFlags properties);
 	void MapMemory(VkDeviceMemory, uint64_t, uint64_t, void **);
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 	void CreateWindowSurface(HWND *hwnd);
-
-
 	void CreateGraphicsPipeline(const std::string& vertexShaderFile, const std::string& fragmentShaderFile);
-	
-
 	void CreateCommandBuffers();
 
 	/*Create two semaphores. The first one is used to signal that an image has been acquired and is ready for rendering, 
 	and the second one to signal that rendering has finished and presentation can happen.*/
 	void CreateSemaphores();
 
-
-
 	void RecreateSwapchain();
 
-
-
-	VkPipelineViewportStateCreateInfo CreatePipelineViewportStateCreateInfo(
-		const VkViewport& viewport, const VkRect2D& scissor) const noexcept;
-	VkPipelineRasterizationStateCreateInfo CreatePipelineRasterizationStateCreateInfo() const noexcept;
-	VkPipelineMultisampleStateCreateInfo CreatePipelineMultisampleStateCreateInfo() const noexcept;
-	VkPipelineColorBlendAttachmentState CreatePipelineColorBlendAttachmentState() const noexcept;
-	VkPipelineColorBlendStateCreateInfo CreatePipelineColorBlendStateCreateInfo(
-		const VkPipelineColorBlendAttachmentState& colorBlendAttachment) const noexcept;
-	VkPipelineLayoutCreateInfo CreatePipelineLayoutCreateInfo() const noexcept;
-	VkGraphicsPipelineCreateInfo CreateGraphicsPipelineCreateInfo(
-		const VkPipelineShaderStageCreateInfo shaderStages[],
-		const VkPipelineVertexInputStateCreateInfo& vertexInputInfo,
-		const VkPipelineInputAssemblyStateCreateInfo& inputAssembly,
-		const VkPipelineViewportStateCreateInfo& viewportState,
-		const VkPipelineRasterizationStateCreateInfo& rasterizer,
-		const VkPipelineMultisampleStateCreateInfo& multisampling,
-		const VkPipelineColorBlendStateCreateInfo& colorBlending) const noexcept;
-	
 	virtual void OnPaint(wxPaintEvent& event);
 	virtual void OnResize(wxSizeEvent& event);
 	virtual void onTimer(wxTimerEvent& event);
 	void OnPaintException(const std::string& msg);
 
-	VkDescriptorSetLayoutBinding CreateDescriptorSetLayoutBinding(uint32_t, VkDescriptorType, uint32_t, uint32_t);
 	void CreateDescriptorSetLayout(uint32_t, uint32_t, VkDescriptorType, uint32_t, uint32_t);
-	VkDescriptorSetLayoutCreateInfo CreateDescriptorSetLayoutInfo(uint32_t, uint32_t, VkDescriptorType, uint32_t, uint32_t);
 
 	VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 	VkDescriptorSet m_descriptorSet;
 	VkDescriptorSetLayout m_descriptorSetLayout;
 	VkDescriptorPoolSize m_descriptorPoolSize;
-
-
+	
 	VkDescriptorSetLayoutBinding m_descriptorSetLayoutBinding;
 	VkDescriptorPool m_descriptorPool;
 	std::vector<VkPushConstantRange> m_ranges;
@@ -126,10 +98,8 @@ private:
 
 	VkPipelineLayout m_pipelineLayout;
 	VkPipeline m_graphicsPipeline;
-
-
+	
 	std::vector<VkCommandBuffer> m_commandBuffers;
-
 
 	/* Specify synchronization objects that are to be signaled when the presentation engine is finished using the image.
 	That's the point in time where we can start drawing to it.*/
