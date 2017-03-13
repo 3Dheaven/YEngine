@@ -189,7 +189,7 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	prepareVertices();
 	prepareUniformBuffers();
 
-	CreateGraphicsPipeline("../workshop/vk_2d_square/vert.spv", "../workshop/vk_2d_square/frag.spv");
+	CreateGraphicsPipeline("../workshop/2d_square/vert.spv", "../workshop/2d_square/frag.spv");
 
 
 	CreateCommandBuffers();

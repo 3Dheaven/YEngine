@@ -25,12 +25,12 @@
 class CRenderer;
 using namespace glm;
 
-class vkSquare : public CRenderer
+class TwoDSquare : public CRenderer
 {
 public:
-	vkSquare();
-	vkSquare(CGraphicDriver *gdriver, wxPanel* panel = NULL);
-	~vkSquare();
+	TwoDSquare();
+	TwoDSquare(CGraphicDriver *gdriver, wxPanel* panel = NULL);
+	~TwoDSquare();
 	
 	void init(CGraphicDriver *gdriver, wxPanel* panel = NULL);
 	void setupGraphics();

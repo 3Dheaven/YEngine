@@ -25,6 +25,7 @@ public:
 	~CScene();
 
 	bool add(std::string modelPath);
+	void add(CModel* model);
 	void render(CShader *shader);
 	void setup();
 

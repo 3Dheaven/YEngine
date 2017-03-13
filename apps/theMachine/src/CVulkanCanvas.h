@@ -44,6 +44,7 @@ private:
 	CVkSwapChain m_swapChain;
 	CVkDevice m_device;
 	CVkShader mShader;
+
 	CVkFramebuffer mFramebuffers;
 
 	void prepareVertices();

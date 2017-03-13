@@ -47,9 +47,12 @@ class CModel
 		//! Default material
 		CMaterial* mDefaultMaterial;
 
+		void addObject(CObject* object, std::vector<CMesh*> meshes);
+
 	public:
 
 		CModel(std::string path);
+		CModel();
 		~CModel();
 };
 

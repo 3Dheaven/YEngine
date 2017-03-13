@@ -21,6 +21,18 @@ CScene::~CScene()
 	}
 }
 
+void CScene::add(CModel* model)
+{
+	for (auto o : model->mObjects)
+	{
+		for (auto m : o->mMeshes)
+		{
+			gDriver->init(model->mMeshes[m]);
+		}
+	}
+	mModels.push_back(model);
+}
+
 bool 
 CScene::add(std::string modelPath)
 {
