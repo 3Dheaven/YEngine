@@ -7,75 +7,80 @@
 
 #pragma comment(lib, "vulkan-1.lib")
 
-CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
-	wxWindowID id,
-	const wxPoint& pos,
-	const wxSize& size,
-	long style,
-	const wxString& name)
-	: wxWindow(pParent, id, pos, size, style, name),
-	
-	m_surface(VK_NULL_HANDLE),  m_pipelineLayout(VK_NULL_HANDLE),
-	m_graphicsPipeline(VK_NULL_HANDLE), 
-	m_imageAvailableSemaphore(VK_NULL_HANDLE), m_renderFinishedSemaphore(VK_NULL_HANDLE),
-	mBuffer(m_device)
+// Prepare vertex and index buffers for an indexed triangle
+void CVulkanCanvas::prepareVertices()
 {
-	Bind(wxEVT_PAINT, &CVulkanCanvas::OnPaint, this);
-	Bind(wxEVT_SIZE, &CVulkanCanvas::OnResize, this);
-	Bind(wxEVT_TIMER, &CVulkanCanvas::onTimer, this);
+	// Rectangle vertices
+	m_vertices.push_back(glm::vec2(-0.5f, -0.5f));
+	m_vertices.push_back(glm::vec2(0.5f, -0.5f));
+	m_vertices.push_back(glm::vec2(0.5f, 0.5f));
+	m_vertices.push_back(glm::vec2(-0.5f, 0.5f));
 
-	// Initialize timer
-	m_timer = std::make_unique<wxTimer>(this, 1000 / 60);
-	m_timer->Start(3);
-	m_startTime = std::chrono::high_resolution_clock::now();
+	// Rectangle indices
+	std::vector<uint16_t> indexRectangle = { 0, 1, 2, 2, 3, 0 };
 
-	// Create instance
-	// Create windows surface
-	auto a = GetHwnd();
-	CreateWindowSurface(&a);
+	// Create vertex buffer, memory, bind buffer/memory and map memory
+	CreateVertexBuffer(m_vertexBuffer, m_vertexMemory);
 
-	// Pick physical device
-	m_device.connectInstance(mVulkanInstance.get());
-	m_device.connectSurface(m_surface);
-	m_device.pickPhysicalDevice();
+	// Create index buffer, memory, bind buffer/memory and map memory
+	m_indices.insert(m_indices.begin(), indexRectangle.begin(), indexRectangle.end());
+	CreateIndexBuffer(m_indexBuffer, m_indexMemory);
 
-	// Create device
-	m_device.createLogicalDevice();
+	mShader.mBindingDescription.binding = 0;
+	mShader.mBindingDescription.stride = sizeof(glm::vec2);
+	mShader.mBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-	m_swapChain.connectPhysicalDevice(m_device.mPhysicalDevice);
-	m_swapChain.connectInstance(mVulkanInstance.get());
-	m_swapChain.connectSurface(m_surface);
-	m_swapChain.connectDevice(m_device);
+	mShader.mAttributeDescriptions.emplace_back();
+	auto &attributeDescription = mShader.mAttributeDescriptions.back();
+	attributeDescription.binding = 0;
+	attributeDescription.location = 0;
+	attributeDescription.format = VK_FORMAT_R32G32_SFLOAT;
+	attributeDescription.offset = 0;
 
-	m_device.connectSwapChain(m_swapChain.mSwapChain);
-	
-	mShader.ConnectDevice(m_device.mLogicalDevice);
+}
 
-	m_device.createCommandPool();
-
-	m_pParent = pParent->GetParent();
-
-	m_swapChain.CreateSwapChain(size);
-
-	mFramebuffers.connectSwapChain(m_swapChain);
-	mFramebuffers.connectDevice(m_device);
-	mFramebuffers.CreateRenderPass();
-	mFramebuffers.CreateFrameBuffers();
-
-
-
+void CVulkanCanvas::prepareUniformBuffers()
+{
 	// Uniform buffer, allocation memory and binding
 	CreateUniformBuffer(m_uniformBuffer, sizeof(glm::vec4), m_uniformMemorie);
 
 	// Initialize the memory
 	void* data;
 	auto triangleColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	MapMemory(m_uniformMemorie, sizeof(glm::vec4), 0, &data);
+
+	{
+		auto result = vkMapMemory(m_device.mLogicalDevice, m_uniformMemorie, 0, sizeof(glm::vec4), 0, &data);
+
+		if (result != VK_SUCCESS)
+		{
+			throw CVulkanException(result, "Error attempting to map memory:");
+		}
+	}
+
 	memcpy(data, &triangleColor, sizeof(glm::vec4));
 	vkUnmapMemory(m_device.mLogicalDevice, m_uniformMemorie);
 
 	// Descriptor in the shader
-	CreateDescriptorSetLayout(1, 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+	m_descriptorSetLayoutBinding.binding = 0;
+	m_descriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	m_descriptorSetLayoutBinding.descriptorCount = 1;
+	m_descriptorSetLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	m_descriptorSetLayoutBinding.pImmutableSamplers = nullptr;
+
+	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo;
+	descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	descriptorSetLayoutCreateInfo.pNext = nullptr;
+	descriptorSetLayoutCreateInfo.bindingCount = 1;
+	descriptorSetLayoutCreateInfo.pBindings = &m_descriptorSetLayoutBinding;
+
+	{
+		auto result = vkCreateDescriptorSetLayout(m_device.mLogicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &m_descriptorSetLayout);
+
+		if (result != VK_SUCCESS)
+		{
+			throw CVulkanException(result, "Failed to create descriptor set layout:");
+		}
+	}
 
 	// NEED A BIT OF REFACTORING...
 	m_descriptorPoolSize.descriptorCount = 1;
@@ -125,37 +130,64 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	vkUpdateDescriptorSets(m_device.mLogicalDevice, 1, &descriptorWrite, 0, nullptr);
 
 
-	// Rectangle vertices
-	m_vertices.push_back(glm::vec2(-0.5f, -0.5f));
-	m_vertices.push_back(glm::vec2(0.5f, -0.5f));
-	m_vertices.push_back(glm::vec2(0.5f, 0.5f));
-	m_vertices.push_back(glm::vec2(-0.5f, 0.5f));
+}
 
-	// Rectangle indices
-	std::vector<uint16_t> indexRectangle = { 0, 1, 2, 2, 3, 0 };
+CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
+	wxWindowID id,
+	const wxPoint& pos,
+	const wxSize& size,
+	long style,
+	const wxString& name)
+	: wxWindow(pParent, id, pos, size, style, name),
 	
-	// Create vertex buffer, memory, bind buffer/memory and map memory
-	CreateVertexBuffer(m_vertexBuffer, m_vertexMemory);
+	m_surface(VK_NULL_HANDLE),  m_pipelineLayout(VK_NULL_HANDLE),
+	m_graphicsPipeline(VK_NULL_HANDLE), 
+	m_imageAvailableSemaphore(VK_NULL_HANDLE), m_renderFinishedSemaphore(VK_NULL_HANDLE)
+{
+	Bind(wxEVT_PAINT, &CVulkanCanvas::OnPaint, this);
+	Bind(wxEVT_SIZE, &CVulkanCanvas::OnResize, this);
+	Bind(wxEVT_TIMER, &CVulkanCanvas::onTimer, this);
 
-	// Create index buffer, memory, bind buffer/memory and map memory
-	m_indices.insert(m_indices.begin(), indexRectangle.begin(), indexRectangle.end());
-	CreateIndexBuffer(m_indexBuffer, m_indexMemory);
+	// Initialize timer
+	m_timer = std::make_unique<wxTimer>(this, 1000 / 60);
+	m_timer->Start(3);
+	m_startTime = std::chrono::high_resolution_clock::now();
 
-	mShader.mBindingDescription.binding = 0;
-	mShader.mBindingDescription.stride = sizeof(glm::vec2);
-	mShader.mBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	// Create instance
+	// Create windows surface
+	auto a = GetHwnd();
+	CreateWindowSurface(&a);
 
-	mShader.mAttributeDescriptions.emplace_back();
-	auto &attributeDescription = mShader.mAttributeDescriptions.back();
-	attributeDescription.binding = 0;
-	attributeDescription.location = 0;
-	attributeDescription.format = VK_FORMAT_R32G32_SFLOAT;
-	attributeDescription.offset = 0;
+	// Pick physical device
+	m_device.connectInstance(mVulkanInstance.get());
+	m_device.connectSurface(m_surface);
+	m_device.pickPhysicalDevice();
 
+	// Create device
+	m_device.createLogicalDevice();
 
+	m_swapChain.connectPhysicalDevice(m_device.mPhysicalDevice);
+	m_swapChain.connectInstance(mVulkanInstance.get());
+	m_swapChain.connectSurface(m_surface);
+	m_swapChain.connectDevice(m_device);
 
+	m_device.connectSwapChain(m_swapChain.mSwapChain);
+	
+	mShader.ConnectDevice(m_device.mLogicalDevice);
 
+	m_device.createCommandPool();
 
+	m_pParent = pParent->GetParent();
+
+	m_swapChain.CreateSwapChain(size);
+
+	mFramebuffers.connectSwapChain(m_swapChain);
+	mFramebuffers.connectDevice(m_device);
+	mFramebuffers.CreateRenderPass();
+	mFramebuffers.CreateFrameBuffers();
+
+	prepareVertices();
+	prepareUniformBuffers();
 
 	CreateGraphicsPipeline("../workshop/vk_2d_square/vert.spv", "../workshop/vk_2d_square/frag.spv");
 
@@ -348,7 +380,6 @@ void CVulkanCanvas::CreateGraphicsPipeline(const std::string& vertexShaderFile, 
 	}
 }
 
-
 void CVulkanCanvas::CreateCommandBuffers()
 {
 	auto &logicalDevice = m_device.mLogicalDevice;
@@ -490,7 +521,16 @@ void CVulkanCanvas::OnPaint(wxPaintEvent& event)
 			*/
 			void* data;
 			glm::vec4 newColor = glm::vec4(1.0,0.0,0.0,1.0);
-			MapMemory(m_uniformMemorie, sizeof(glm::vec4), 0, &data);
+
+			{
+				auto result = vkMapMemory(m_device.mLogicalDevice, m_uniformMemorie, 0, sizeof(glm::vec4), 0, &data);
+
+				if (result != VK_SUCCESS)
+				{
+					throw CVulkanException(result, "Error attempting to map memory:");
+				}
+			}
+
 			memcpy(data, &newColor, sizeof(glm::vec4));
 			vkUnmapMemory(logicalDevice, m_uniformMemorie);
 			/*parent->colorHasChanged = false;
@@ -608,61 +648,10 @@ void CVulkanCanvas::OnPaintException(const std::string& msg)
 	wxTheApp->ExitMainLoop();
 }
 
-void CVulkanCanvas::MapMemory(VkDeviceMemory memory, uint64_t size, uint64_t offset, void **data)
-{
-	auto result = vkMapMemory(m_device.mLogicalDevice, memory, offset, size, 0, data);
-
-	if (result != VK_SUCCESS)
-	{
-		throw CVulkanException(result, "Error attempting to map memory:");
-	}
-}
-
-void CVulkanCanvas::AllocateMemory(VkDeviceMemory &deviceMemorie, VkBuffer &buffer, VkMemoryPropertyFlags properties)
-{
-	auto createInfo = CreateMemoryAllocateInfo(buffer, properties);
-
-	auto result = vkAllocateMemory(m_device.mLogicalDevice, &createInfo, nullptr, &deviceMemorie);
-
-	if (result != VK_SUCCESS)
-	{
-		throw CVulkanException(result, "Error attempting to allocate memory:");
-	}
-}
-
-uint32_t CVulkanCanvas::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
-{
-	VkPhysicalDeviceMemoryProperties memProperties;
-	vkGetPhysicalDeviceMemoryProperties(m_device.mPhysicalDevice, &memProperties);
-
-	for (uint32_t i = 0; i < memProperties.memoryTypeCount; ++i)
-	{
-		if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
-		{
-			return i;
-		}
-	}
-
-	throw std::runtime_error("failed to find suitable memory type!");
-}
-
-VkMemoryAllocateInfo CVulkanCanvas::CreateMemoryAllocateInfo(VkBuffer &buffer, VkMemoryPropertyFlags properties)
-{
-	VkMemoryRequirements memoryRequirements;
-	vkGetBufferMemoryRequirements(m_device.mLogicalDevice, buffer, &memoryRequirements);
-
-	VkMemoryAllocateInfo createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	createInfo.pNext = nullptr;
-	createInfo.allocationSize = memoryRequirements.size;
-	createInfo.memoryTypeIndex = FindMemoryType(memoryRequirements.memoryTypeBits, properties);
-
-	return createInfo;
-}
 
 void CVulkanCanvas::CreateUniformBuffer(VkBuffer &buffer, uint32_t size, VkDeviceMemory &deviceMemorie)
 {
-	CreateBuffer(buffer, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, size, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, deviceMemorie);
+	m_device.CreateBuffer(buffer, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, size, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, deviceMemorie);
 }
 
 void CVulkanCanvas::CreateVertexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceMemorie)
@@ -672,18 +661,25 @@ void CVulkanCanvas::CreateVertexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceM
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
 
-	CreateBuffer(stagingBuffer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, bufferSize,
+	m_device.CreateBuffer(stagingBuffer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, bufferSize,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBufferMemory);
 
 	void* data;
-	MapMemory(stagingBufferMemory, bufferSize, 0, &data);
+
+	auto result = vkMapMemory(m_device.mLogicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
+
+	if (result != VK_SUCCESS)
+	{
+		throw CVulkanException(result, "Error attempting to map memory:");
+	}
+
 	memcpy(data, m_vertices.data(), (size_t)bufferSize);
 	vkUnmapMemory(m_device.mLogicalDevice, stagingBufferMemory);
 
-	CreateBuffer(buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, bufferSize,
+	m_device.CreateBuffer(buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, bufferSize,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, deviceMemorie);
 
-	CopyBuffer(stagingBuffer, buffer, bufferSize);
+	m_device.CopyBuffer(stagingBuffer, buffer, bufferSize);
 }
 
 void CVulkanCanvas::CreateIndexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceMemorie)
@@ -693,135 +689,25 @@ void CVulkanCanvas::CreateIndexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceMe
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
 
-	CreateBuffer(stagingBuffer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, bufferSize,
+	m_device.CreateBuffer(stagingBuffer, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, bufferSize,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBufferMemory);
 
 	void* data;
-	MapMemory(stagingBufferMemory, bufferSize, 0, &data);
+
+	auto result = vkMapMemory(m_device.mLogicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
+
+	if (result != VK_SUCCESS)
+	{
+		throw CVulkanException(result, "Error attempting to map memory:");
+	}
+
 	memcpy(data, m_indices.data(), (size_t)bufferSize);
 	vkUnmapMemory(m_device.mLogicalDevice, stagingBufferMemory);
 
-	CreateBuffer(buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, bufferSize,
+	m_device.CreateBuffer(buffer, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, bufferSize,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, deviceMemorie);
 
-	CopyBuffer(stagingBuffer, buffer, bufferSize);
+	m_device.CopyBuffer(stagingBuffer, buffer, bufferSize);
 }
 
-void CVulkanCanvas::CopyBuffer(const VkBuffer &srcBuffer, VkBuffer &dstBuffer, VkDeviceSize size)
-{
-	VkCommandBufferAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandPool = m_device.mCommandPool;
-	allocInfo.commandBufferCount = 1;
 
-	VkCommandBuffer commandBuffer;
-	auto result = vkAllocateCommandBuffers(m_device.mLogicalDevice, &allocInfo, &commandBuffer);
-
-	if (result != VK_SUCCESS)
-	{
-		throw CVulkanException(result, "Error attempting to allocate command buffers:");
-	}
-
-	VkCommandBufferBeginInfo beginInfo = {};
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-	// Start recording a command buffer
-	result = vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
-	if (result != VK_SUCCESS)
-	{
-		throw CVulkanException(result, "Error attempting to begin command buffer:");
-	}
-
-	VkBufferCopy copyRegion = {};
-	copyRegion.srcOffset = 0; // Optional
-	copyRegion.dstOffset = 0; // Optional
-	copyRegion.size = size;
-	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-	result = vkEndCommandBuffer(commandBuffer);
-
-	if (result != VK_SUCCESS)
-	{
-		throw CVulkanException(result, "Error attempting to end command buffer:");
-	}
-
-	VkSubmitInfo submitInfo = {};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffer;
-
-	result = vkQueueSubmit(m_device.mGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-
-	if (result != VK_SUCCESS)
-	{
-		throw CVulkanException(result, "Error attempting to submit queue:");
-	}
-
-	result = vkQueueWaitIdle(m_device.mGraphicsQueue);
-
-	if (result != VK_SUCCESS)
-	{
-		throw CVulkanException(result, "Error attempting to wait queue:");
-	}
-
-	vkFreeCommandBuffers(m_device.mLogicalDevice, m_device.mCommandPool, 1, &commandBuffer);
-}
-
-void CVulkanCanvas::CreateBuffer(VkBuffer &buffer,
-	VkBufferUsageFlags usage,
-	uint32_t size,
-	VkMemoryPropertyFlags properties,
-	VkDeviceMemory &deviceMemorie)
-{
-	assert(size > 0);
-	assert(usage != 0);
-
-	VkBufferCreateInfo createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	createInfo.pNext = nullptr;
-	createInfo.size = size;
-	createInfo.usage = usage;
-	createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-	auto result = vkCreateBuffer(m_device.mLogicalDevice, &createInfo, nullptr, &buffer);
-
-	if (result != VK_SUCCESS)
-	{
-		throw CVulkanException(result, "Error attempting to create a buffer:");
-	}
-
-	AllocateMemory(deviceMemorie, buffer, properties);
-
-	result = vkBindBufferMemory(m_device.mLogicalDevice, buffer, deviceMemorie, 0);
-
-	if (result != VK_SUCCESS)
-	{
-		throw CVulkanException(result, "Error attempting to bind buffer and memory:");
-	}
-}
-
-void CVulkanCanvas::CreateDescriptorSetLayout(uint32_t bindingCount, uint32_t binding, VkDescriptorType descriptorType,
-	uint32_t descriptorCount, uint32_t stageFlags)
-{
-	m_descriptorSetLayoutBinding.binding = binding;
-	m_descriptorSetLayoutBinding.descriptorType = descriptorType;
-	m_descriptorSetLayoutBinding.descriptorCount = descriptorCount;
-	m_descriptorSetLayoutBinding.stageFlags = stageFlags;
-	m_descriptorSetLayoutBinding.pImmutableSamplers = nullptr;
-
-	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo;
-	descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	descriptorSetLayoutCreateInfo.pNext = nullptr;
-	descriptorSetLayoutCreateInfo.bindingCount = bindingCount;
-	descriptorSetLayoutCreateInfo.pBindings = &m_descriptorSetLayoutBinding;
-
-	auto result = vkCreateDescriptorSetLayout(m_device.mLogicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &m_descriptorSetLayout);
-
-	if (result != VK_SUCCESS)
-	{
-		throw CVulkanException(result, "Failed to create descriptor set layout:");
-	}
-}

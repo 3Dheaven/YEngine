@@ -63,4 +63,9 @@ struct CVkDevice
 	Command buffers are submitted to a work queue.
 	*/
 	void createCommandPool();
+
+	void CopyBuffer(const VkBuffer &, VkBuffer &, VkDeviceSize);
+	void CreateBuffer(VkBuffer &, VkBufferUsageFlags, uint32_t size, VkMemoryPropertyFlags properties, VkDeviceMemory &deviceMemorie);
+	void AllocateMemory(VkDeviceMemory &deviceMemorie, VkBuffer &buffer, VkMemoryPropertyFlags properties);
+	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 };

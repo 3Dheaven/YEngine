@@ -16,10 +16,10 @@
 #include "CVkDevice.hpp"
 #include "CVkCommon.hpp"
 #include "CVkShader.hpp"
-#include "CVkBuffer.hpp"
 #include "CVkFramebuffer.hpp"
 #include "CVkInstance.h"
 #include "CFileReader.h"
+#include "../../../yengine/scene/CScene.h"
 
 class CVulkanCanvas :
     public wxWindow
@@ -44,24 +44,41 @@ private:
 	CVkSwapChain m_swapChain;
 	CVkDevice m_device;
 	CVkShader mShader;
-	CVkBuffer mBuffer;
 	CVkFramebuffer mFramebuffers;
-	
+
+	void prepareVertices();
+	void prepareUniformBuffers();
+
 	void CreateVertexBuffer(VkBuffer &, VkDeviceMemory &);
-	void CopyBuffer(const VkBuffer &, VkBuffer &, VkDeviceSize);
+	
 	void CreateIndexBuffer(VkBuffer &, VkDeviceMemory &);
 	VkDeviceMemory m_uniformMemorie, m_vertexMemory, m_indexMemory;
 	std::vector<glm::vec2> m_vertices;
 	std::vector<uint16_t> m_indices;
 	VkBuffer m_uniformBuffer, m_vertexBuffer, m_indexBuffer;
 
-	void CreateBuffer(VkBuffer &, VkBufferUsageFlags, uint32_t size, VkMemoryPropertyFlags properties, VkDeviceMemory &deviceMemorie);
+
 	void CreateUniformBuffer(VkBuffer &, uint32_t size, VkDeviceMemory &deviceMemorie);
 
-	void AllocateMemory(VkDeviceMemory &deviceMemorie, VkBuffer &buffer, VkMemoryPropertyFlags properties);
-	VkMemoryAllocateInfo CreateMemoryAllocateInfo(VkBuffer &buffer, VkMemoryPropertyFlags properties);
-	void MapMemory(VkDeviceMemory, uint64_t, uint64_t, void **);
-	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+	
+	VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+	VkDescriptorSet m_descriptorSet;
+	VkDescriptorSetLayout m_descriptorSetLayout;
+	VkDescriptorPoolSize m_descriptorPoolSize;
+
+	VkDescriptorSetLayoutBinding m_descriptorSetLayoutBinding;
+	VkDescriptorPool m_descriptorPool;
+	std::vector<VkPushConstantRange> m_ranges;
+	VkDescriptorSetAllocateInfo m_descriptorSetAllocateInfo;
+	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo;
+
+	VkDescriptorBufferInfo bufferInfo;
+	VkWriteDescriptorSet descriptorWrite;
+
+
+
+
+
 
 	void CreateWindowSurface(HWND *hwnd);
 	void CreateGraphicsPipeline(const std::string& vertexShaderFile, const std::string& fragmentShaderFile);
@@ -78,22 +95,7 @@ private:
 	virtual void onTimer(wxTimerEvent& event);
 	void OnPaintException(const std::string& msg);
 
-	void CreateDescriptorSetLayout(uint32_t, uint32_t, VkDescriptorType, uint32_t, uint32_t);
-
-	VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-	VkDescriptorSet m_descriptorSet;
-	VkDescriptorSetLayout m_descriptorSetLayout;
-	VkDescriptorPoolSize m_descriptorPoolSize;
 	
-	VkDescriptorSetLayoutBinding m_descriptorSetLayoutBinding;
-	VkDescriptorPool m_descriptorPool;
-	std::vector<VkPushConstantRange> m_ranges;
-	VkDescriptorSetAllocateInfo m_descriptorSetAllocateInfo;
-	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo;
-
-	VkDescriptorBufferInfo bufferInfo;
-	VkWriteDescriptorSet descriptorWrite;
-
 	VkSurfaceKHR m_surface;
 
 	VkPipelineLayout m_pipelineLayout;

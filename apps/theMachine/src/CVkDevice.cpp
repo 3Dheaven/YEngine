@@ -243,3 +243,138 @@ void CVkDevice::createCommandPool()
 		throw CVulkanException(result, "Failed to create command pool:");
 	}
 }
+
+
+void CVkDevice::CopyBuffer(const VkBuffer &srcBuffer, VkBuffer &dstBuffer, VkDeviceSize size)
+{
+	VkCommandBufferAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = mCommandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	auto result = vkAllocateCommandBuffers(mLogicalDevice, &allocInfo, &commandBuffer);
+
+	if (result != VK_SUCCESS)
+	{
+		throw CVulkanException(result, "Error attempting to allocate command buffers:");
+	}
+
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	// Start recording a command buffer
+	result = vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	if (result != VK_SUCCESS)
+	{
+		throw CVulkanException(result, "Error attempting to begin command buffer:");
+	}
+
+	VkBufferCopy copyRegion = {};
+	copyRegion.srcOffset = 0; // Optional
+	copyRegion.dstOffset = 0; // Optional
+	copyRegion.size = size;
+	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+	result = vkEndCommandBuffer(commandBuffer);
+
+	if (result != VK_SUCCESS)
+	{
+		throw CVulkanException(result, "Error attempting to end command buffer:");
+	}
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	result = vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+
+	if (result != VK_SUCCESS)
+	{
+		throw CVulkanException(result, "Error attempting to submit queue:");
+	}
+
+	result = vkQueueWaitIdle(mGraphicsQueue);
+
+	if (result != VK_SUCCESS)
+	{
+		throw CVulkanException(result, "Error attempting to wait queue:");
+	}
+
+	vkFreeCommandBuffers(mLogicalDevice, mCommandPool, 1, &commandBuffer);
+}
+
+void CVkDevice::CreateBuffer(VkBuffer &buffer,
+	VkBufferUsageFlags usage,
+	uint32_t size,
+	VkMemoryPropertyFlags properties,
+	VkDeviceMemory &deviceMemorie)
+{
+	assert(size > 0);
+	assert(usage != 0);
+
+	VkBufferCreateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	createInfo.pNext = nullptr;
+	createInfo.size = size;
+	createInfo.usage = usage;
+	createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	auto result = vkCreateBuffer(mLogicalDevice, &createInfo, nullptr, &buffer);
+
+	if (result != VK_SUCCESS)
+	{
+		throw CVulkanException(result, "Error attempting to create a buffer:");
+	}
+
+	AllocateMemory(deviceMemorie, buffer, properties);
+
+	result = vkBindBufferMemory(mLogicalDevice, buffer, deviceMemorie, 0);
+
+	if (result != VK_SUCCESS)
+	{
+		throw CVulkanException(result, "Error attempting to bind buffer and memory:");
+	}
+}
+
+
+void CVkDevice::AllocateMemory(VkDeviceMemory &deviceMemorie, VkBuffer &buffer, VkMemoryPropertyFlags properties)
+{
+	VkMemoryRequirements memoryRequirements;
+	vkGetBufferMemoryRequirements(mLogicalDevice, buffer, &memoryRequirements);
+
+	VkMemoryAllocateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	createInfo.pNext = nullptr;
+	createInfo.allocationSize = memoryRequirements.size;
+	createInfo.memoryTypeIndex = FindMemoryType(memoryRequirements.memoryTypeBits, properties);
+
+	auto result = vkAllocateMemory(mLogicalDevice, &createInfo, nullptr, &deviceMemorie);
+
+	if (result != VK_SUCCESS)
+	{
+		throw CVulkanException(result, "Error attempting to allocate memory:");
+	}
+}
+
+uint32_t CVkDevice::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+{
+	VkPhysicalDeviceMemoryProperties memProperties;
+	vkGetPhysicalDeviceMemoryProperties(mPhysicalDevice, &memProperties);
+
+	for (uint32_t i = 0; i < memProperties.memoryTypeCount; ++i)
+	{
+		if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+		{
+			return i;
+		}
+	}
+
+	throw std::runtime_error("failed to find suitable memory type!");
+}
+
+
