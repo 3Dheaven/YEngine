@@ -56,8 +56,13 @@ TwoDSquare::setupGraphics()
 	}
 
 	std::string vsPath = projectPath + "//apps//theMachine//workshop//2d_square//gl//shader.vert";
-	std::string fsPath = projectPath + "//apps//theMachine//workshop//2d_square/gl///shader.frag";
+	std::string fsPath = projectPath + "//apps//theMachine//workshop//2d_square/gl//shader.frag";
 
+	/*
+	ORIGINAL CODE WITH OPENGL : HAS TO BE FUNCTIONAL ALSO WITH VULKAN
+	REFACTORING NEEDED
+	
+	
 	mGDriver->createShader(vsPath, fsPath);
 
 	mCam = new CCamera(glm::vec3(0.0f, 0.0f, 5.0f), 
@@ -99,13 +104,20 @@ TwoDSquare::setupGraphics()
 
 	mUniformColor = glm::vec4(1.0, 0.0, 0.0, 1.0);
 	mGDriver->getShader()->setUniform("custom_color", mUniformColor);
-	mUniformColorHasChanged = true;
-	
+	mUniformColorHasChanged = true;*/
+
+	// Has to be replaced by a way to initialize uniforms, vertices and needed shaders ...
+	// like for opengl, just above
+	mGDriver->init();
 }
 
 void 
 TwoDSquare::render()
 {
+	/*
+	ORIGINAL CODE WITH OPENGL : HAS TO BE FUNCTIONAL ALSO WITH VULKAN
+	REFACTORING NEEDED
+
 	mGDriver->getShader()->use();
 
 	if (mUniformColorHasChanged)
@@ -114,7 +126,11 @@ TwoDSquare::render()
 		mUniformColorHasChanged = false;
 	}
 		
-	mScene->render(mGDriver->getShader());
+	mScene->render(mGDriver->getShader());*/
+
+	// inside CVulkan::render(), uniforms and vertices are updated.
+	// It should be extracted
+	mGDriver->render();
 }
 
 void 

@@ -25,23 +25,25 @@ CRendererManager::CRendererManager(MainWindow *mainWindow) : mMainWindow(mainWin
 	gApi = API_VULKAN;
 	switch (gApi)
 	{
-	case API_VULKAN:
-	{
-		vcanvas = new CVulkanCanvas(mMainWindow->mMainPanel, wxID_ANY, { 0, 0 }, mMainWindow->GetSize());
-		//mGDriver = dynamic_cast<CGraphicDriver *>(new CVKDriver());
-		//mRenderer->init(mGDriver, mMainWindow->getSettingsWindow()->getDynamicPanel());
-		//vcanvas->setRenderer(mRenderer);
-	}
-	break;
+		case API_VULKAN:
+		{
+			CVKDriver* vkdriver = new CVKDriver();
+			vcanvas = new CVulkanCanvas(&vkdriver->mVulkan, mMainWindow->mMainPanel, wxID_ANY, { 0, 0 }, mMainWindow->GetSize());
 
-	case API_OPENGL:
-	{
-		glcanvas = new CGLCanvas(mMainWindow->mMainPanel, ID_GL_CANVAS, nullptr, { 0, 0 }, mMainWindow->GetSize(), wxFULL_REPAINT_ON_RESIZE);
-		mGDriver = new CGLDriver();
-		mRenderer->init(mGDriver, mMainWindow->getSettingsWindow()->getDynamicPanel());
-		glcanvas->setRenderer(mRenderer);
-	}
-	break;
+			mGDriver = vkdriver;
+			mRenderer->init(mGDriver, mMainWindow->getSettingsWindow()->getDynamicPanel());
+			vcanvas->setRenderer(mRenderer);
+		}
+		break;
+
+		case API_OPENGL:
+		{
+			glcanvas = new CGLCanvas(mMainWindow->mMainPanel, ID_GL_CANVAS, nullptr, { 0, 0 }, mMainWindow->GetSize(), wxFULL_REPAINT_ON_RESIZE);
+			mGDriver = new CGLDriver();
+			mRenderer->init(mGDriver, mMainWindow->getSettingsWindow()->getDynamicPanel());
+			glcanvas->setRenderer(mRenderer);
+		}
+		break;
 	}
 
 	mModulesCombobox->Bind(wxEVT_COMBOBOX, &CRendererManager::OnModuleChanged, this);

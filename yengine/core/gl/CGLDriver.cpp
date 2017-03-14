@@ -132,6 +132,12 @@ CGLDriver::render(CMesh *mesh, CShader* shader) const
 	unbindMaterial(mesh);
 }
 
+void 
+CGLDriver::render()
+{
+
+}
+
 void
 CGLDriver::clean(CMesh *mesh) const
 {

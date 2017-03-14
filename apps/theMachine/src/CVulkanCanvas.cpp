@@ -1,7 +1,7 @@
 #include "CVulkanCanvas.h"
 
 
-CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
+CVulkanCanvas::CVulkanCanvas(CVulkan* vk, wxWindow *pParent,
 							 wxWindowID id,
 							 const wxPoint& pos,
 							 const wxSize& size,
@@ -16,13 +16,28 @@ CVulkanCanvas::CVulkanCanvas(wxWindow *pParent,
 	m_timer->Start(3);
 	m_startTime = std::chrono::high_resolution_clock::now();
 
+	mVulkan = vk;
 	auto pw = GetHwnd();
-	mVulkan.prepare(&pw, size);
+	mVulkan->prepare(&pw, size);
+	
 }
 
 CVulkanCanvas::~CVulkanCanvas() noexcept
 {
 	m_timer->Stop();
+}
+
+HWND* 
+CVulkanCanvas::getCanvasHandling()
+{
+	HWND pw = GetHwnd();
+	return &pw;
+}
+
+void
+CVulkanCanvas::setRenderer(CRenderer *renderer)
+{
+	mRenderer = renderer;
 }
 
 void CVulkanCanvas::onTimer(wxTimerEvent& event)
@@ -35,13 +50,13 @@ void CVulkanCanvas::OnPaint(wxPaintEvent& event)
 	auto t_now = std::chrono::high_resolution_clock::now();
 	auto time = std::chrono::duration_cast<std::chrono::microseconds>(t_now - m_startTime).count();
 
-	mVulkan.render();
+	mRenderer->render();
 }
 
 void CVulkanCanvas::OnResize(wxSizeEvent& event)
 {
 	wxSize size = GetSize();
-	mVulkan.recreateSwapchain();
+	mVulkan->recreateSwapchain();
 	wxRect refreshRect(size);
 	RefreshRect(refreshRect, false);
 }

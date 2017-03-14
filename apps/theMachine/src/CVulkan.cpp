@@ -45,11 +45,15 @@ CVulkan::prepare(HWND *hwnd, const wxSize& size)
 	mFramebuffers.CreateRenderPass();
 	mFramebuffers.CreateFrameBuffers();
 
+	
+}
+
+void CVulkan::prepare2()
+{
 	prepareVertices();
 	prepareUniformBuffers();
 
 	CreateGraphicsPipeline("../workshop/2d_square/vert.spv", "../workshop/2d_square/frag.spv");
-
 
 	CreateCommandBuffers();
 	CreateSemaphores();

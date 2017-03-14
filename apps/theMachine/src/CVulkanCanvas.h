@@ -14,7 +14,7 @@ class CVulkanCanvas :
 {
 public:
 	
-	CVulkanCanvas(wxWindow *pParent,
+	CVulkanCanvas(CVulkan* vk, wxWindow *pParent,
         wxWindowID id = wxID_ANY,
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxDefaultSize,
@@ -22,11 +22,15 @@ public:
         const wxString& name = "VulkanCanvasName");
 
     virtual ~CVulkanCanvas() noexcept;
+	void setRenderer(CRenderer *renderer);
+
+	HWND* getCanvasHandling();
 	wxWindow *m_pParent;
 
 private:
 
-	CVulkan mVulkan;
+	CVulkan* mVulkan;
+	CRenderer* mRenderer;
 
 	std::unique_ptr<wxTimer> m_timer;
 	typedef std::chrono::time_point<std::chrono::high_resolution_clock> sclock;

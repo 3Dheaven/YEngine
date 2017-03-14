@@ -22,9 +22,11 @@ public:
 	~CGLDriver();
 
 	void init(CMesh *mesh) const override;
+	void init() {};
 	void bindMaterial(CMesh *mesh, CShader *shader) const override;
 	void unbindMaterial(CMesh *mesh) const override;
 	void render(CMesh *mesh, CShader *shader) const override;
+	void render() override;
 	void clean(CMesh *mesh) const override;
 	void createShader(const string &vertexShader, const string &pixelShader) override;
 };
