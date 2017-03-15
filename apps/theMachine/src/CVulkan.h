@@ -49,9 +49,6 @@ private:
 
 	wxSize mSize;
 
-	void prepareVertices();
-	void prepareUniformBuffers();
-	
 	void CreateVertexBuffer(VkBuffer &, VkDeviceMemory &);
 	void CreateIndexBuffer(VkBuffer &, VkDeviceMemory &);
 	void CreateUniformBuffer(VkBuffer &, uint32_t size, VkDeviceMemory &deviceMemorie);
@@ -68,9 +65,12 @@ public:
 
 	CVulkan();
     ~CVulkan();
-	void prepare2();
 	void prepare(HWND *hwnd, const wxSize& size);
 	void render();
 	void recreateSwapchain();
+	void updateUniforms(glm::vec4 &value);
+	void prepareVertices();
+	void prepareUniformBuffers(glm::vec4& value);
+	void finalizeSetup();
 };
 

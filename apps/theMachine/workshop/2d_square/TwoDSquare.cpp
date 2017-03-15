@@ -58,13 +58,9 @@ TwoDSquare::setupGraphics()
 	std::string vsPath = projectPath + "//apps//theMachine//workshop//2d_square//gl//shader.vert";
 	std::string fsPath = projectPath + "//apps//theMachine//workshop//2d_square/gl//shader.frag";
 
-	/*
-	ORIGINAL CODE WITH OPENGL : HAS TO BE FUNCTIONAL ALSO WITH VULKAN
-	REFACTORING NEEDED
-	
-	
-	mGDriver->createShader(vsPath, fsPath);
 
+	mGDriver->createShader(vsPath, fsPath);
+	
 	mCam = new CCamera(glm::vec3(0.0f, 0.0f, 5.0f), 
 						glm::vec3(0.0f, 0.0f, 0.0f), 
 						glm::vec3(0.0f, 1.0f, 0.0f));
@@ -101,36 +97,24 @@ TwoDSquare::setupGraphics()
 
 	mScene = new CScene(mGDriver);
 	mScene->add(model);
-
+	
 	mUniformColor = glm::vec4(1.0, 0.0, 0.0, 1.0);
-	mGDriver->getShader()->setUniform("custom_color", mUniformColor);
-	mUniformColorHasChanged = true;*/
+	mGDriver->addUniform("custom_color", mUniformColor);
+	mUniformColorHasChanged = true;
 
-	// Has to be replaced by a way to initialize uniforms, vertices and needed shaders ...
-	// like for opengl, just above
-	mGDriver->init();
+	mGDriver->finalizeSetup();
 }
 
 void 
 TwoDSquare::render()
 {
-	/*
-	ORIGINAL CODE WITH OPENGL : HAS TO BE FUNCTIONAL ALSO WITH VULKAN
-	REFACTORING NEEDED
-
-	mGDriver->getShader()->use();
-
 	if (mUniformColorHasChanged)
 	{
-		mGDriver->getShader()->setUniform("custom_color", mUniformColor);
+		mGDriver->updateUniform("custom_color", mUniformColor);
 		mUniformColorHasChanged = false;
 	}
-		
-	mScene->render(mGDriver->getShader());*/
 
-	// inside CVulkan::render(), uniforms and vertices are updated.
-	// It should be extracted
-	mGDriver->render();
+	mScene->render(mGDriver->getShader());
 }
 
 void 
@@ -159,6 +143,7 @@ TwoDSquare::loadGUI()
 									mUniformColor.z = static_cast<float>(newColor.Blue()) / 255.0f;
 									mUniformColor.w = 1.0f;
 								});
+
 		hbox1->Add(colourPickerCtrl, 2);
 		vbox->Add(hbox1, 0, wxLEFT | wxRIGHT | wxTOP, 10);
 
@@ -178,4 +163,4 @@ TwoDSquare::cleanGUI()
 	}
 }
 
-RendererRegister<TwoDSquare> regObjLoading("TwoDSquare");
+RendererRegister<TwoDSquare> regSquare("TwoDSquare");

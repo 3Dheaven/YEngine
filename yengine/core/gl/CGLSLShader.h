@@ -12,9 +12,10 @@ class CGLSLShader
 {
 	private:
 		GLuint mShaderID;
-
+	
 	public:
-		CGLSLShader() {};
+		std::string mName;
+		CGLSLShader() { mName = "no-name"; };
 		CGLSLShader(const GLchar* shaderFile, GLenum shaderType, std::string type);
 		~CGLSLShader();
 		GLuint getShaderID() const;

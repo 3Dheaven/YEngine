@@ -3,11 +3,12 @@
 
 
 CVulkan::CVulkan():
-	m_surface(VK_NULL_HANDLE), m_pipelineLayout(VK_NULL_HANDLE),
+	m_surface(VK_NULL_HANDLE), 
+	m_pipelineLayout(VK_NULL_HANDLE),
 	m_graphicsPipeline(VK_NULL_HANDLE),
-	m_imageAvailableSemaphore(VK_NULL_HANDLE), m_renderFinishedSemaphore(VK_NULL_HANDLE)
+	m_imageAvailableSemaphore(VK_NULL_HANDLE), 
+	m_renderFinishedSemaphore(VK_NULL_HANDLE)
 {
-
 
 }
 
@@ -15,7 +16,7 @@ void
 CVulkan::prepare(HWND *hwnd, const wxSize& size)
 {
 	mSize = size;
-	// Create instance
+
 	// Create windows surface
 	CreateWindowSurface(hwnd);
 
@@ -44,17 +45,11 @@ CVulkan::prepare(HWND *hwnd, const wxSize& size)
 	mFramebuffers.connectDevice(m_device);
 	mFramebuffers.CreateRenderPass();
 	mFramebuffers.CreateFrameBuffers();
-
-	
 }
 
-void CVulkan::prepare2()
+void CVulkan::finalizeSetup()
 {
-	prepareVertices();
-	prepareUniformBuffers();
-
 	CreateGraphicsPipeline("../workshop/2d_square/vert.spv", "../workshop/2d_square/frag.spv");
-
 	CreateCommandBuffers();
 	CreateSemaphores();
 }
@@ -106,7 +101,6 @@ CVulkan::~CVulkan()
 	}
 }
 
-
 void CVulkan::CreateWindowSurface(HWND *hwnd)
 {
 	if (!mVulkanInstance.get())
@@ -118,7 +112,7 @@ void CVulkan::CreateWindowSurface(HWND *hwnd)
 #ifdef _WIN32
 	VkWin32SurfaceCreateInfoKHR sci = {};
 	sci.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-	sci.hwnd = *hwnd;//GetHwnd();
+	sci.hwnd = *hwnd;
 	sci.hinstance = GetModuleHandle(NULL);
 
 	VkResult err = vkCreateWin32SurfaceKHR(mVulkanInstance.get(), &sci, nullptr, &m_surface);
@@ -359,37 +353,23 @@ void CVulkan::recreateSwapchain()
 	CreateCommandBuffers();
 }
 
+void 
+CVulkan::updateUniforms(glm::vec4 &value)
+{
+	void* data;
+	auto result = vkMapMemory(m_device.mLogicalDevice, m_uniformMemorie, 0, sizeof(glm::vec4), 0, &data);
+	if (result != VK_SUCCESS)
+	{
+		throw CVulkanException(result, "Error attempting to map memory:");
+	}
+	memcpy(data, &value, sizeof(glm::vec4));
+	vkUnmapMemory(m_device.mLogicalDevice, m_uniformMemorie);
+}
+
 void CVulkan::render()
 {
-	auto &logicalDevice = m_device.mLogicalDevice;
 	try
 	{
-		/*auto parent = (MainWindow *)m_pParent;
-		if (parent->colorHasChanged)
-		{
-		glm::vec4 newColor;
-		newColor.x = static_cast<float>(parent->color.Red()) / 255.0f;
-		newColor.y = static_cast<float>(parent->color.Green()) / 255.0f;
-		newColor.z = static_cast<float>(parent->color.Blue()) / 255.0f;
-		newColor.w = 1.0f;
-		*/
-		void* data;
-		glm::vec4 newColor = glm::vec4(1.0, 0.0, 0.0, 1.0);
-
-		{
-			auto result = vkMapMemory(m_device.mLogicalDevice, m_uniformMemorie, 0, sizeof(glm::vec4), 0, &data);
-
-			if (result != VK_SUCCESS)
-			{
-				throw CVulkanException(result, "Error attempting to map memory:");
-			}
-		}
-
-		memcpy(data, &newColor, sizeof(glm::vec4));
-		vkUnmapMemory(logicalDevice, m_uniformMemorie);
-		/*parent->colorHasChanged = false;
-		}*/
-
 		// ------------------------------------------------------------------------------------------------------------
 		// The first thing to do is to acquiring an image from the swap chain
 		// The swap chain is an extension feature, so we must use a function with the vk*KHR naming convention.
@@ -403,7 +383,7 @@ void CVulkan::render()
 		/*The first two parameters of vkAcquireNextImageKHR are the logical device and the swap chain from which we wish
 		to acquire an image. The third parameter specifies a timeout in nanoseconds for an image to become available.
 		Using the maximum value of a 64 bit unsigned integer disables the timeout.*/
-		VkResult result = vkAcquireNextImageKHR(logicalDevice, m_swapChain.mSwapChain,
+		VkResult result = vkAcquireNextImageKHR(m_device.mLogicalDevice, m_swapChain.mSwapChain,
 			std::numeric_limits<uint64_t>::max(), m_imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR)
@@ -517,15 +497,13 @@ void CVulkan::prepareVertices()
 
 }
 
-void CVulkan::prepareUniformBuffers()
+void CVulkan::prepareUniformBuffers(glm::vec4& value)
 {
 	// Uniform buffer, allocation memory and binding
 	CreateUniformBuffer(m_uniformBuffer, sizeof(glm::vec4), m_uniformMemorie);
 
 	// Initialize the memory
 	void* data;
-	auto triangleColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-
 	{
 		auto result = vkMapMemory(m_device.mLogicalDevice, m_uniformMemorie, 0, sizeof(glm::vec4), 0, &data);
 
@@ -535,7 +513,7 @@ void CVulkan::prepareUniformBuffers()
 		}
 	}
 
-	memcpy(data, &triangleColor, sizeof(glm::vec4));
+	memcpy(data, &value, sizeof(glm::vec4));
 	vkUnmapMemory(m_device.mLogicalDevice, m_uniformMemorie);
 
 	// Descriptor in the shader

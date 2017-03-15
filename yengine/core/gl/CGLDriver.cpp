@@ -40,7 +40,7 @@ void createVertexBuffer(GLuint &vbId, GLuint vaoId, int vbIndex, unsigned int si
 }
 
 void
-CGLDriver::init(CMesh *mesh) const
+CGLDriver::init(CMesh *mesh)
 {
 	// Create the vertex array object
 	glCreateVertexArrays(1, &mesh->mVao);
@@ -123,7 +123,7 @@ CGLDriver::unbindMaterial(CMesh *mesh) const
 }
 
 void
-CGLDriver::render(CMesh *mesh, CShader* shader) const
+CGLDriver::render(CMesh *mesh, CShader* shader)
 {
 	bindMaterial(mesh, shader);
 	glBindVertexArray(mesh->mVao);
@@ -154,4 +154,23 @@ CGLDriver::clean(CMesh *mesh) const
 	}
 
 	glDisableVertexArrayAttrib(mesh->mVao, 0);
+}
+
+void 
+CGLDriver::updateUniform(const char* name, glm::vec4& value)
+{
+	getShader()->use();
+	getShader()->setUniform(name, value);
+}
+
+void 
+CGLDriver::addUniform(const char* name, glm::vec4& value)
+{
+	getShader()->setUniform(name, value);
+}
+
+void 
+CGLDriver::finalizeSetup()
+{
+
 }
