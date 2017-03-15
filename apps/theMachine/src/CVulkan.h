@@ -19,6 +19,8 @@
 #include "CVkShader.hpp"
 #include "CVkFramebuffer.hpp"
 #include "CVkInstance.h"
+#include "../../../yengine/helpers/StringsHelper.h"
+#include "../../../yengine/system/FileSystem.h"
 
 class CVulkan
 {

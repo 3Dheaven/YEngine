@@ -49,7 +49,39 @@ CVulkan::prepare(HWND *hwnd, const wxSize& size)
 
 void CVulkan::finalizeSetup()
 {
-	CreateGraphicsPipeline("../workshop/2d_square/vert.spv", "../workshop/2d_square/frag.spv");
+	std::vector<std::string> splittedPath = strh::split(sys::getExecutablePath(), '\\');
+	std::string projectPath;
+	for (auto i : splittedPath)
+	{
+		if (i != "YEngine")
+		{
+			projectPath += i + "\\";
+		}
+		else
+		{
+			projectPath += i;
+			break;
+		}
+	}
+	
+	std::string vertfragShaderPath = "//apps//theMachine//workshop//2d_square//";
+	std::string vertShaderFile = "shader.vert";
+	std::string fragShaderFile = "shader.frag";
+
+	std::string cmdVert = projectPath + "//tools//glslangValidator.exe -V " + 
+					      projectPath + vertfragShaderPath + vertShaderFile + " -o " +
+					      projectPath + vertfragShaderPath + "vert.spv";
+
+	std::string cmdFrag = projectPath + "//tools//glslangValidator.exe -V " +
+						  projectPath + vertfragShaderPath + fragShaderFile + " -o " +
+						  projectPath + vertfragShaderPath + "frag.spv";
+
+	std::system(cmdVert.c_str());
+	std::system(cmdFrag.c_str());
+
+	CreateGraphicsPipeline(projectPath + vertfragShaderPath + "vert.spv",
+						   projectPath + vertfragShaderPath + "frag.spv");
+
 	CreateCommandBuffers();
 	CreateSemaphores();
 }
