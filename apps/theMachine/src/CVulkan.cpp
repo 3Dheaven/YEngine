@@ -501,10 +501,10 @@ void CVulkan::render()
 void CVulkan::prepareVertices()
 {
 	// Rectangle vertices
-	m_vertices.push_back(glm::vec2(-0.5f, -0.5f));
-	m_vertices.push_back(glm::vec2(0.5f, -0.5f));
-	m_vertices.push_back(glm::vec2(0.5f, 0.5f));
-	m_vertices.push_back(glm::vec2(-0.5f, 0.5f));
+	m_vertices.push_back(glm::vec3(-0.5f, -0.5f, 0.0f));
+	m_vertices.push_back(glm::vec3(0.5f, -0.5f, 0.0f));
+	m_vertices.push_back(glm::vec3(0.5f, 0.5f, 0.0f));
+	m_vertices.push_back(glm::vec3(-0.5f, 0.5f, 0.0f));
 
 	// Rectangle indices
 	std::vector<uint16_t> indexRectangle = { 0, 1, 2, 2, 3, 0 };
@@ -636,7 +636,7 @@ void CVulkan::CreateUniformBuffer(VkBuffer &buffer, uint32_t size, VkDeviceMemor
 
 void CVulkan::CreateVertexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceMemorie)
 {
-	VkDeviceSize bufferSize = sizeof(glm::vec2) * m_vertices.size();
+	VkDeviceSize bufferSize = sizeof(glm::vec3) * m_vertices.size();
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;

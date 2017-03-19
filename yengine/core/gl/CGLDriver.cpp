@@ -28,37 +28,49 @@ void createVertexBuffer(GLuint &vbId, GLuint vaoId, int vbIndex, unsigned int si
 		GLenum attribType = 2;
 	}
 
-	// Create texture coordinates buffer
-	glCreateBuffers(1, &vbId);
+	//glCreateBuffers(1, &vbId);
+	glGenBuffers(1, &vbId);
 
-	// Initialize the second buffer with data
-	glNamedBufferStorage(vbId, size * sizeof(T), &data, 0);
-	glVertexArrayVertexBuffer(vaoId, vbIndex, vbId, 0, sizeof(T));
-	glVertexArrayAttribFormat(vaoId, vbIndex, attribType, GL_FLOAT, GL_FALSE, 0);
-	glVertexArrayAttribBinding(vaoId, vbIndex, vbIndex);
-	glEnableVertexArrayAttrib(vaoId, vbIndex);
+    // Load data into vertex buffers
+    glBindBuffer(GL_ARRAY_BUFFER, vbId);
+    glBufferData(GL_ARRAY_BUFFER, size * sizeof(T), &data[0], GL_STATIC_DRAW);
+
+	// Set the vertex attribute pointers
+    glEnableVertexAttribArray(vbIndex);
+    glVertexAttribPointer(0, attribType, GL_FLOAT, GL_FALSE, sizeof(T), (GLvoid*)0);
 }
 
 void
 CGLDriver::init(CMesh *mesh)
 {
-	// Create the vertex array object
-	glCreateVertexArrays(1, &mesh->mVao);
+	// Create vertex array object
+	glGenVertexArrays(1, &mesh->mVao);
+	glBindVertexArray(mesh->mVao);
 
-	// Create vertex buffer for positons
-	createVertexBuffer(mesh->mVbuf, mesh->mVao, 0, mesh->vertices.size(), mesh->vertices[0]);
+	glGenBuffers(1, &mesh->mVbo);
 
-	if (mesh->mHasTexcoords)
-	{
-		// Create vertex buffer for texture coordinates
-		createVertexBuffer(mesh->mUVbuf, mesh->mVao, 1, mesh->uvs.size(), mesh->uvs[0]);
-	}
+	// Load data into vertex buffers
+	glBindBuffer(GL_ARRAY_BUFFER, mesh->mVbo);
+	glBufferData(GL_ARRAY_BUFFER, mesh->mVertices.size() * sizeof(sVertex), &mesh->mVertices[0], GL_STATIC_DRAW);
 
-	if (mesh->mHasNormals)
-	{
-		// Create vertex buffer for normals
-		createVertexBuffer(mesh->mNbuf, mesh->mVao, 1, mesh->normals.size(), mesh->normals[0]);
-	}
+	// Vertex Position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(sVertex), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+
+	// Vertex Normals
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(sVertex), (GLvoid*)offsetof(sVertex, normal));
+
+	// Vertex Texture Coords
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(sVertex), (GLvoid*)offsetof(sVertex, texcoord));
+	
+	// Create and fill element buffer object
+	glGenBuffers(1, &mesh->mEbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->mEbo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->mIndices.size() * sizeof(GLuint), &mesh->mIndices[0], GL_STATIC_DRAW);
+	
+	glBindVertexArray(0);
 }
 
 void
@@ -127,7 +139,7 @@ CGLDriver::render(CMesh *mesh, CShader* shader)
 {
 	bindMaterial(mesh, shader);
 	glBindVertexArray(mesh->mVao);
-	glDrawArrays(GL_TRIANGLES, 0, 3 * mesh->vertices.size());
+	glDrawElements(GL_TRIANGLES, mesh->mIndices.size(), GL_UNSIGNED_INT, (void*)0);
 	glBindVertexArray(0);
 	unbindMaterial(mesh);
 }

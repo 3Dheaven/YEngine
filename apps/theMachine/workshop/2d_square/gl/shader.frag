@@ -1,4 +1,4 @@
-#version 330 core
+#version 440 core
 
 out vec4 outColor;
 uniform vec4 custom_color;

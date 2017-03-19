@@ -17,12 +17,16 @@ struct sVertex
 {
 	glm::vec3 position;
 	glm::vec3 normal;
-	glm::vec2 texCoord;
+	glm::vec2 texcoord;
 };
 
 class CMesh 
 {
 	public:
+
+		std::vector<sVertex> mVertices;
+		std::vector<GLuint> mIndices;
+
 		std::vector< glm::vec3 > vertices;
 		std::vector< glm::vec2 > uvs;
 		std::vector< glm::vec3 > normals;
@@ -33,6 +37,8 @@ class CMesh
 		std::vector< glm::vec3 > temp_normals;
 
 		GLuint mVao;
+		GLuint mVbo;
+		GLuint mEbo;
 		GLuint mVbuf;
 		GLuint mUVbuf;
 		GLuint mNbuf;

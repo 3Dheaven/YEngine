@@ -69,20 +69,21 @@ TwoDSquare::setupGraphics()
 	CObject* object = new CObject("square");
 	std::vector<CMesh*> meshes;
 	CMesh* mesh = new CMesh("quad");
-	model->mVertices.push_back(glm::vec3(-0.5f, -0.5f, 0.0f));
-	model->mVertices.push_back(glm::vec3(0.5f, -0.5f, 0.0f));
-	model->mVertices.push_back(glm::vec3(0.5f, 0.5f, 0.0f));
-	model->mVertices.push_back(glm::vec3(-0.5f, 0.5f, 0.0f));
-	mesh->vertexIndices = { 0, 1, 2, 0, 2, 3 };
-	auto s = mesh->vertexIndices.size();
 
-	
+	sVertex v0 = { glm::vec3(-0.5f, -0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(0.0, 0.0) };
+	sVertex v1 = { glm::vec3(0.5f, -0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(0.0, 1.0) };
+	sVertex v2 = { glm::vec3(0.5f, 0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(1.0, 1.0) };
+	sVertex v3 = { glm::vec3(-0.5f, 0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(1.0, 0.0) };
+
+	mesh->mVertices = {v0, v1, v2,v3};
+	mesh->mIndices = { 0, 3, 2, 2, 1, 0 };
+
 	meshes.push_back(mesh);
 
 	model->addObject(object, meshes);
 
 	// indexing
-	for (auto o : model->mObjects)
+	/*for (auto o : model->mObjects)
 	{
 		for (auto m : o->mMeshes)
 		{
@@ -93,7 +94,7 @@ TwoDSquare::setupGraphics()
 				model->mMeshes[m]->vertices.push_back(vertex);
 			}
 		}
-	}
+	}*/
 
 	mScene = new CScene(mGDriver);
 	mScene->add(model);
