@@ -76,7 +76,7 @@ TwoDSquare::setupGraphics()
 	sVertex v3 = { glm::vec3(-0.5f, 0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(1.0, 0.0) };
 
 	mesh->mVertices = {v0, v1, v2,v3};
-	mesh->mIndices = { 0, 3, 2, 2, 1, 0 };
+	mesh->mIndices = { 0, 1, 2, 2, 3, 0 };//{ 0, 3, 2, 2, 1, 0 };
 
 	meshes.push_back(mesh);
 

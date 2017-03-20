@@ -336,7 +336,7 @@ void CVulkan::CreateCommandBuffers()
 		VkBuffer vertexBuffers[] = { m_vertexBuffer };
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(m_commandBuffers[i], 0, 1, vertexBuffers, offsets);
-		vkCmdBindIndexBuffer(m_commandBuffers[i], m_indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindIndexBuffer(m_commandBuffers[i], m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 		vkCmdBindDescriptorSets(m_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);
 		//vkCmdDraw(m_commandBuffers[i], m_vertices.size(), 1, 0, 0);
 		vkCmdDrawIndexed(m_commandBuffers[i], m_indices.size(), 1, 0, 0, 0);
@@ -498,16 +498,21 @@ void CVulkan::render()
 }
 
 // Prepare vertex and index buffers for an indexed triangle
-void CVulkan::prepareVertices()
+void CVulkan::prepareVertices(std::vector<sVertex>& vertices, std::vector<unsigned int>& indices)
 {
 	// Rectangle vertices
-	m_vertices.push_back(glm::vec3(-0.5f, -0.5f, 0.0f));
-	m_vertices.push_back(glm::vec3(0.5f, -0.5f, 0.0f));
-	m_vertices.push_back(glm::vec3(0.5f, 0.5f, 0.0f));
-	m_vertices.push_back(glm::vec3(-0.5f, 0.5f, 0.0f));
-
+	for (auto i : vertices)
+	{
+		auto v = i.position;
+		m_vertices.push_back(v);
+	}
+	
 	// Rectangle indices
-	std::vector<uint16_t> indexRectangle = { 0, 1, 2, 2, 3, 0 };
+	std::vector<unsigned int> indexRectangle;
+	for (auto i : indices)
+	{
+		indexRectangle.push_back(i);
+	}
 
 	// Create vertex buffer, memory, bind buffer/memory and map memory
 	CreateVertexBuffer(m_vertexBuffer, m_vertexMemory);
@@ -517,7 +522,7 @@ void CVulkan::prepareVertices()
 	CreateIndexBuffer(m_indexBuffer, m_indexMemory);
 
 	mShader.mBindingDescription.binding = 0;
-	mShader.mBindingDescription.stride = sizeof(glm::vec2);
+	mShader.mBindingDescription.stride = sizeof(glm::vec3);
 	mShader.mBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 	mShader.mAttributeDescriptions.emplace_back();
@@ -664,7 +669,7 @@ void CVulkan::CreateVertexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceMemorie
 
 void CVulkan::CreateIndexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceMemorie)
 {
-	VkDeviceSize bufferSize = sizeof(uint16_t) * m_indices.size();
+	VkDeviceSize bufferSize = sizeof(unsigned int) * m_indices.size();
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;

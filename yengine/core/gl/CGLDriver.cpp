@@ -68,7 +68,7 @@ CGLDriver::init(CMesh *mesh)
 	// Create and fill element buffer object
 	glGenBuffers(1, &mesh->mEbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->mEbo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->mIndices.size() * sizeof(GLuint), &mesh->mIndices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->mIndices.size() * sizeof(unsigned int), &mesh->mIndices[0], GL_STATIC_DRAW);
 	
 	glBindVertexArray(0);
 }

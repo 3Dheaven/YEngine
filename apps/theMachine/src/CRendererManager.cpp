@@ -22,7 +22,7 @@ CRendererManager::CRendererManager(MainWindow *mainWindow) : mMainWindow(mainWin
 	mGDriver = NULL;
 	mRenderer = RendererFactory::createInstance((std::string)mModulesCombobox->GetStringSelection());
 	
-	gApi = API_OPENGL;
+	gApi = API_VULKAN;
 	switch (gApi)
 	{
 		case API_VULKAN:

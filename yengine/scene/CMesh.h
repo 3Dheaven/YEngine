@@ -25,7 +25,7 @@ class CMesh
 	public:
 
 		std::vector<sVertex> mVertices;
-		std::vector<GLuint> mIndices;
+		std::vector<unsigned int> mIndices;
 
 		std::vector< glm::vec3 > vertices;
 		std::vector< glm::vec2 > uvs;

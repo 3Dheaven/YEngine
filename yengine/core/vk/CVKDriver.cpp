@@ -10,7 +10,7 @@ CVKDriver::~CVKDriver()
 
 void CVKDriver::init(CMesh *mesh)
 {
-	mVulkan.prepareVertices();
+	mVulkan.prepareVertices(mesh->mVertices, mesh->mIndices);
 }
 
 void CVKDriver::init()

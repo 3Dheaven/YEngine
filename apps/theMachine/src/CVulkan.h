@@ -21,6 +21,7 @@
 #include "CVkInstance.h"
 #include "../../../yengine/helpers/StringsHelper.h"
 #include "../../../yengine/system/FileSystem.h"
+#include "../../../yengine/scene/CMesh.h"
 
 class CVulkan
 {
@@ -43,8 +44,8 @@ private:
 	VkSemaphore m_renderFinishedSemaphore;
 
 	VkDeviceMemory m_uniformMemorie, m_vertexMemory, m_indexMemory;
-	std::vector<glm::vec2> m_vertices;
-	std::vector<uint16_t> m_indices;
+	std::vector<glm::vec3> m_vertices;
+	std::vector<unsigned int> m_indices;
 	VkBuffer m_uniformBuffer, m_vertexBuffer, m_indexBuffer;
 	VkDescriptorSet m_descriptorSet;
 	VkDescriptorSetLayout m_descriptorSetLayout;
@@ -71,7 +72,7 @@ public:
 	void render();
 	void recreateSwapchain();
 	void updateUniforms(glm::vec4 &value);
-	void prepareVertices();
+	void prepareVertices(std::vector<sVertex>& vertices, std::vector<unsigned int>& indices);
 	void prepareUniformBuffers(glm::vec4& value);
 	void finalizeSetup();
 };
