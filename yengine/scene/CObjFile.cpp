@@ -174,33 +174,37 @@ CObjectFile::finalizeModel()
 	{
 		for (auto m : o->mMeshes)
 		{
+
+			// To change ! --> Duplicated vertices ...
+
+			// Create buffer of vertices
 			for (unsigned int i = 0; i < mModel->mMeshes[m]->vertexIndices.size(); i++)
 			{
-				unsigned int vertexIndex = mModel->mMeshes[m]->vertexIndices[i];
-				glm::vec3 vertex = mModel->mVertices[vertexIndex - 1];
-				mModel->mMeshes[m]->vertices.push_back(vertex);
-			}
+				sVertex newVertex = { glm::vec3(0.0f, 0.0f, 0.0f),
+					glm::vec3(0.0f, 0.0f, 0.0f),
+					glm::vec2(0.0f, 0.0f) };
 
-			if (mModel->mMeshes[m]->mHasTexcoords)
-			{
-				// For each uv of each triangle
-				for (unsigned int i = 0; i < mModel->mMeshes[m]->uvIndices.size(); i++)
+				unsigned int vertexIndex = mModel->mMeshes[m]->vertexIndices[i];
+				newVertex.position = mModel->mVertices[vertexIndex - 1];
+
+				if (mModel->mMeshes[m]->mHasTexcoords)
 				{
 					unsigned int uvIndex = mModel->mMeshes[m]->uvIndices[i];
-					glm::vec2 uv = mModel->mTexcoords[uvIndex - 1];
-					mModel->mMeshes[m]->uvs.push_back(uv);
+					newVertex.texcoord = mModel->mTexcoords[uvIndex - 1];
 				}
-			}
 
-			if (mModel->mMeshes[m]->mHasNormals)
-			{
-				// For each normal of each triangle
-				for (unsigned int i = 0; i < mModel->mMeshes[m]->normalIndices.size(); i++)
+				if (mModel->mMeshes[m]->mHasNormals)
 				{
 					unsigned int normalIndex = mModel->mMeshes[m]->normalIndices[i];
-					glm::vec3 normal = mModel->mNormals[normalIndex - 1];
-					mModel->mMeshes[m]->normals.push_back(normal);
+					newVertex.normal = mModel->mNormals[normalIndex - 1];
 				}
+
+				mModel->mMeshes[m]->mVertices.push_back(newVertex);
+			}
+
+			for (unsigned int i = 0; i < mModel->mMeshes[m]->mVertices.size(); i++)
+			{
+				mModel->mMeshes[m]->mIndices.push_back(i);
 			}
 
 		}

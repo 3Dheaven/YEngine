@@ -7,6 +7,8 @@ CMesh::CMesh(std::string name)
 	mHasMaterial = false;
 	mName = name;
 	mMaterial = NULL;
+	mNbVertices = 0;
+	mNbFaces = 0;
 }
 
 CMesh::~CMesh()

@@ -26,22 +26,14 @@ class CMesh
 
 		std::vector<sVertex> mVertices;
 		std::vector<unsigned int> mIndices;
+		std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
 
-		std::vector< glm::vec3 > vertices;
-		std::vector< glm::vec2 > uvs;
-		std::vector< glm::vec3 > normals;
-
-		std::vector< unsigned int > vertexIndices, uvIndices, normalIndices;
-		std::vector< glm::vec3 > temp_vertices;
-		std::vector< glm::vec2 > temp_uvs;
-		std::vector< glm::vec3 > temp_normals;
+		int mNbVertices;
+		int mNbFaces;
 
 		GLuint mVao;
 		GLuint mVbo;
 		GLuint mEbo;
-		GLuint mVbuf;
-		GLuint mUVbuf;
-		GLuint mNbuf;
 
 		bool mHasTexcoords;
 		bool mHasNormals;
@@ -53,4 +45,6 @@ class CMesh
 
 		CMesh(std::string name);
 		~CMesh();
+
+
 };
