@@ -23,7 +23,6 @@ class Grid
 		Grid(int size);
 		int getSize();
 		CMesh* mMeshes;
-		std::vector<glm::vec3> mVertices;
 
 	private :
 

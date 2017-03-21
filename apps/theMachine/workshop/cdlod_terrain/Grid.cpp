@@ -11,42 +11,31 @@ Grid::Grid(int size) :
 	{
 		for (int j = 0; j < size; j++)
 		{
-			glm::vec3 v1, v2, v3, v4, v5, v6;
+			sVertex v1, v2, v3, v4;
 
-			v1 = glm::vec3(i, 0.0f, j);
-			mVertices.push_back(v1);
+			v1 = { glm::vec3(i, 0.0f, j), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 0.0f) };
+			mMeshes->mVertices.push_back(v1);
 			index = index + 1;
 
-			v4 = glm::vec3(i + 1.0f, 0.0f, j);
-			mVertices.push_back(v4);
+			v2 = { glm::vec3(i + 1.0f, 0.0f, j), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 0.0f) };
+			mMeshes->mVertices.push_back(v2);
 			index = index + 1;
 
-			v5 = glm::vec3(i + 1.0f, 0.0f, j + 1.0f);
-			mVertices.push_back(v5);
+			v3 = { glm::vec3(i + 1.0f, 0.0f, j + 1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 0.0f) };
+			mMeshes->mVertices.push_back(v3);
 			index = index + 1;
 
-			v6 = glm::vec3(i, 0.0f, j + 1.0f);
-			mVertices.push_back(v6);
+			v4 = { glm::vec3(i, 0.0f, j + 1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 0.0f) };
+			mMeshes->mVertices.push_back(v4);
 
-			mMeshes->vertexIndices.push_back(index); // 0
-			mMeshes->vertexIndices.push_back(index - 1); // 2
-			mMeshes->vertexIndices.push_back(index - 3); // 3
+			mMeshes->mIndices.push_back(index - 3); // 0
+			mMeshes->mIndices.push_back(index - 1); // 2
+			mMeshes->mIndices.push_back(index);		// 3
+			mMeshes->mIndices.push_back(index - 3); // 0
+			mMeshes->mIndices.push_back(index - 2); // 1
+			mMeshes->mIndices.push_back(index - 1); // 2
 
-			mMeshes->vertexIndices.push_back(index - 3); // 0
-			mMeshes->vertexIndices.push_back(index - 2); // 1
-			mMeshes->vertexIndices.push_back(index - 1); // 2
-
-			mMeshes->vertices.push_back(mVertices[index]);
-			mMeshes->vertices.push_back(mVertices[index - 1]);
-			mMeshes->vertices.push_back(mVertices[index - 3]);
-
-			mMeshes->vertices.push_back(mVertices[index - 3]);
-			mMeshes->vertices.push_back(mVertices[index - 2]);
-			mMeshes->vertices.push_back(mVertices[index - 1]);
-
-			index = index + 1;
-
-			
+			index = index + 1;		
 		}
 	}
 };
