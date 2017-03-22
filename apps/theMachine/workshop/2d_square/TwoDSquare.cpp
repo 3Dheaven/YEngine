@@ -64,7 +64,7 @@ TwoDSquare::setupGraphics()
 	mCam = new CCamera(glm::vec3(0.0f, 0.0f, 5.0f), 
 						glm::vec3(0.0f, 0.0f, 0.0f), 
 						glm::vec3(0.0f, 1.0f, 0.0f));
-
+	
 	CModel* model = new CModel();
 	CObject* object = new CObject("square");
 	std::vector<CMesh*> meshes;

@@ -23,7 +23,7 @@ protected:
 public:
 
 	CGraphicDriver();
-	~CGraphicDriver();
+	virtual ~CGraphicDriver();
 
 	virtual CShader *getShader() const final;
 	virtual void updateUniform(const char* name, glm::vec4& value) = 0;

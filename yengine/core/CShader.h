@@ -10,6 +10,7 @@
 class CShader
 {
 public:
+	virtual ~CShader() {};
 	virtual void use() const = 0;
 	virtual void unuse() const = 0;
 	virtual void setUniform(const std::string &name, const glm::mat4 &m) = 0;
