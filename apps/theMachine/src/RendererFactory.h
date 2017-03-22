@@ -15,6 +15,16 @@ typedef std::map<std::string, CRenderer*(*)()> map_type;
 
 struct RendererFactory 
 {
+
+	~RendererFactory()
+	{
+		if (map != NULL)
+		{
+			delete map;
+			map = nullptr;
+		}
+	}
+
 	static CRenderer* createInstance(std::string const& s) 
 	{
 		map_type::iterator it = getMap()->find(s);
@@ -27,7 +37,7 @@ struct RendererFactory
 	{
 		if (!map) 
 		{ 
-			map = new map_type; 
+			map = new map_type;
 		}
 		return map;
 	}
