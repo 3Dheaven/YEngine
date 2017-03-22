@@ -113,9 +113,9 @@ void
 CGLCanvas::onKeyDown(wxKeyEvent& event)
 {
 	int code = event.GetKeyCode();
-	CCamera* cam = mRenderer->getCam();
+	auto cam = mRenderer->getCam();
 
-	if (cam != NULL)
+	if (cam)
 	{
 		if (code == 'z' || code == 'Z')
 		{
@@ -152,8 +152,8 @@ CGLCanvas::onMouseWheel(wxMouseEvent& event)
 		value -= (event.GetWheelDelta() / 240.0);
 	}
 
-	CCamera* cam = mRenderer->getCam();
-	if (cam != NULL)
+	auto cam = mRenderer->getCam();
+	if (cam)
 	{
 		cam->processMouseWheel(value);
 	}
@@ -176,9 +176,9 @@ CGLCanvas::onMouseEvent(wxMouseEvent& event)
 
 		mLastMouseX = event.GetX();
 		mLastMouseY = event.GetY();
-		CCamera* cam = mRenderer->getCam();
+		auto cam = mRenderer->getCam();
 
-		if (cam != NULL)
+		if (cam)
 		{
 			cam->processMouseMovement(xoffset, yoffset);
 		}

@@ -5,11 +5,13 @@ TerrainCDLOD::TerrainCDLOD()
 	mCam = NULL;
 	mGDriver = NULL;
 	mRightPanel = NULL;
+	mScene = NULL;
 }
 
 TerrainCDLOD::TerrainCDLOD(CGraphicDriver *gdriver, wxPanel* panel)
 {
 	mCam = NULL;
+	mScene = NULL;
 	mGDriver = gdriver;
 	mRightPanel = panel;
 	loadGUI();
@@ -19,8 +21,7 @@ RendererRegister<TerrainCDLOD> regTerrainCDLOD("TerrainCDLOD");
 
 TerrainCDLOD::~TerrainCDLOD()
 {
-	delete mCam;
-	delete mScene;
+	if (mScene != NULL) delete mScene;
 
 	if (grid != NULL) delete grid;
 	if (hmap != NULL) delete hmap;
@@ -37,7 +38,7 @@ TerrainCDLOD::init(CGraphicDriver *gdriver, wxPanel* panel)
 	loadGUI();
 }
 
-CCamera*
+std::shared_ptr<CCamera>
 TerrainCDLOD::getCam()
 {
 	return mCam;
@@ -46,9 +47,9 @@ TerrainCDLOD::getCam()
 void
 TerrainCDLOD::setupGraphics()
 {
-	mCam = new CCamera(	glm::vec3(0.0f, 0.0f, 0.0f),	
-						glm::vec3(1.0f, 0.0f, 1.0f),		
-						glm::vec3(0.0f, 1.0f, 0.0f));	
+	mCam = std::make_shared<CCamera>(CCamera(glm::vec3(0.0f, 0.0f, 0.0f),
+											 glm::vec3(1.0f, 0.0f, 1.0f),		
+											 glm::vec3(0.0f, 1.0f, 0.0f)));	
 
 	mCam->setYaw(45.0f);
 	mCam->update();

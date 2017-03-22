@@ -14,14 +14,17 @@ CScene::~CScene()
 			for (auto m : o->mMeshes)
 			{
 				gDriver->clean(i->mMeshes[m]);
+				if(i->mMeshes[m])
+					delete i->mMeshes[m];
 			}
+			delete o;
 		}
-
 		delete i;
 	}
 }
 
-void CScene::add(CModel* model)
+void 
+CScene::add(CModel* model)
 {
 	for (auto o : model->mObjects)
 	{
@@ -31,6 +34,12 @@ void CScene::add(CModel* model)
 		}
 	}
 	mModels.push_back(model);
+}
+
+void 
+CScene::addCustomModel(std::vector<sVertex> vertices, const char* name)
+{
+
 }
 
 bool 

@@ -39,7 +39,6 @@ public:
 
 private:
 	void initializeGLEW();
-	void setupGraphics();
 	void setupControls();
 	void onPaint(wxPaintEvent& event);
 	void onKeyDown(wxKeyEvent& event);

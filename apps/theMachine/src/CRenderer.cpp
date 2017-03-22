@@ -5,11 +5,6 @@ CRenderer::CRenderer()
 
 }
 
-CRenderer::~CRenderer()
-{
-
-}
-
 void 
 CRenderer::setupGraphics()
 {

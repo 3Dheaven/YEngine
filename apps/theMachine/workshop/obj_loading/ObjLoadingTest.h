@@ -35,10 +35,10 @@ public:
 	void init(CGraphicDriver *gdriver, wxPanel* panel = NULL);
 	void setupGraphics();
 	void render();
-	CCamera* getCam();
+	std::shared_ptr<CCamera> getCam();
 	
 private:
-	CCamera *mCam;
+	std::shared_ptr<CCamera> mCam;
 	CScene *mScene;
 	CGraphicDriver *mGDriver;
 

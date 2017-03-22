@@ -41,7 +41,7 @@ private:
 	
 	CScene *mScene;
 	CGraphicDriver *mGDriver;
-	CCamera *mCam;
+	std::shared_ptr<CCamera> mCam;
 	wxPanel* mRightPanel;
 
 	void loadGUI();
@@ -63,6 +63,6 @@ public:
 	void setupGraphics();
 	void render();
 
-	CCamera* getCam();
+	std::shared_ptr<CCamera> getCam();
 
 };

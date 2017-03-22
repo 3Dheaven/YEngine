@@ -13,5 +13,8 @@ CMesh::CMesh(std::string name)
 
 CMesh::~CMesh()
 {
-	delete mMaterial;
+	/*if (mMaterial != NULL)
+	{
+		delete mMaterial;
+	}*/
 }

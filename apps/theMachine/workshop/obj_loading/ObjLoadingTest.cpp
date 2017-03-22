@@ -26,12 +26,11 @@ ObjLoading::init(CGraphicDriver *gdriver, wxPanel* panel)
 
 ObjLoading::~ObjLoading()
 {
-	delete mCam;
 	delete mScene;
 	cleanGUI();
 }
 
-CCamera* 
+std::shared_ptr<CCamera>
 ObjLoading::getCam()
 {
 	return mCam;
@@ -60,9 +59,9 @@ ObjLoading::setupGraphics()
 
 	mGDriver->createShader(vsPath, fsPath);
 
-	mCam = new CCamera(glm::vec3(0.0f, 0.0f, 5.0f), 
-						glm::vec3(0.0f, 0.0f, 0.0f), 
-						glm::vec3(0.0f, 1.0f, 0.0f));
+	mCam = std::make_shared<CCamera>(CCamera(glm::vec3(0.0f, 0.0f, 5.0f),
+											 glm::vec3(0.0f, 0.0f, 0.0f), 
+											 glm::vec3(0.0f, 1.0f, 0.0f)));
 
 	mScene = new CScene(mGDriver);
 	mScene->add(projectPath + "//media//nanosuit//nanosuit.obj");

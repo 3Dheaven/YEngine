@@ -81,7 +81,7 @@ QuadTreeNode::inFrustum(CCamera *cam)
 }
 
 bool 
-QuadTreeNode::LODSelect(std::vector<int> &ranges, int lodlevel, CCamera *cam, std::stack<QuadTreeNode*> &drawStack) 
+QuadTreeNode::LODSelect(std::vector<int> &ranges, int lodlevel, std::shared_ptr<CCamera> cam, std::stack<QuadTreeNode*> &drawStack)
 {
 
 	currentRange = ranges[lodlevel];

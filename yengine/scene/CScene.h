@@ -26,6 +26,7 @@ public:
 
 	bool add(std::string modelPath);
 	void add(CModel* model);
+	void addCustomModel(std::vector<sVertex> vertices, const char* name = "custom");
 	void render(CShader *shader);
 	void setup();
 

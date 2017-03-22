@@ -67,6 +67,7 @@ class CCamera
 	public:
 
 		CCamera(glm::vec3 position, glm::vec3 direction, glm::vec3 up);
+		CCamera() {};
 		~CCamera();
 
 		void update();

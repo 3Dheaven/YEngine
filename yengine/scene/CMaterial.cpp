@@ -1,5 +1,18 @@
 #include "CMaterial.h"
 
+CMaterial::CMaterial()
+{
+	mTextureAmbient = NULL;
+	mTextureDiffuse = NULL;
+	mTextureSpecular = NULL;
+	mTextureEmissive = NULL;
+	mTextureOpacity = NULL;
+	mTextureBump = NULL;
+	mTextureNormal = NULL;
+	mTextureDisp = NULL;
+	mMaterialName = "";
+}
+
 CMaterial::CMaterial(std::string name) :
 	mMaterialName(name),
 	mDiffuseColor(glm::vec3(0.5, 0.5, 0.5)),
@@ -21,7 +34,7 @@ CMaterial::CMaterial(std::string name) :
 
 CMaterial::~CMaterial()
 {
-	if (mTextureAmbient != NULL)
+	/*if (mTextureAmbient != NULL)
 		delete mTextureAmbient;
 
 	if (mTextureDiffuse != NULL)
@@ -43,5 +56,5 @@ CMaterial::~CMaterial()
 		delete mTextureNormal;
 
 	if (mTextureDisp != NULL)
-		delete mTextureDisp;
+		delete mTextureDisp;*/
 }

@@ -8,6 +8,7 @@
 #include "../../../../yengine/scene/CCamera.h"
 #include "HeightMap.h"
 #include <algorithm>
+#include <memory>
 
 class QuadTreeNode 
 {
@@ -39,6 +40,6 @@ public:
 
 	bool inFrustum(CCamera *cam);
 
-	bool LODSelect(std::vector<int> &ranges, int lodlevel, CCamera *cam, std::stack<QuadTreeNode*> &drawStack);
+	bool LODSelect(std::vector<int> &ranges, int lodlevel, std::shared_ptr<CCamera> cam, std::stack<QuadTreeNode*> &drawStack);
 
 };

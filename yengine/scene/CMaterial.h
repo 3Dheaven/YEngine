@@ -42,6 +42,7 @@ class CMaterial
 
 	public:
 		CMaterial(std::string name);
+		CMaterial();
 		~CMaterial();
 };
 

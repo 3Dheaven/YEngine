@@ -1,17 +1,28 @@
 ﻿#include "TwoDSquare.h"
 
+#ifdef _DEBUG
+#include <crtdbg.h>
+#define DEBUG_NEW new(_NORMAL_BLOCK ,__FILE__, __LINE__)
+#else
+#define DEBUG_NEW new
+#endif
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif 
+
 TwoDSquare::TwoDSquare()
 {
-	mCam = NULL;
 	mGDriver = NULL;
 	mRightPanel = NULL;
+	mScene = NULL;
 }
 
 TwoDSquare::TwoDSquare(CGraphicDriver *gdriver, wxPanel* panel)
 {
-	mCam = NULL;
 	mGDriver = gdriver;
 	mRightPanel = panel;
+	mScene = NULL;
 	loadGUI();
 }
 
@@ -26,15 +37,17 @@ TwoDSquare::init(CGraphicDriver *gdriver, wxPanel* panel)
 
 TwoDSquare::~TwoDSquare()
 {
-	delete mCam;
-	delete mScene;
+	if (mScene != NULL)
+	{
+		delete mScene;
+	}
 	cleanGUI();
 }
 
-CCamera* 
+std::shared_ptr<CCamera>
 TwoDSquare::getCam()
 {
-	return mCam;
+	return mCamPtr;
 }
 
 void 
@@ -61,9 +74,11 @@ TwoDSquare::setupGraphics()
 
 	mGDriver->createShader(vsPath, fsPath);
 	
-	mCam = new CCamera(glm::vec3(0.0f, 0.0f, 5.0f), 
-						glm::vec3(0.0f, 0.0f, 0.0f), 
-						glm::vec3(0.0f, 1.0f, 0.0f));
+	mCam = CCamera(glm::vec3(0.0f, 0.0f, 5.0f),
+				   glm::vec3(0.0f, 0.0f, 0.0f),
+				   glm::vec3(0.0f, 1.0f, 0.0f));
+
+	mCamPtr = std::make_shared<CCamera>(mCam);
 	
 	CModel* model = new CModel();
 	CObject* object = new CObject("square");

@@ -5,7 +5,7 @@ CModel::CModel(std::string path)
 	mCurrentMesh = NULL;
 	mCurrentMaterial = NULL;
 	mCurrentObject = NULL; 
-	mDefaultMaterial = new CMaterial("dafault-mat");
+	mDefaultMaterial = NULL;
 	mFilePath = path;
 
 	auto filename = path.substr(path.find_last_of("/\\") + 1);
@@ -17,14 +17,15 @@ CModel::CModel()
 	mCurrentMesh = NULL;
 	mCurrentMaterial = NULL;
 	mCurrentObject = NULL;
-	mDefaultMaterial = new CMaterial("dafault-mat");
+	mDefaultMaterial = NULL;
 	mFilePath = "";
 	mName = "unknown";
 }
 
 CModel::~CModel()
 {
-	delete mDefaultMaterial;
+	if(mDefaultMaterial != NULL)
+		delete mDefaultMaterial;
 }
 
 void

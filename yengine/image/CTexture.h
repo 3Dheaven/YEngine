@@ -20,7 +20,7 @@ class CTexture
 		GLuint mID;
 		std::string mFilePath;
 
-		CTexture(std::string filepath);
+		CTexture(const char* filepath);
 		~CTexture();
 		
 };

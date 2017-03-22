@@ -1,13 +1,13 @@
 #include "CTexture.h"
 
-CTexture::CTexture(std::string filepath) :
+CTexture::CTexture(const char* filepath) :
 mFilePath(filepath)
 {
 
 	glGenTextures(1, &mID);
 
 	int width, height;
-	unsigned char* image = SOIL_load_image(filepath.c_str(), &width, &height, 0, SOIL_LOAD_RGBA);
+	unsigned char* image = SOIL_load_image(filepath, &width, &height, 0, SOIL_LOAD_RGBA);
 
 	// Assign texture to ID
 	glBindTexture(GL_TEXTURE_2D, mID);

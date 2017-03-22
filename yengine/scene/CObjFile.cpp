@@ -224,42 +224,42 @@ CObjectFile::getTexture(std::string& buffer)
 		if (!key.compare("map_Kd"))
 		{
 			// Diffuse texture
-			mModel->mCurrentMaterial->mTextureDiffuse = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
+			mModel->mCurrentMaterial->mTextureDiffuse = new CTexture(std::string(dirPath + buffer.substr(buffer.find(" ") + 1)).c_str());
 		}
 		else if (!key.compare("map_Ka"))
 		{
 			// Ambient texture
-			mModel->mCurrentMaterial->mTextureAmbient = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
+			mModel->mCurrentMaterial->mTextureAmbient = new CTexture(std::string(dirPath + buffer.substr(buffer.find(" ") + 1)).c_str());
 		}
 		else if (!key.compare("map_Ks"))
 		{
 			// Specular texture
-			mModel->mCurrentMaterial->mTextureSpecular = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
+			mModel->mCurrentMaterial->mTextureSpecular = new CTexture(std::string(dirPath + buffer.substr(buffer.find(" ") + 1)).c_str());
 		}
 		else if (!key.compare("map_d"))
 		{
 			// Opacity texture
-			mModel->mCurrentMaterial->mTextureOpacity = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
+			mModel->mCurrentMaterial->mTextureOpacity = new CTexture(std::string(dirPath + buffer.substr(buffer.find(" ") + 1)).c_str());
 		}
 		else if (!key.compare("map_emissive"))
 		{
 			// Emissive texture
-			mModel->mCurrentMaterial->mTextureEmissive = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
+			mModel->mCurrentMaterial->mTextureEmissive = new CTexture(std::string(dirPath + buffer.substr(buffer.find(" ") + 1)).c_str());
 		}
 		else if (!key.compare("map_Ke"))
 		{
 			// Emissive texture
-			mModel->mCurrentMaterial->mTextureEmissive = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
+			mModel->mCurrentMaterial->mTextureEmissive = new CTexture(std::string(dirPath + buffer.substr(buffer.find(" ") + 1)).c_str());
 		}
 		else if ((!key.compare("map_bump")) || (!buffer.compare("map_Bump")) || (!buffer.compare("bump")))
 		{
 			// Bump texture
-			mModel->mCurrentMaterial->mTextureBump = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
+			mModel->mCurrentMaterial->mTextureBump = new CTexture(std::string(dirPath + buffer.substr(buffer.find(" ") + 1)).c_str());
 		}
 		else if (!key.compare("map_Kn"))
 		{
 			// Normal map
-			mModel->mCurrentMaterial->mTextureNormal = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
+			mModel->mCurrentMaterial->mTextureNormal = new CTexture(std::string(dirPath + buffer.substr(buffer.find(" ") + 1)).c_str());
 		}
 		else if (!key.compare("refl"))
 		{
@@ -269,12 +269,12 @@ CObjectFile::getTexture(std::string& buffer)
 		else if (!key.compare("disp"))
 		{
 			// Displacement texture
-			mModel->mCurrentMaterial->mTextureDisp = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
+			mModel->mCurrentMaterial->mTextureDisp = new CTexture(std::string(dirPath + buffer.substr(buffer.find(" ") + 1)).c_str());
 		}
 		else if (!key.compare("map_ns"))
 		{
 			// Specularity scaling (glossiness)
-			mModel->mCurrentMaterial->mTextureSpecular = new CTexture(dirPath + buffer.substr(buffer.find(" ") + 1));
+			mModel->mCurrentMaterial->mTextureSpecular = new CTexture(std::string(dirPath + buffer.substr(buffer.find(" ") + 1)).c_str());
 		}
 		else
 		{
