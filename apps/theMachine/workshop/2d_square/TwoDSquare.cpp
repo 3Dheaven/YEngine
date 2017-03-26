@@ -1,6 +1,6 @@
 ﻿#include "TwoDSquare.h"
 
-#ifdef _DEBUG
+/*#ifdef _DEBUG
 #include <crtdbg.h>
 #define DEBUG_NEW new(_NORMAL_BLOCK ,__FILE__, __LINE__)
 #else
@@ -9,7 +9,7 @@
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
-#endif 
+#endif */
 
 TwoDSquare::TwoDSquare()
 {
@@ -80,11 +80,7 @@ TwoDSquare::setupGraphics()
 
 	mCamPtr = std::make_shared<CCamera>(mCam);
 	
-	CModel* model = new CModel();
-	CObject* object = new CObject("square");
-	std::vector<CMesh*> meshes;
 	CMesh* mesh = new CMesh("quad");
-
 	sVertex v0 = { glm::vec3(-0.5f, -0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(0.0, 0.0) };
 	sVertex v1 = { glm::vec3(0.5f, -0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(0.0, 1.0) };
 	sVertex v2 = { glm::vec3(0.5f, 0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(1.0, 1.0) };
@@ -93,12 +89,8 @@ TwoDSquare::setupGraphics()
 	mesh->mVertices = {v0, v1, v2,v3};
 	mesh->mIndices = { 0, 1, 2, 2, 3, 0 };
 
-	meshes.push_back(mesh);
-
-	model->addObject(object, meshes);
-
 	mScene = new CScene(mGDriver);
-	mScene->add(model);
+	mScene->add(mesh);
 	
 	mUniformColor = glm::vec4(1.0, 0.0, 0.0, 1.0);
 	mGDriver->addUniform("custom_color", mUniformColor);

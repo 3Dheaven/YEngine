@@ -15,12 +15,11 @@ using namespace std;
 
 class CTexture
 {
-	public:
+public:
+	CTexture(const char* filepath);
+	CTexture();
+	~CTexture();
 
-		GLuint mID;
-		std::string mFilePath;
-
-		CTexture(const char* filepath);
-		~CTexture();
-		
+	GLuint mID;
+	std::string mFilePath;
 };

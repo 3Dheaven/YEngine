@@ -1,43 +1,73 @@
 #include "CModel.h"
 
-CModel::CModel(std::string path)
+CModel::CModel(std::string path) :
+	mFilePath(path)
 {
-	mCurrentMesh = NULL;
-	mCurrentMaterial = NULL;
-	mCurrentObject = NULL; 
-	mDefaultMaterial = NULL;
-	mFilePath = path;
-
 	auto filename = path.substr(path.find_last_of("/\\") + 1);
 	mName = filename.substr(0, filename.find("."));
+
+	std::cout << "Load file : " << filename << std::endl;
+
+	Assimp::Importer importer;
+	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+
+	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+	{
+		std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
+		return;
+	}
+
+	mDirectory = path.substr(0, path.find_last_of('/'));
+
+	processMaterial(scene);
+
+	processNode(scene->mRootNode, scene);
 }
 
 CModel::CModel()
 {
-	mCurrentMesh = NULL;
-	mCurrentMaterial = NULL;
-	mCurrentObject = NULL;
-	mDefaultMaterial = NULL;
-	mFilePath = "";
-	mName = "unknown";
+
 }
 
 CModel::~CModel()
 {
-	if(mDefaultMaterial != NULL)
-		delete mDefaultMaterial;
+	for (auto mtl : mMaterials)
+	{
+		delete mtl;
+	}
 }
 
-void
-CModel::addObject(CObject* object, std::vector<CMesh*> meshes)
+void 
+CModel::processNode(aiNode* node, const aiScene* scene)
 {
-	mCurrentObject = object;
-	mObjects.push_back(mCurrentObject);
-
-	for (int i = 0; i < meshes.size(); i++)
+	// Process all the node's meshes (if any)
+	for (GLuint i = 0; i < node->mNumMeshes; i++)
 	{
-		mMeshes.push_back(meshes[i]);
-		unsigned int meshId = static_cast<unsigned int>(mMeshes.size() - 1);
-		mCurrentObject->mMeshes.push_back(meshId);
+		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+		CMesh *m = new CMesh(mesh, scene, mDirectory);
+		
+		// Link material
+		// A mesh only contains an index to a material object
+		if (mesh->mMaterialIndex >= 0)
+		{
+			m->mMaterial = mMaterials[mesh->mMaterialIndex];
+		}
+
+		mMeshes.push_back(m); 
+	}
+	// Then do the same for each of its children
+	for (GLuint i = 0; i < node->mNumChildren; i++)
+	{
+		processNode(node->mChildren[i], scene);
+	}
+}
+
+void 
+CModel::processMaterial(const aiScene* scene)
+{
+	for (GLuint i = 0; i < scene->mNumMaterials; i++)
+	{
+		CMaterial* mtl = new CMaterial(scene->mMaterials[i], mDirectory);
+		mMaterials.push_back(mtl);
 	}
 }

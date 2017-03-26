@@ -9,14 +9,18 @@ FIND_PATH( ASSIMP_INCLUDE_DIR assimp/mesh.h
 	/usr/local/include
 	/opt/local/include
 	${CMAKE_SOURCE_DIR}/includes
+	../../dependencies/assimp/include
 )
+MESSAGE("assimp include path : ${ASSIMP_INCLUDE_DIR}")
 FIND_LIBRARY( ASSIMP_LIBRARY assimp
 	/usr/lib64
 	/usr/lib
 	/usr/local/lib
 	/opt/local/lib
 	${CMAKE_SOURCE_DIR}/lib
+	${CMAKE_MODULE_PATH}/../../dependencies/assimp/lib/Debug
 )
+MESSAGE("assimp include path : ${ASSIMP_LIBRARY}")
 IF(ASSIMP_INCLUDE_DIR AND ASSIMP_LIBRARY)
 	SET( ASSIMP_FOUND TRUE )
 	SET( ASSIMP_LIBRARIES ${ASSIMP_LIBRARY} )

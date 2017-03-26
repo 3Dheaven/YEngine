@@ -1,11 +1,11 @@
-#include "CObject.h"
-
-CObject::CObject(std::string name)
-{
-	mName = name;
-}
-
-CObject::~CObject()
-{
-
-}
+//#include "CObject.h"
+//
+//CObject::CObject(std::string name)
+//{
+//	mName = name;
+//}
+//
+//CObject::~CObject()
+//{
+//
+//}

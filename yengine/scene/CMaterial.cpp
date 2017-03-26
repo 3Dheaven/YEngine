@@ -13,8 +13,7 @@ CMaterial::CMaterial()
 	mMaterialName = "";
 }
 
-CMaterial::CMaterial(std::string name) :
-	mMaterialName(name),
+CMaterial::CMaterial(const aiMaterial* mtl, std::string dir) :
 	mDiffuseColor(glm::vec3(0.5, 0.5, 0.5)),
 	mAlpha(1.0),
 	mShineness(0.0),
@@ -30,11 +29,42 @@ CMaterial::CMaterial(std::string name) :
 	mTextureBump = NULL;
 	mTextureNormal = NULL;
 	mTextureDisp = NULL;
-}
+
+	aiString str;
+
+	if (AI_SUCCESS == mtl->GetTexture(aiTextureType_DIFFUSE, 0, &str))
+	{
+		string filename = string(str.C_Str());
+		string filepath = dir + '/' + filename;
+		mTextureDiffuse = new CTexture(filepath.c_str());
+	}
+
+	if (AI_SUCCESS == mtl->GetTexture(aiTextureType_HEIGHT, 0, &str))
+	{
+		string filename = string(str.C_Str());
+		string filepath = dir + '/' + filename;
+		mTextureNormal = new CTexture(filepath.c_str());
+	}
+
+	if (AI_SUCCESS == mtl->GetTexture(aiTextureType_SPECULAR, 0, &str))
+	{
+		string filename = string(str.C_Str());
+		string filepath = dir + '/' + filename;
+		mTextureSpecular = new CTexture(filepath.c_str());
+	}
+
+	aiColor4D ka, kd, ks;
+	aiGetMaterialColor(mtl, AI_MATKEY_COLOR_AMBIENT, &ka);
+	aiGetMaterialColor(mtl, AI_MATKEY_COLOR_DIFFUSE, &kd);
+	aiGetMaterialColor(mtl, AI_MATKEY_COLOR_SPECULAR, &ks);
+	mAmbientColor = glm::vec3(ka.r, ka.g, ka.b);
+	mDiffuseColor = glm::vec3(kd.r, kd.g, kd.b);
+	mSpecularColor = glm::vec3(ks.r, ks.g, ks.b);
+};
 
 CMaterial::~CMaterial()
 {
-	/*if (mTextureAmbient != NULL)
+	if (mTextureAmbient != NULL)
 		delete mTextureAmbient;
 
 	if (mTextureDiffuse != NULL)
@@ -56,5 +86,5 @@ CMaterial::~CMaterial()
 		delete mTextureNormal;
 
 	if (mTextureDisp != NULL)
-		delete mTextureDisp;*/
+		delete mTextureDisp;
 }

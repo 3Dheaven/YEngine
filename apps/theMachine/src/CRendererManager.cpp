@@ -8,7 +8,7 @@ CRendererManager::CRendererManager(MainWindow *mainWindow) : mMainWindow(mainWin
 	mModulesCombobox->AppendString("TerrainCDLOD");
 	mModulesCombobox->AppendString("TwoDSquare");
 	// ADD NEW RENDERERS HERE
-	mModulesCombobox->SetStringSelection("TwoDSquare");
+	mModulesCombobox->SetStringSelection("ObjLoading");
 
 	map_type * rendererMap = RendererFactory::getMap();
 	map_type::iterator it;

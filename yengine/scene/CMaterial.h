@@ -12,12 +12,20 @@
 #include <gtc/matrix_transform.hpp>
 #include "../image/CTexture.h"
 
+#include <assimp/types.h>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/material.h>
+#include <assimp/postprocess.h>
+
+
 using namespace std;
 
 class CMaterial
 {
 	public:
 		std::string mMaterialName;
+		std::vector<CTexture*> mTextures;
 
 		glm::vec3 mAmbientColor;
 		glm::vec3 mDiffuseColor;
@@ -40,9 +48,13 @@ class CMaterial
 		CTexture* mTextureNormal;
 		CTexture* mTextureDisp;
 
+		std::string mDir;
+
 	public:
-		CMaterial(std::string name);
+
 		CMaterial();
 		~CMaterial();
+
+		CMaterial(const aiMaterial* mtl, std::string dir);
 };
 

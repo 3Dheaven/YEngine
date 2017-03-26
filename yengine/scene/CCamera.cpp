@@ -1,6 +1,6 @@
 #include "CCamera.h"
 
-#ifdef _DEBUG
+/*#ifdef _DEBUG
 #include <crtdbg.h>
 #define DEBUG_NEW new(_NORMAL_BLOCK ,__FILE__, __LINE__)
 #else
@@ -9,7 +9,7 @@
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
-#endif 
+#endif */
 
 
 CCamera::CCamera(glm::vec3 position, glm::vec3 direction, glm::vec3 up):

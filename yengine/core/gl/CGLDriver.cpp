@@ -76,25 +76,25 @@ CGLDriver::init(CMesh *mesh)
 void
 CGLDriver::bindMaterial(CMesh *mesh, CShader* shader) const
 {
-	if (mesh->mHasMaterial)
+	if (mesh->mMaterial)
 	{
 		glEnable(GL_TEXTURE_2D);
 
-		if (mesh->mMaterial->mTextureDiffuse != NULL)
+		if (mesh->mMaterial->mTextureDiffuse)
 		{
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, mesh->mMaterial->mTextureDiffuse->mID);
 			shader->setUniform("texture_diffuse", 0);
 		}
 
-		if (mesh->mMaterial->mTextureNormal != NULL)
+		if (mesh->mMaterial->mTextureNormal)
 		{
 			glActiveTexture(GL_TEXTURE1);
 			glBindTexture(GL_TEXTURE_2D, mesh->mMaterial->mTextureNormal->mID);
 			shader->setUniform("texture_normal", 1);
 		}
 
-		if (mesh->mMaterial->mTextureSpecular != NULL)
+		if (mesh->mMaterial->mTextureSpecular)
 		{
 			glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, mesh->mMaterial->mTextureSpecular->mID);
@@ -110,21 +110,21 @@ CGLDriver::bindMaterial(CMesh *mesh, CShader* shader) const
 void
 CGLDriver::unbindMaterial(CMesh *mesh) const
 {
-	if (mesh->mHasMaterial)
+	if (mesh->mMaterial)
 	{
-		if (mesh->mMaterial->mTextureDiffuse != NULL)
+		if (mesh->mMaterial->mTextureDiffuse)
 		{
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 
-		if (mesh->mMaterial->mTextureNormal != NULL)
+		if (mesh->mMaterial->mTextureNormal)
 		{
 			glActiveTexture(GL_TEXTURE1);
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 
-		if (mesh->mMaterial->mTextureSpecular != NULL)
+		if (mesh->mMaterial->mTextureSpecular)
 		{
 			glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, 0);
@@ -155,15 +155,9 @@ CGLDriver::clean(CMesh *mesh) const
 {
 	glDisableVertexAttribArray(0);
 
-	if (mesh->mHasTexcoords)
-	{
-		glDisableVertexAttribArray(1);
-	}
+	glDisableVertexAttribArray(1);
 
-	if (mesh->mHasNormals)
-	{
-		glDisableVertexAttribArray(2);
-	}
+	glDisableVertexAttribArray(2);
 
 	glDisableVertexArrayAttrib(mesh->mVao, 0);
 }

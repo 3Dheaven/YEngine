@@ -1,9 +1,8 @@
 #include "CTexture.h"
 
 CTexture::CTexture(const char* filepath) :
-mFilePath(filepath)
+	mFilePath(filepath)
 {
-
 	glGenTextures(1, &mID);
 
 	int width, height;
@@ -24,6 +23,11 @@ mFilePath(filepath)
 	SOIL_free_image_data(image);
 
 	//glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+CTexture::CTexture()
+{
+
 }
 
 CTexture::~CTexture()
