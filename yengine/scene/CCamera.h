@@ -76,6 +76,8 @@ class CCamera
 
 		GLfloat getZoom() const;
 
+		glm::mat4 getProjectionMatrix();
+
 		glm::mat4 getViewMatrix();
 
 		void processKeyboard(eCamMvmt dirMvmt, GLfloat deltaTime);

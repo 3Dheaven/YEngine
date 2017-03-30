@@ -45,13 +45,26 @@ void CVKDriver::clean(CMesh * mesh) const
 void
 CVKDriver::updateUniform(const char* name, glm::vec4& value)
 {
-	mVulkan.updateUniforms(value);
+	//mVulkan.prepareUniformBuffer(value);
+	mVulkan.updateUniform(value, name);
+}
+
+void
+CVKDriver::updateUniform(const char* name, glm::mat4& value)
+{
+	mVulkan.updateUniform(value, name);
 }
 
 void
 CVKDriver::addUniform(const char* name, glm::vec4& value)
 {
-	mVulkan.prepareUniformBuffers(value);
+	mVulkan.prepareUniformBuffer(value, name);
+}
+
+void
+CVKDriver::addUniform(const char* name, glm::mat4& value)
+{
+	mVulkan.prepareUniformBuffer(value, name);
 }
 
 void

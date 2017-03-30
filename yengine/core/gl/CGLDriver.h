@@ -22,7 +22,9 @@ public:
 	~CGLDriver();
 
 	void updateUniform(const char* name, glm::vec4& value);
+	void updateUniform(const char* name, glm::mat4& value);
 	void addUniform(const char* name, glm::vec4& value);
+	void addUniform(const char* name, glm::mat4& value);
 	void init(CMesh *mesh) override;
 	void init() {};
 	void bindMaterial(CMesh *mesh, CShader *shader) const override;

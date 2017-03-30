@@ -208,6 +208,12 @@ CCamera::processKeyboard(eCamMvmt dirMvmt, GLfloat deltaTime)
 	}
 }
 
+glm::mat4
+CCamera::getProjectionMatrix()
+{
+	return glm::perspective(mZoom, 1.0f, 0.1f, 100.0f);
+}
+
 glm::mat4 
 CCamera::getViewMatrix()
 {

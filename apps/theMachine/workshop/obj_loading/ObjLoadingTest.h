@@ -45,6 +45,8 @@ private:
 	glm::vec4 mUniformColor;
 	bool mUniformColorHasChanged;
 
+	void updateUniforms();
+
 public:
 	void loadGUI();
 	void cleanGUI();

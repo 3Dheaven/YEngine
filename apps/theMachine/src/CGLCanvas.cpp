@@ -95,7 +95,12 @@ CGLCanvas::onPaint(wxPaintEvent& event)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	glCullFace(GL_BACK);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	
+	//auto m_llTimerStartTick = wxGetLocalTimeMillis();
+	// ...
+	//llTimerStopTick = wxGetLocalTimeMillis();
+	//const wxLongLong llElapsedTime = llTimerStopTick - m_llTimerStartTick;
 
 	mRenderer->render();
 

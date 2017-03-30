@@ -169,8 +169,21 @@ CGLDriver::updateUniform(const char* name, glm::vec4& value)
 	getShader()->setUniform(name, value);
 }
 
+void
+CGLDriver::updateUniform(const char* name, glm::mat4& value)
+{
+	getShader()->use();
+	getShader()->setUniform(name, value);
+}
+
 void 
 CGLDriver::addUniform(const char* name, glm::vec4& value)
+{
+	getShader()->setUniform(name, value);
+}
+
+void
+CGLDriver::addUniform(const char* name, glm::mat4& value)
 {
 	getShader()->setUniform(name, value);
 }

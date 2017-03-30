@@ -27,7 +27,9 @@ public:
 
 	virtual CShader *getShader() const final;
 	virtual void updateUniform(const char* name, glm::vec4& value) = 0;
+	virtual void updateUniform(const char* name, glm::mat4& value) = 0;
 	virtual void addUniform(const char* name, glm::vec4& value) = 0;
+	virtual void addUniform(const char* name, glm::mat4& value) = 0;
 	virtual void init(CMesh* mesh) = 0;
 	virtual void init() = 0;
 	virtual void bindMaterial(CMesh* mesh, CShader* shader) const = 0;

@@ -64,34 +64,35 @@ ObjLoading::setupGraphics()
 											 glm::vec3(0.0f, 1.0f, 0.0f)));
 
 	mScene = new CScene(mGDriver);
-	mScene->add(projectPath + "//media//nanosuit//nanosuit.obj");
+	mScene->add(projectPath + "//media//sphere.obj"); //nanosuit//nanosuit.obj
 
 	mUniformColor = glm::vec4(1.0, 1.0, 1.0, 1.0);
-	mGDriver->getShader()->setUniform("custom_color", mUniformColor);
 	mUniformColorHasChanged = true;
+
+	updateUniforms();
+}
+
+void 
+ObjLoading::updateUniforms()
+{
+	if (mUniformColorHasChanged)
+	{
+		mGDriver->updateUniform("custom_color", mUniformColor);
+		mUniformColorHasChanged = false;
+	}
+
+	mGDriver->updateUniform("projection_matrix", mCam->getProjectionMatrix());
+	mGDriver->updateUniform("view_matrix", mCam->getViewMatrix());
+	
+	glm::mat4 model;
+	model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+	mGDriver->updateUniform("model_matrix", model);
 }
 
 void 
 ObjLoading::render()
 {
-	mGDriver->getShader()->use();
-
-	mCam->projMatrix = glm::perspective(mCam->getZoom(), 1.0f, 0.1f, 100.0f);
-	mGDriver->getShader()->setUniform("projection_matrix", mCam->projMatrix);
-	mGDriver->getShader()->setUniform("view_matrix", mCam->getViewMatrix());
-	// glm::vec3((sin(time * 1.0f) + 1.0f) / 2.0f, (sin(time * 0.5f) + 1.0f) / 2.0f, (cos(time * 0.25f) + 1.0f) / 2.0f)
-	if (mUniformColorHasChanged)
-	{
-		mGDriver->getShader()->setUniform("custom_color", mUniformColor);
-		mUniformColorHasChanged = false;
-	}
-
-	glm::mat4 model;
-	//glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); 
-	model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f)); 
-	//model = glm::rotate(model, (float)time * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
-	mGDriver->getShader()->setUniform("model_matrix", model);
-
+	updateUniforms();
 	mScene->render(mGDriver->getShader());
 }
 

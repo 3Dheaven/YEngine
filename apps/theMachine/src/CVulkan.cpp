@@ -123,8 +123,11 @@ CVulkan::~CVulkan()
 				vkDestroySemaphore(logicalDevice, m_renderFinishedSemaphore, nullptr);
 			}
 
-			vkFreeMemory(logicalDevice, m_uniformMemorie, nullptr);
-			vkDestroyBuffer(logicalDevice, m_uniformBuffer, nullptr);
+			for (int i = 0; i < mUniforms.size(); i++)
+			{
+				vkFreeMemory(logicalDevice, mUniforms[i].memory, nullptr);
+				vkDestroyBuffer(logicalDevice, mUniforms[i].buffer, nullptr);
+			}
 
 			vkDestroyDevice(logicalDevice, nullptr);
 		}
@@ -385,19 +388,6 @@ void CVulkan::recreateSwapchain()
 	CreateCommandBuffers();
 }
 
-void 
-CVulkan::updateUniforms(glm::vec4 &value)
-{
-	void* data;
-	auto result = vkMapMemory(m_device.mLogicalDevice, m_uniformMemorie, 0, sizeof(glm::vec4), 0, &data);
-	if (result != VK_SUCCESS)
-	{
-		throw CVulkanException(result, "Error attempting to map memory:");
-	}
-	memcpy(data, &value, sizeof(glm::vec4));
-	vkUnmapMemory(m_device.mLogicalDevice, m_uniformMemorie);
-}
-
 void CVulkan::render()
 {
 	try
@@ -500,26 +490,31 @@ void CVulkan::render()
 // Prepare vertex and index buffers for an indexed triangle
 void CVulkan::prepareVertices(std::vector<sVertex>& vertices, std::vector<unsigned int>& indices)
 {
-	// Rectangle vertices
+	
+	//std::vector<glm::vec3> vert;
 	for (auto i : vertices)
 	{
 		auto v = i.position;
 		m_vertices.push_back(v);
 	}
+	//m_vertices.push_back(vert);
 	
-	// Rectangle indices
-	std::vector<unsigned int> indexRectangle;
-	for (auto i : indices)
-	{
-		indexRectangle.push_back(i);
-	}
-
 	// Create vertex buffer, memory, bind buffer/memory and map memory
+	//VkBuffer vertexBuffer;
+	//VkDeviceMemory vertexMemory;
 	CreateVertexBuffer(m_vertexBuffer, m_vertexMemory);
+	//m_vertexBuffer.push_back(vertexBuffer);
+	//m_vertexMemory.push_back(vertexMemory);
 
 	// Create index buffer, memory, bind buffer/memory and map memory
-	m_indices.insert(m_indices.begin(), indexRectangle.begin(), indexRectangle.end());
+	//std::vector<unsigned int> ind;
+	m_indices.insert(m_indices.begin(), indices.begin(), indices.end());
+	//m_indices.push_back(ind);
+	//VkBuffer indexBuffer;
+	//VkDeviceMemory indexMemory;
 	CreateIndexBuffer(m_indexBuffer, m_indexMemory);
+	//m_indexBuffer.push_back(indexBuffer);
+	//m_indexMemory.push_back(indexMemory);
 
 	mShader.mBindingDescription.binding = 0;
 	mShader.mBindingDescription.stride = sizeof(glm::vec3);
@@ -534,104 +529,6 @@ void CVulkan::prepareVertices(std::vector<sVertex>& vertices, std::vector<unsign
 
 }
 
-void CVulkan::prepareUniformBuffers(glm::vec4& value)
-{
-	// Uniform buffer, allocation memory and binding
-	CreateUniformBuffer(m_uniformBuffer, sizeof(glm::vec4), m_uniformMemorie);
-
-	// Initialize the memory
-	void* data;
-	{
-		auto result = vkMapMemory(m_device.mLogicalDevice, m_uniformMemorie, 0, sizeof(glm::vec4), 0, &data);
-
-		if (result != VK_SUCCESS)
-		{
-			throw CVulkanException(result, "Error attempting to map memory:");
-		}
-	}
-
-	memcpy(data, &value, sizeof(glm::vec4));
-	vkUnmapMemory(m_device.mLogicalDevice, m_uniformMemorie);
-
-	// Descriptor in the shader
-	VkDescriptorSetLayoutBinding m_descriptorSetLayoutBinding;
-	m_descriptorSetLayoutBinding.binding = 0;
-	m_descriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	m_descriptorSetLayoutBinding.descriptorCount = 1;
-	m_descriptorSetLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	m_descriptorSetLayoutBinding.pImmutableSamplers = nullptr;
-
-	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo;
-	descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	descriptorSetLayoutCreateInfo.pNext = nullptr;
-	descriptorSetLayoutCreateInfo.bindingCount = 1;
-	descriptorSetLayoutCreateInfo.pBindings = &m_descriptorSetLayoutBinding;
-
-	{
-		auto result = vkCreateDescriptorSetLayout(m_device.mLogicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &m_descriptorSetLayout);
-
-		if (result != VK_SUCCESS)
-		{
-			throw CVulkanException(result, "Failed to create descriptor set layout:");
-		}
-	}
-
-	// NEED A BIT OF REFACTORING...
-	VkDescriptorPoolSize m_descriptorPoolSize;
-	m_descriptorPoolSize.descriptorCount = 1;
-	m_descriptorPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-
-	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo;
-	descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	descriptorPoolCreateInfo.maxSets = 1;
-	descriptorPoolCreateInfo.pNext = nullptr;
-	descriptorPoolCreateInfo.poolSizeCount = 1;
-	descriptorPoolCreateInfo.pPoolSizes = &m_descriptorPoolSize;
-
-	VkDescriptorPool m_descriptorPool;
-	auto result = vkCreateDescriptorPool(m_device.mLogicalDevice, &descriptorPoolCreateInfo, nullptr, &m_descriptorPool);
-
-	if (result != VK_SUCCESS)
-	{
-		throw CVulkanException(result, "Error attempting to create a pool descriptor:");
-	}
-
-	VkDescriptorSetAllocateInfo m_descriptorSetAllocateInfo;
-	m_descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	m_descriptorSetAllocateInfo.pNext = nullptr;
-	m_descriptorSetAllocateInfo.descriptorPool = m_descriptorPool;
-	m_descriptorSetAllocateInfo.descriptorSetCount = 1;
-	m_descriptorSetAllocateInfo.pSetLayouts = &m_descriptorSetLayout;
-
-	result = vkAllocateDescriptorSets(m_device.mLogicalDevice, &m_descriptorSetAllocateInfo, &m_descriptorSet);
-
-	if (result != VK_SUCCESS)
-	{
-		throw CVulkanException(result, "Error attempting to allocate a descriptor set:");
-	}
-
-	VkDescriptorBufferInfo bufferInfo;
-	bufferInfo.buffer = m_uniformBuffer;
-	bufferInfo.offset = 0;
-	bufferInfo.range = sizeof(glm::vec4);
-
-	VkWriteDescriptorSet descriptorWrite;
-	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.dstSet = m_descriptorSet;
-	descriptorWrite.dstBinding = 0;
-	descriptorWrite.dstArrayElement = 0;
-
-	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorWrite.descriptorCount = 1;
-
-	descriptorWrite.pBufferInfo = &bufferInfo;
-	descriptorWrite.pImageInfo = nullptr; // Optional
-	descriptorWrite.pTexelBufferView = nullptr; // Optional
-
-	vkUpdateDescriptorSets(m_device.mLogicalDevice, 1, &descriptorWrite, 0, nullptr);
-
-
-}
 
 
 void CVulkan::CreateUniformBuffer(VkBuffer &buffer, uint32_t size, VkDeviceMemory &deviceMemorie)

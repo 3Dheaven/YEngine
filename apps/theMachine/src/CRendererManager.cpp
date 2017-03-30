@@ -7,8 +7,9 @@ CRendererManager::CRendererManager(MainWindow *mainWindow) : mMainWindow(mainWin
 	mModulesCombobox->AppendString("ObjLoading");
 	mModulesCombobox->AppendString("TerrainCDLOD");
 	mModulesCombobox->AppendString("TwoDSquare");
+	mModulesCombobox->AppendString("CubeTest");
 	// ADD NEW RENDERERS HERE
-	mModulesCombobox->SetStringSelection("ObjLoading");
+	mModulesCombobox->SetStringSelection("TwoDSquare");
 
 	map_type * rendererMap = RendererFactory::getMap();
 	map_type::iterator it;
@@ -22,7 +23,7 @@ CRendererManager::CRendererManager(MainWindow *mainWindow) : mMainWindow(mainWin
 	mGDriver = NULL;
 	mRenderer = RendererFactory::createInstance((std::string)mModulesCombobox->GetStringSelection());
 	
-	gApi = API_OPENGL;
+	gApi = API_VULKAN;
 	switch (gApi)
 	{
 		case API_VULKAN:
