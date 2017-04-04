@@ -76,6 +76,10 @@ include_directories(${ASSIMP_INCLUDE_DIR})
 # force Unicode over Multi-byte
 add_definitions(-DUNICODE -D_UNICODE)
 
+#wxwidget seems to use some depracated functions : disable warnings on visual studio about it
+add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
+add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
+
 add_executable(${EXE_NAME} ${SRC_FILES})
 set(LIBS opengl32 ${Vulkan_LIBRARY}) 
 target_link_libraries(${EXE_NAME} ${LIBS} ${GLEW_LIBRARY} ${SOIL_LIBRARY} ${ASSIMP_LIBRARY})
