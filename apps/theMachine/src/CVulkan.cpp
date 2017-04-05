@@ -213,9 +213,9 @@ void CVulkan::CreateGraphicsPipeline(const std::string& vertexShaderFile, const 
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	rasterizer.depthClampEnable = VK_FALSE;
 	rasterizer.rasterizerDiscardEnable = VK_FALSE;
-	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+	rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
 	rasterizer.lineWidth = 1.0f;
-	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+	rasterizer.cullMode = VK_CULL_MODE_NONE;
 	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -364,7 +364,7 @@ void CVulkan::CreateCommandBuffers()
 		vkCmdBindDescriptorSets(m_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &mDescriptorSet, 0, nullptr);
 		//vkCmdDraw(m_commandBuffers[i], m_vertices.size(), 1, 0, 0);
 		vkCmdDrawIndexed(m_commandBuffers[i], m_indices.size(), 1, 0, 0, 0);
-
+		auto s = m_indices.size();
 		vkCmdEndRenderPass(m_commandBuffers[i]);
 
 		// We've finished recording the command buffer
@@ -511,41 +511,33 @@ void CVulkan::render()
 // Prepare vertex and index buffers for an indexed triangle
 void CVulkan::prepareVertices(std::vector<sVertex>& vertices, std::vector<unsigned int>& indices)
 {
-	
-	//std::vector<glm::vec3> vert;
+	auto v = vertices.size();
+	auto isize = indices.size();
+
 	for (auto i : vertices)
 	{
 		auto v = i.position;
 		m_vertices.push_back(v);
 	}
-	//m_vertices.push_back(vert);
-	
+
 	// Create vertex buffer, memory, bind buffer/memory and map memory
-	//VkBuffer vertexBuffer;
-	//VkDeviceMemory vertexMemory;
 	CreateVertexBuffer(m_vertexBuffer, m_vertexMemory);
-	//m_vertexBuffer.push_back(vertexBuffer);
-	//m_vertexMemory.push_back(vertexMemory);
 
 	// Create index buffer, memory, bind buffer/memory and map memory
-	//std::vector<unsigned int> ind;
 	m_indices.insert(m_indices.begin(), indices.begin(), indices.end());
-	//m_indices.push_back(ind);
-	//VkBuffer indexBuffer;
-	//VkDeviceMemory indexMemory;
 	CreateIndexBuffer(m_indexBuffer, m_indexMemory);
-	//m_indexBuffer.push_back(indexBuffer);
-	//m_indexMemory.push_back(indexMemory);
 
+	// We are now describing the Input Vertex Data
+	// A vertex input binding is used to describe the data arrangement to the GPU.
 	mShader.mBindingDescription.binding = 0;
-	mShader.mBindingDescription.stride = sizeof(glm::vec3);
+	mShader.mBindingDescription.stride = sizeof(glm::vec3);					// Size of one vertex
 	mShader.mBindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 	mShader.mAttributeDescriptions.emplace_back();
 	auto &attributeDescription = mShader.mAttributeDescriptions.back();
-	attributeDescription.binding = 0;
+	attributeDescription.binding = 0;										
 	attributeDescription.location = 0;
-	attributeDescription.format = VK_FORMAT_R32G32_SFLOAT;
+	attributeDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
 	attributeDescription.offset = 0;
 
 }
@@ -597,12 +589,8 @@ void CVulkan::CreateIndexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceMemorie)
 
 	void* data;
 
-	auto result = vkMapMemory(m_device.mLogicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
-
-	if (result != VK_SUCCESS)
-	{
-		throw CVulkanException(result, "Error attempting to map memory:");
-	}
+	VK_CHECK_RESULT(vkMapMemory(m_device.mLogicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data),
+		"Error attempting to map memory:");
 
 	memcpy(data, m_indices.data(), (size_t)bufferSize);
 	vkUnmapMemory(m_device.mLogicalDevice, stagingBufferMemory);

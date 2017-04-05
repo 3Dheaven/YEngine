@@ -6,15 +6,15 @@ out gl_PerVertex
     vec4 gl_Position;
 };
 
-layout(binding = 1) uniform myUniformMatrixBuffer
+layout(std140, set = 0, binding = 1) uniform block
 {
-	mat4 myElement;
-}uboVS;
+	mat4 mvp;
+}ubo;
 
-layout(location = 0) in vec3 inPosition;
+layout(location = 0) in vec4 inPosition;
 
 void main()
 {
-    gl_Position = uboVS.myElement * vec4(inPosition, 1.0);
+    gl_Position = ubo.mvp * inPosition;
 
 }
