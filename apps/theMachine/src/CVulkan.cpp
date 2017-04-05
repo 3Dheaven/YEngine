@@ -76,8 +76,14 @@ void CVulkan::finalizeSetup()
 						  projectPath + vertfragShaderPath + fragShaderFile + " -o " +
 						  projectPath + vertfragShaderPath + "frag.spv";
 
-	std::system(cmdVert.c_str());
-	std::system(cmdFrag.c_str());
+	std::cout << cmd::execute(cmdVert.c_str()) << std::endl;
+	std::cout << cmd::execute(cmdFrag.c_str()) << std::endl;
+
+	setupDescriptorSetLayout();
+
+	setupDescriptorPool();
+
+	setupDescriptorSet();
 
 	CreateGraphicsPipeline(projectPath + vertfragShaderPath + "vert.spv",
 						   projectPath + vertfragShaderPath + "frag.spv");
@@ -236,7 +242,7 @@ void CVulkan::CreateGraphicsPipeline(const std::string& vertexShaderFile, const 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = &m_descriptorSetLayout;
+	pipelineLayoutInfo.pSetLayouts = &mDescriptorSetLayout;
 
 	auto &logicalDevice = m_device.mLogicalDevice;
 
@@ -340,7 +346,7 @@ void CVulkan::CreateCommandBuffers()
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(m_commandBuffers[i], 0, 1, vertexBuffers, offsets);
 		vkCmdBindIndexBuffer(m_commandBuffers[i], m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-		vkCmdBindDescriptorSets(m_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);
+		vkCmdBindDescriptorSets(m_commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &mDescriptorSet, 0, nullptr);
 		//vkCmdDraw(m_commandBuffers[i], m_vertices.size(), 1, 0, 0);
 		vkCmdDrawIndexed(m_commandBuffers[i], m_indices.size(), 1, 0, 0, 0);
 
@@ -590,4 +596,91 @@ void CVulkan::CreateIndexBuffer(VkBuffer &buffer, VkDeviceMemory &deviceMemorie)
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, deviceMemorie);
 
 	m_device.CopyBuffer(stagingBuffer, buffer, bufferSize);
+}
+
+void 
+CVulkan::setupDescriptorSetLayout()
+{
+	unsigned char numBinding = 0;
+	std::vector<VkDescriptorSetLayoutBinding> mDescriptorSetLayoutBindings;
+
+	for (auto &u : mUniforms)
+	{
+		VkDescriptorSetLayoutBinding m_descriptorSetLayoutBinding;
+		m_descriptorSetLayoutBinding.binding = numBinding;
+		m_descriptorSetLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		m_descriptorSetLayoutBinding.descriptorCount = 1;
+		m_descriptorSetLayoutBinding.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS; // Access to this binding in all shader stages
+		m_descriptorSetLayoutBinding.pImmutableSamplers = nullptr;
+		mDescriptorSetLayoutBindings.push_back(m_descriptorSetLayoutBinding);
+
+		numBinding++;
+	}
+
+	VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo;
+	descriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	descriptorSetLayoutCreateInfo.pNext = nullptr;
+	descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(mDescriptorSetLayoutBindings.size()); // Number of VkDescriptorSetLayoutBinding
+	descriptorSetLayoutCreateInfo.pBindings = mDescriptorSetLayoutBindings.data();
+	descriptorSetLayoutCreateInfo.flags = 0;
+
+	VK_CHECK_RESULT(vkCreateDescriptorSetLayout(m_device.mLogicalDevice, &descriptorSetLayoutCreateInfo, nullptr, &mDescriptorSetLayout),
+		"Failed to create descriptor set layout:");
+}
+
+void 
+CVulkan::setupDescriptorPool()
+{
+	std::vector<VkDescriptorPoolSize> descriptorPoolSize;
+	for (auto &u : mUniforms)
+	{
+		VkDescriptorPoolSize m_descriptorPoolSize;
+		m_descriptorPoolSize.descriptorCount = 1;
+		m_descriptorPoolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorPoolSize.push_back(m_descriptorPoolSize);
+	}
+
+	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo;
+	descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	descriptorPoolCreateInfo.maxSets = 1;
+	descriptorPoolCreateInfo.pNext = nullptr;
+	descriptorPoolCreateInfo.poolSizeCount = static_cast<uint32_t>(descriptorPoolSize.size());
+	descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSize.data();
+
+	VK_CHECK_RESULT(vkCreateDescriptorPool(m_device.mLogicalDevice, &descriptorPoolCreateInfo, nullptr, &mDescriptorPool),
+		"Error attempting to create a pool descriptor:");
+
+}
+
+void
+CVulkan::setupDescriptorSet()
+{
+	VkDescriptorSetAllocateInfo m_descriptorSetAllocateInfo;
+	m_descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	m_descriptorSetAllocateInfo.pNext = nullptr;
+	m_descriptorSetAllocateInfo.descriptorPool = mDescriptorPool;
+	m_descriptorSetAllocateInfo.descriptorSetCount = 1;
+	m_descriptorSetAllocateInfo.pSetLayouts = &mDescriptorSetLayout;
+
+	VK_CHECK_RESULT(vkAllocateDescriptorSets(m_device.mLogicalDevice, &m_descriptorSetAllocateInfo, &mDescriptorSet),
+		"Error attempting to allocate a descriptor set:");
+
+	std::vector<VkWriteDescriptorSet> mWriteDescriptorSets;
+	for (auto &u : mUniforms)
+	{
+		VkWriteDescriptorSet descriptorWrite;
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = mDescriptorSet;
+		descriptorWrite.dstBinding = mWriteDescriptorSets.size();
+		descriptorWrite.dstArrayElement = 0;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.pBufferInfo = &u.bufferInfos;
+		descriptorWrite.pImageInfo = nullptr;								// Optional
+		descriptorWrite.pTexelBufferView = nullptr;						    // Optional
+
+		mWriteDescriptorSets.push_back(descriptorWrite);
+	}
+
+	vkUpdateDescriptorSets(m_device.mLogicalDevice, static_cast<uint32_t>(mWriteDescriptorSets.size()), mWriteDescriptorSets.data(), 0, NULL);
 }

@@ -44,6 +44,7 @@ private:
 	CGraphicDriver *mGDriver;
 
 	glm::vec4 mUniformColor;
+	glm::vec4 mUniformColor2;
 	bool mUniformColorHasChanged;
 
 public:

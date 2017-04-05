@@ -93,6 +93,10 @@ TwoDSquare::setupGraphics()
 	
 	mUniformColor = glm::vec4(1.0, 0.0, 0.0, 1.0);
 	mGDriver->addUniform("custom_color", mUniformColor);
+
+	mUniformColor2 = glm::vec4(0.0, 0.0, 1.0, 1.0);
+	mGDriver->addUniform("custom_color_two", mUniformColor2);
+
 	mUniformColorHasChanged = true;
 
 	mGDriver->finalizeSetup();
@@ -101,11 +105,11 @@ TwoDSquare::setupGraphics()
 void 
 TwoDSquare::render()
 {
-	if (mUniformColorHasChanged)
+	/*if (mUniformColorHasChanged)
 	{
 		mGDriver->updateUniform("custom_color", mUniformColor);
 		mUniformColorHasChanged = false;
-	}
+	}*/
 
 	mScene->render(mGDriver->getShader());
 }
