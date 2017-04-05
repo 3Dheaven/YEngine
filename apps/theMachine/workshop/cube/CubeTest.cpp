@@ -5,6 +5,7 @@ CubeTest::CubeTest()
 	mGDriver = NULL;
 	mRightPanel = NULL;
 	mScene = NULL;
+	fakeTime = 1;
 }
 
 CubeTest::CubeTest(CGraphicDriver *gdriver, wxPanel* panel)
@@ -12,6 +13,7 @@ CubeTest::CubeTest(CGraphicDriver *gdriver, wxPanel* panel)
 	mGDriver = gdriver;
 	mRightPanel = panel;
 	mScene = NULL;
+	fakeTime = 1;
 	loadGUI();
 }
 
@@ -20,6 +22,7 @@ CubeTest::init(CGraphicDriver *gdriver, wxPanel* panel)
 {
 	mGDriver = gdriver;
 	mRightPanel = panel;
+	fakeTime = 1;
 	setupGraphics();
 	loadGUI();
 }
@@ -78,24 +81,21 @@ CubeTest::setupGraphics()
 	sVertex c8 = { glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(0.0, 0.0) };
 	mesh2->mVertices = { c1, c2, c3, c4, c5, c6, c7, c8 };
 	//					      front					  top					  back				 
-	mesh2->mIndices = { 0, 1, 2, 2, 3, 0,		1, 5, 6, 6, 2, 1,		7, 6, 5, 5, 4, 7,		
+	mesh2->mIndices = { 0, 1, 2, 2, 3, 0,		1, 5, 6, 6, 2, 1,		7, 6, 5, 5, 4, 7,
 	//						  bottom				 left					  right
 						4, 0, 3, 3, 7, 4,		4, 5, 1, 1, 0, 4,		3, 2, 6, 6, 7, 3 };
 
 	mScene = new CScene(mGDriver);
-	//mScene->add(mesh);
 	mScene->add(mesh2);
 	
 	mUniformColor = glm::vec4(1.0, 0.0, 0.0, 1.0);
 	mGDriver->addUniform("custom_color", mUniformColor);
 	mUniformColorHasChanged = true;
 
-	mGDriver->addUniform("projection_matrix", mCam->getProjectionMatrix());
-	mGDriver->addUniform("view_matrix", mCam->getViewMatrix());
-
 	glm::mat4 model;
 	model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-	mGDriver->addUniform("model_matrix", model);
+	glm::mat4 mvp = mCam->getProjectionMatrix() * mCam->getViewMatrix() * model;
+	mGDriver->addUniform("mvp", mvp);
 
 	mGDriver->finalizeSetup();
 }
@@ -109,15 +109,16 @@ CubeTest::render()
 		mUniformColorHasChanged = false;
 	}
 
-	mGDriver->updateUniform("projection_matrix", mCam->getProjectionMatrix());
-	mGDriver->updateUniform("view_matrix", mCam->getViewMatrix());
-
 	glm::mat4 model;
-	model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-	//model = glm::rotate(model, (float)time * 0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
-	mGDriver->updateUniform("model_matrix", model);
+	model = glm::rotate(model, fakeTime, glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 mvp = mCam->getProjectionMatrix() * mCam->getViewMatrix() * model;
+	mGDriver->updateUniform("mvp", mvp);
 
 	mScene->render(mGDriver->getShader());
+
+	fakeTime += 0.1;
+	if (fakeTime > 1000000.0)
+		fakeTime = 1.0;
 }
 
 void 

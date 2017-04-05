@@ -46,6 +46,7 @@ private:
 
 	glm::vec4 mUniformColor;
 	bool mUniformColorHasChanged;
+	float fakeTime;
 
 public:
 	void loadGUI();

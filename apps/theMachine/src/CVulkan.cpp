@@ -64,7 +64,7 @@ void CVulkan::finalizeSetup()
 		}
 	}
 	
-	std::string vertfragShaderPath = "//apps//theMachine//workshop//2d_square//";
+	std::string vertfragShaderPath = "//apps//theMachine//workshop//cube//";
 	std::string vertShaderFile = "shader.vert";
 	std::string fragShaderFile = "shader.frag";
 
@@ -318,6 +318,21 @@ void CVulkan::CreateCommandBuffers()
 		beginInfo.pInheritanceInfo = nullptr;								// Optional
 
 		result = vkBeginCommandBuffer(m_commandBuffers[i], &beginInfo);
+
+		// barrier for reading from uniform buffer after all writing is done:
+		VkMemoryBarrier uniformMemoryBarrier = {};
+		uniformMemoryBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+		uniformMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+		uniformMemoryBarrier.dstAccessMask = VK_ACCESS_UNIFORM_READ_BIT;
+
+		vkCmdPipelineBarrier(m_commandBuffers[i],
+			VK_PIPELINE_STAGE_HOST_BIT,
+			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			0,
+			1, &uniformMemoryBarrier,
+			0, NULL,
+			0, NULL);
+
 
 		if (result != VK_SUCCESS)
 		{

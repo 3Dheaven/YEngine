@@ -9,7 +9,7 @@ CRendererManager::CRendererManager(MainWindow *mainWindow) : mMainWindow(mainWin
 	mModulesCombobox->AppendString("TwoDSquare");
 	mModulesCombobox->AppendString("CubeTest");
 	// ADD NEW RENDERERS HERE
-	mModulesCombobox->SetStringSelection("TwoDSquare");
+	mModulesCombobox->SetStringSelection("CubeTest");
 
 	map_type * rendererMap = RendererFactory::getMap();
 	map_type::iterator it;

@@ -103,6 +103,15 @@ public:
 				VK_CHECK_RESULT(vkMapMemory(m_device.mLogicalDevice, u.memory, 0, sizeof(T), 0, &data), 
 								"Error attempting to map memory for uniform:");
 				memcpy(data, &value, sizeof(T));
+
+				// flush device memory
+				VkMappedMemoryRange memoryRange = {};
+				memoryRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+				memoryRange.memory = u.memory;
+				memoryRange.offset = 0;
+				memoryRange.size = VK_WHOLE_SIZE;
+				vkFlushMappedMemoryRanges(m_device.mLogicalDevice, 1, &memoryRange);
+				
 				vkUnmapMemory(m_device.mLogicalDevice, u.memory);
 				break;
 			}
