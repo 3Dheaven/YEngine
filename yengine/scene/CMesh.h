@@ -53,7 +53,8 @@ class CMesh
 			mDir = dir;
 			mNbVertices = mesh->mNumVertices;
 			mNbFaces = mesh->mNumFaces;
-			mHasTexcoord0 = mesh->mTextureCoords[0];
+			if(mesh->mTextureCoords[0])
+				mHasTexcoord0 = true;
 
 			// Fetch vertex
 			for (GLuint i = 0; i < mesh->mNumVertices; i++)

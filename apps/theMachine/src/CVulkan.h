@@ -42,6 +42,9 @@ private:
 		VkDescriptorBufferInfo bufferInfos;
 	};
 
+	std::string vsShaderFullFilePath;
+	std::string fsShaderFullFilePath;
+
 	CVkInstance mVulkanInstance;
 	CVkSwapChain m_swapChain;
 	CVkDevice m_device;
@@ -155,5 +158,7 @@ public:
 	void setupDescriptorPool();
 
 	void finalizeSetup();
+
+	void setupShader(const std::string vs, const std::string fs);
 };
 

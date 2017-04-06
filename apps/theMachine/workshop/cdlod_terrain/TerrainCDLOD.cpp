@@ -54,7 +54,7 @@ TerrainCDLOD::setupGraphics()
 	mCam->setYaw(45.0f);
 	mCam->update();
 
-	std::vector<std::string> splittedPath = strh::split(sys::getExecutablePath(), '\\');
+	std::vector<std::string> splittedPath = strh::split(sys::getFullFilePath(), '\\');
 	std::string projectPath;
 	for (auto i : splittedPath)
 	{

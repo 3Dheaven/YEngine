@@ -49,44 +49,14 @@ CVulkan::prepare(HWND *hwnd, const wxSize& size)
 
 void CVulkan::finalizeSetup()
 {
-	std::vector<std::string> splittedPath = strh::split(sys::getExecutablePath(), '\\');
-	std::string projectPath;
-	for (auto i : splittedPath)
-	{
-		if (i != "YEngine")
-		{
-			projectPath += i + "\\";
-		}
-		else
-		{
-			projectPath += i;
-			break;
-		}
-	}
 	
-	std::string vertfragShaderPath = "//apps//theMachine//workshop//cube//";
-	std::string vertShaderFile = "shader.vert";
-	std::string fragShaderFile = "shader.frag";
-
-	std::string cmdVert = projectPath + "//tools//glslangValidator.exe -V " + 
-					      projectPath + vertfragShaderPath + vertShaderFile + " -o " +
-					      projectPath + vertfragShaderPath + "vert.spv";
-
-	std::string cmdFrag = projectPath + "//tools//glslangValidator.exe -V " +
-						  projectPath + vertfragShaderPath + fragShaderFile + " -o " +
-						  projectPath + vertfragShaderPath + "frag.spv";
-
-	std::cout << cmd::execute(cmdVert.c_str()) << std::endl;
-	std::cout << cmd::execute(cmdFrag.c_str()) << std::endl;
-
 	setupDescriptorSetLayout();
 
 	setupDescriptorPool();
 
 	setupDescriptorSet();
 
-	CreateGraphicsPipeline(projectPath + vertfragShaderPath + "vert.spv",
-						   projectPath + vertfragShaderPath + "frag.spv");
+	CreateGraphicsPipeline(vsShaderFullFilePath, fsShaderFullFilePath);
 
 	CreateCommandBuffers();
 	CreateSemaphores();
@@ -686,4 +656,40 @@ CVulkan::setupDescriptorSet()
 	}
 
 	vkUpdateDescriptorSets(m_device.mLogicalDevice, static_cast<uint32_t>(mWriteDescriptorSets.size()), mWriteDescriptorSets.data(), 0, NULL);
+}
+
+void 
+CVulkan::setupShader(const std::string vsFile, std::string fsFile)
+{
+	std::string glslang = sys::getProjectPath("YEngine") + "//tools//glslangValidator.exe ";
+
+	// Build vertex shader output full file path
+	std::vector<std::string> splittedVsPath = strh::split(vsFile, '/');
+	std::string vsFilePath = "";
+	
+	for (int i = 0; i < splittedVsPath.size() - 1; i++)
+		vsFilePath += splittedVsPath[i] + "\\";
+	
+	size_t foundVs = vsFile.find_last_of("/\\");
+	std::string vsFileNameWithExt = vsFile.substr(foundVs + 1);
+	std::string vsFileName = vsFileNameWithExt.substr(0, vsFileNameWithExt.find("."));
+	vsShaderFullFilePath = vsFilePath + vsFileName + "_vs.spv";
+
+	// Build fragment shader output full file path
+	std::vector<std::string> splittedFsPath = strh::split(fsFile, '/');
+	std::string fsFilePath = "";
+
+	for (int i = 0; i < splittedFsPath.size() - 1; i++)
+		fsFilePath += splittedFsPath[i] + "\\";
+	
+	size_t foundFs = fsFile.find_last_of("/\\");
+	std::string fsFileNameWithExt = fsFile.substr(foundFs + 1);
+	std::string fsFileName = fsFileNameWithExt.substr(0, fsFileNameWithExt.find("."));
+	fsShaderFullFilePath = fsFilePath + fsFileName + "_fs.spv";
+
+	// Execute conversion to spir-v
+	std::string cmdVert = glslang + " -V " + vsFile + " -o " + vsShaderFullFilePath;
+	std::string cmdFrag = glslang + " -V " + fsFile + " -o " + fsShaderFullFilePath;
+	std::cout << cmd::execute(cmdVert.c_str()) << std::endl;
+	std::cout << cmd::execute(cmdFrag.c_str()) << std::endl;
 }

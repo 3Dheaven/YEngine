@@ -72,3 +72,9 @@ CVKDriver::finalizeSetup()
 {
 	mVulkan.finalizeSetup();
 }
+
+void 
+CVKDriver::createShader(const string& vertexShader, const string& pixelShader) 
+{
+	mVulkan.setupShader(vertexShader, pixelShader);
+}

@@ -45,26 +45,15 @@ CubeTest::getCam()
 void 
 CubeTest::setupGraphics()
 {
-	std::vector<std::string> splittedPath = strh::split(sys::getExecutablePath(), '\\');
-	std::string projectPath;
-	for (auto i : splittedPath)
-	{
-		if (i != "YEngine")
-		{
-			projectPath += i + "\\";
-		}
-		else
-		{
-			projectPath += i;
-			break;
-		}
-	}
+	std::string projectPath = sys::getProjectPath("YEngine");
 
-	std::string vsPath = projectPath + "//apps//theMachine//workshop//cube//gl//shader.vert";
-	std::string fsPath = projectPath + "//apps//theMachine//workshop//cube/gl//shader.frag";
+	/*
+	mGDriver->createShader(projectPath + "//apps//theMachine//workshop//cube//gl//shader.vert", 
+						   projectPath + "//apps//theMachine//workshop//cube/gl//shader.frag");
+*/
 
-
-	mGDriver->createShader(vsPath, fsPath);
+	mGDriver->createShader(projectPath + "//apps//theMachine//workshop//cube//shader.vert",
+						   projectPath + "//apps//theMachine//workshop//cube//shader.frag");
 
 	mCam = std::make_shared<CCamera>(CCamera(glm::vec3(0.0f, 0.0f, 5.0f),
 		glm::vec3(0.0f, 0.0f, 0.0f),

@@ -35,6 +35,6 @@ class CVKDriver : public CGraphicDriver
 		void render(CMesh *mesh, CShader* shader) override;
 		void render() override;
 		void clean(CMesh *mesh) const override;
-		void createShader(const string& vertexShader, const string& pixelShader) {};
+		void createShader(const string& vertexShader, const string& pixelShader);
 		void finalizeSetup();
 };
