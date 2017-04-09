@@ -91,3 +91,8 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT A
 set( CMAKE_CURRENT_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/Debug/" )
 add_custom_command(TARGET ${EXE_NAME} POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_MODULE_PATH}/../../dependencies/glew/bin/Release/x64/glew32.dll ${CMAKE_CURRENT_BINARY_DIR})
+
+# Copy assimp-vc140.dll 64 bits with .exe
+set( CMAKE_CURRENT_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/Debug/" )
+add_custom_command(TARGET ${EXE_NAME} POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_MODULE_PATH}/../../dependencies/assimp/lib/Release/assimp-vc140-mt.dll ${CMAKE_CURRENT_BINARY_DIR})
