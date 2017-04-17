@@ -42,5 +42,15 @@ private:
 	void OnResize(wxSizeEvent& event);
 	virtual void onTimer(wxTimerEvent& event);
 	void OnPaintException(const std::string& msg);
+
+	void setupControls();
+	void onKeyDown(wxKeyEvent& event);
+	void onMouseEnter(wxMouseEvent& WXUNUSED(ev));
+	void onMouseWheel(wxMouseEvent& WXUNUSED(ev));
+	void onMouseEvent(wxMouseEvent& WXUNUSED(ev));
+
+	float mLastMouseX;
+	float mLastMouseY;
+	bool mFirstMouse;
 };
 

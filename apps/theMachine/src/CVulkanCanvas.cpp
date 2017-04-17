@@ -12,6 +12,8 @@ CVulkanCanvas::CVulkanCanvas(CVulkan* vk, wxWindow *pParent,
 	Bind(wxEVT_SIZE, &CVulkanCanvas::OnResize, this);
 	Bind(wxEVT_TIMER, &CVulkanCanvas::onTimer, this);
 
+	setupControls();
+
 	m_timer = std::make_unique<wxTimer>(this, 1000 / 60);
 	m_timer->Start(3);
 	m_startTime = std::chrono::high_resolution_clock::now();
@@ -25,6 +27,12 @@ CVulkanCanvas::CVulkanCanvas(CVulkan* vk, wxWindow *pParent,
 CVulkanCanvas::~CVulkanCanvas() noexcept
 {
 	m_timer->Stop();
+
+	Disconnect(wxEVT_LEFT_DOWN, wxMouseEventHandler(CVulkanCanvas::onMouseEvent), NULL, this);
+	Disconnect(wxEVT_LEFT_UP, wxMouseEventHandler(CVulkanCanvas::onMouseEvent), NULL, this);
+	Disconnect(wxEVT_MOTION, wxMouseEventHandler(CVulkanCanvas::onMouseEvent), NULL, this);
+	Disconnect(wxEVT_MOUSEWHEEL, wxMouseEventHandler(CVulkanCanvas::onMouseWheel), NULL, this);
+	Disconnect(wxEVT_KEY_DOWN, wxKeyEventHandler(CVulkanCanvas::onKeyDown), NULL, this);
 }
 
 HWND* 
@@ -43,6 +51,106 @@ CVulkanCanvas::setRenderer(CRenderer *renderer)
 void CVulkanCanvas::onTimer(wxTimerEvent& event)
 {
 	ProcessEvent(wxPaintEvent());
+}
+
+void
+CVulkanCanvas::setupControls()
+{
+	mLastMouseX = 300;
+	mLastMouseY = 300;
+	mFirstMouse = true;
+
+	Connect(wxEVT_LEFT_DOWN, wxMouseEventHandler(CVulkanCanvas::onMouseEvent), NULL, this);
+	Connect(wxEVT_LEFT_UP, wxMouseEventHandler(CVulkanCanvas::onMouseEvent), NULL, this);
+	Connect(wxEVT_MOTION, wxMouseEventHandler(CVulkanCanvas::onMouseEvent), NULL, this);
+	Connect(wxEVT_MOUSEWHEEL, wxMouseEventHandler(CVulkanCanvas::onMouseWheel), NULL, this);
+	Connect(wxEVT_KEY_DOWN, wxKeyEventHandler(CVulkanCanvas::onKeyDown), NULL, this);
+}
+
+void
+CVulkanCanvas::onMouseEnter(wxMouseEvent& WXUNUSED(ev))
+{
+	SetFocus();
+}
+
+void
+CVulkanCanvas::onKeyDown(wxKeyEvent& event)
+{
+	int code = event.GetKeyCode();
+	auto cam = mRenderer->getCam();
+
+	if (cam)
+	{
+		if (code == 'z' || code == 'Z')
+		{
+			cam->processKeyboard(FORWARD, 0.005);
+		}
+
+		if (code == 's' || code == 'S')
+		{
+			cam->processKeyboard(BACKWARD, 0.005);
+		}
+
+		if (code == 'd' || code == 'D')
+		{
+			cam->processKeyboard(RIGHT, 0.005);
+		}
+
+		if (code == 'q' || code == 'Q')
+		{
+			cam->processKeyboard(LEFT, 0.005);
+		}
+	}
+}
+
+void
+CVulkanCanvas::onMouseWheel(wxMouseEvent& event)
+{
+	float value = 0;
+	if (event.GetWheelRotation() > 0)
+	{
+		value += (event.GetWheelDelta() / 240.0);
+	}
+	else if (event.GetWheelRotation() < 0)
+	{
+		value -= (event.GetWheelDelta() / 240.0);
+	}
+
+	auto cam = mRenderer->getCam();
+	if (cam)
+	{
+		cam->processMouseWheel(value);
+	}
+}
+
+void
+CVulkanCanvas::onMouseEvent(wxMouseEvent& event)
+{
+	if (event.Dragging() && event.ButtonIsDown(wxMOUSE_BTN_LEFT))
+	{
+		if (mFirstMouse)
+		{
+			mLastMouseX = event.GetX();
+			mLastMouseY = event.GetY();
+			mFirstMouse = false;
+		}
+
+		float xoffset = (float)(event.GetX() - mLastMouseX);
+		float	yoffset = (float)(mLastMouseY - event.GetY());
+
+		mLastMouseX = event.GetX();
+		mLastMouseY = event.GetY();
+		auto cam = mRenderer->getCam();
+
+		if (cam)
+		{
+			cam->processMouseMovement(xoffset, yoffset);
+		}
+	}
+	else
+	{
+		mFirstMouse = true;
+	}
 }
 
 void CVulkanCanvas::OnPaint(wxPaintEvent& event)

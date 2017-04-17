@@ -27,10 +27,13 @@ Application::~Application()
 bool 
 Application::OnInit()
 {
-	MainWindow* mainFrame = new MainWindow(nullptr, L"TheMachine v1.0", wxDefaultPosition, wxSize(1000,800));
+	MainWindow* mainFrame = new MainWindow(	nullptr, 
+											L"TheMachine v1.0", 
+											wxDefaultPosition, 
+											wxSize(1000,800));
+
 	mainFrame->SetIcon(wxIcon(wxT("iconapp.jpg")));
 	mainFrame->Show(true);
-
 	return true;
 }
 
