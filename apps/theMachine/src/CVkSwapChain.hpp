@@ -11,6 +11,7 @@
 
 /*
 The swap chain handles the image buffers we will be writing to. 
+It's essentially a queue of images that are waiting to be presented to the screen.
 */
 
 class CVkSwapChain
@@ -130,8 +131,9 @@ required to support other windowing systems.
 		}
 		VkSwapchainCreateInfoKHR createInfo = CreateSwapchainCreateInfo(swapChainSupport,
 			surfaceFormat, imageCount, extent);
-		VkSwapchainKHR oldSwapchain = mSwapChain;
-		createInfo.oldSwapchain = oldSwapchain;
+		/*VkSwapchainKHR oldSwapchain = mSwapChain;
+		createInfo.oldSwapchain = oldSwapchain;*/
+
 		VkSwapchainKHR newSwapchain;
 		VkResult result = vkCreateSwapchainKHR(mDevice.mLogicalDevice, &createInfo, nullptr, &newSwapchain);
 		if (result != VK_SUCCESS)

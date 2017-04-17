@@ -27,6 +27,8 @@ public:
 	HWND* getCanvasHandling();
 	wxWindow *m_pParent;
 
+	void resize(wxSize size);
+
 private:
 
 	CVulkan* mVulkan;
@@ -37,7 +39,7 @@ private:
 	sclock m_startTime;
 
 	virtual void OnPaint(wxPaintEvent& event);
-	virtual void OnResize(wxSizeEvent& event);
+	void OnResize(wxSizeEvent& event);
 	virtual void onTimer(wxTimerEvent& event);
 	void OnPaintException(const std::string& msg);
 };

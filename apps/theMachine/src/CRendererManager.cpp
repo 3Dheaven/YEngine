@@ -29,7 +29,7 @@ CRendererManager::CRendererManager(MainWindow *mainWindow) : mMainWindow(mainWin
 		case API_VULKAN:
 		{
 			CVKDriver* vkdriver = new CVKDriver();
-			vcanvas = new CVulkanCanvas(&vkdriver->mVulkan, mMainWindow->mMainPanel, wxID_ANY, { 0, 0 }, mMainWindow->GetSize());
+			vcanvas = new CVulkanCanvas(&vkdriver->mVulkan, mMainWindow->mMainPanel, wxID_ANY, { 0, 0 }, mMainWindow->GetSize(), wxFULL_REPAINT_ON_RESIZE);
 
 			mGDriver = vkdriver;
 			mRenderer->init(mGDriver, mMainWindow->getSettingsWindow()->getDynamicPanel());
@@ -76,6 +76,12 @@ CRendererManager::onResize()
 		glcanvas->SetSize(mMainWindow->GetSize());
 		glcanvas->resize();
 	}
+	else if (gApi == API_VULKAN && vcanvas != NULL)
+	{
+		vcanvas->SetSize(mMainWindow->GetSize());
+		vcanvas->resize(mMainWindow->GetSize());
+	}
+
 }
 
 void

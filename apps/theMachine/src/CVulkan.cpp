@@ -370,12 +370,41 @@ void CVulkan::CreateSemaphores()
 
 void CVulkan::recreateSwapchain()
 {
+	// Wait for the device to become idle
 	vkDeviceWaitIdle(m_device.mLogicalDevice);
 
+	if (mFramebuffers.mRenderPass != VK_NULL_HANDLE)
+	{
+		vkDestroyRenderPass(m_device.mLogicalDevice, mFramebuffers.mRenderPass, nullptr);
+	}
+
+	if (m_swapChain.mSwapChain != VK_NULL_HANDLE) 
+	{
+		vkDestroySwapchainKHR(m_device.mLogicalDevice, m_swapChain.mSwapChain, nullptr);
+	}
+
+	for (auto& imageView : m_swapChain.m_swapchainImageViews) 
+	{
+		vkDestroyImageView(m_device.mLogicalDevice, imageView, nullptr);
+	}
+
+	for (auto& framebuffer : mFramebuffers.mSwapchainFramebuffers) 
+	{
+		vkDestroyFramebuffer(m_device.mLogicalDevice, framebuffer, nullptr);
+	}
+	
 	m_swapChain.CreateSwapChain(mSize);
+
+	m_device.connectSwapChain(m_swapChain.mSwapChain);
+
+	mFramebuffers.connectSwapChain(m_swapChain);
+
 	mFramebuffers.CreateRenderPass();
-	CreateGraphicsPipeline("../workshop/vk_2d_square/vert.spv", "../workshop/vk_2d_square/frag.spv");
+
 	mFramebuffers.CreateFrameBuffers();
+
+	CreateGraphicsPipeline(vsShaderFullFilePath, fsShaderFullFilePath);
+	
 	CreateCommandBuffers();
 }
 
