@@ -5,10 +5,10 @@
 # GLEW_FOUND
 # GLEW_INCLUDE_PATH
 # GLEW_LIBRARY
-#C:/Users/yoan.audureau/Documents/GitHub/YEngine/projects/wxWidget/../../cmake/modules/../dependencies/glew/include
+
 IF (WIN32)
 	FIND_PATH( GLEW_INCLUDE_PATH GL/glew.h
-	${CMAKE_MODULE_PATH}/../../dependencies/glew/include
+	${CMAKE_MODULE_PATH}/../../deps/glew/include
 	$ENV{GLEW_ROOT}/include
 	DOC "The directory where GL/glew.h resides")
 
@@ -16,8 +16,8 @@ IF (WIN32)
 	FIND_LIBRARY( GLEW_LIBRARY
 		NAMES glew GLEW glew32 glew32s
 		PATHS
-		${CMAKE_MODULE_PATH}/../../dependencies/glew/bin/Release/x64
-		${CMAKE_MODULE_PATH}/../../dependencies/glew/lib/Release/x64
+		${CMAKE_MODULE_PATH}/../../deps/glew/bin/Release/x64
+		${CMAKE_MODULE_PATH}/../../deps/glew/lib/Release/x64
 		$ENV{GLEW_ROOT}/lib
 		DOC "The GLEW library"
 	)
