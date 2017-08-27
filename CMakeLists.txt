@@ -49,7 +49,7 @@ find_package(ASSIMP REQUIRED)
 
 IF (NOT Vulkan_FOUND)
 	MESSAGE("Searching for embedded vulkan library version ...")
-	set (VULKAN_DIR ${CMAKE_MODULE_PATH}/../../dependencies/vulkan/)
+	set (VULKAN_DIR ${CMAKE_MODULE_PATH}/../../deps/vulkan/)
 	find_library(Vulkan_LIBRARY NAMES vulkan-1 vulkan PATHS ${VULKAN_DIR}/lib)
 	IF (Vulkan_LIBRARY)
 		set(Vulkan_FOUND ON)
